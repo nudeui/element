@@ -1,5 +1,6 @@
 import {
 	resolveValue,
+	queueInitFunction,
 } from "../util.js";
 
 export default function (Class, {
@@ -26,7 +27,7 @@ export default function (Class, {
 
 	Class.formAssociated = true;
 
-	let ret = function postConstruct () {
+	return queueInitFunction(function init () {
 		let internals = this[internalsProp] ??= this.attachInternals();
 
 		if (internals) {
@@ -41,9 +42,5 @@ export default function (Class, {
 			internals.setFormValue(this[valueProp]);
 			el.addEventListener(changeEvent, () => internals.setFormValue(this[valueProp]));
 		}
-	}
-
-	Class.postConstruct?.push(ret);
-
-	return ret;
+	});
 }

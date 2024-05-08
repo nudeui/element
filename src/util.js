@@ -101,3 +101,15 @@ export function pick (obj, properties) {
 export function resolveValue (value, callArgs) {
 	return typeof value === "function" ? value.call(...callArgs) : value;
 }
+
+export function queueInitFunction (Class, fn) {
+	if (Array.isArray(fn)) {
+		return fn.map(f => queueInitFunction(Class, f));
+	}
+
+	if (Class.initQueue && !Class.initQueue.includes(fn)) {
+		Class.initQueue.push(fn);
+	}
+
+	return fn;
+}

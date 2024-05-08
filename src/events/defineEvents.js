@@ -3,6 +3,7 @@ import PropChangeEvent from "../common/PropChangeEvent.js";
 import {
 	pick,
 	resolveValue,
+	queueInitFunction,
 } from "../util.js";
 
 /**
@@ -33,7 +34,7 @@ export function defineEvent (Class, name, options = {}) {
 		return;
 	}
 
-	return function postConstruct () {
+	return function init () {
 		this.addEventListener("propchange", event => {
 			if (!isImplemented) {
 				if (event.name === onName) {
@@ -83,18 +84,6 @@ export function defineEvent (Class, name, options = {}) {
 }
 
 export default function defineEvents (Class, events = Class.events) {
-	let ret = [];
-
-	for (let name in events) {
-		let postConstruct = defineEvent(Class, name, events[name]);
-		if (postConstruct) {
-			ret.push(postConstruct);
-		}
-	}
-
-	if (Class.postConstruct) {
-		Class.postConstruct.push(...ret);
-	}
-
-	return ret;
+	let fns = events.map(event => defineEvent(Class, event)).filter(Boolean);
+	return queueInitFunction(Class, fns);
 }

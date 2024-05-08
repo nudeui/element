@@ -1,12 +1,12 @@
 /**
  * Base class for all elements
  */
-import Props from "../Props.js";
+import defineProps from "./props/defineProps.js";
 import defineFormAssociated from "./formAssociated.js/defineFormAssociated.js";
 import defineEvents from "./events/defineEvents.js";
 
 const Self = class NudeElement extends HTMLElement {
-	static postConstruct = [];
+	static initQueue = [];
 	#initialized = false;
 
 	constructor () {
@@ -21,10 +21,8 @@ const Self = class NudeElement extends HTMLElement {
 	connectedCallback () {
 		if (!this.#initialized) {
 			// Stuff that runs once per element
-			for (let init of this.constructor.postConstruct) {
-				init.call(this);
-			}
-			this.initializeProps?.();
+			this.constructor.initQueue.forEach(init => init.call(this));
+
 			this.#initialized = true;
 		}
 	}
@@ -36,15 +34,15 @@ const Self = class NudeElement extends HTMLElement {
 		}
 
 		if (this.events) {
-			defineEvents(this)
-		}
-
-		if (this.props) {
-			Props.create(this);
+			defineEvents(this);
 		}
 
 		if (this.formAssociated) {
 			defineFormAssociated(this);
+		}
+
+		if (this.props) {
+			defineProps(this);
 		}
 
 		this._initialized = true;

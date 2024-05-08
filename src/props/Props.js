@@ -1,10 +1,7 @@
 import {
-	defineLazyProperty,
 	sortObject,
 } from "../util.js";
 import Prop from "./Prop.js";
-
-let propsInitialized = Symbol("propsInitialized");
 
 export default class Props extends Map {
 	/**
@@ -13,8 +10,6 @@ export default class Props extends Map {
 	 * Key is the name of the prop, value is a set of prop names that depend on it
 	 */
 	dependents = {};
-
-	#initialized = false;
 
 	/**
 	 *
@@ -26,64 +21,27 @@ export default class Props extends Map {
 
 		this.Class = Class;
 
-		// Add prop specs on element class
-		// TODO handle composition
-		Class.props = this;
-
-		// Internal prop values
-		defineLazyProperty(Class.prototype, "props", el => ({}));
-
-		// Ignore mutations on these attributes
-		defineLazyProperty(Class.prototype, "ignoredAttributes", el => new Set());
-
-		// Changes not already handled by the propChangedCallback
-		defineLazyProperty(Class.prototype, "pendingChanges", el => ({}));
-		defineLazyProperty(Class.prototype, "updatingProps", el => new Set());
-
-		let _attributeChangedCallback = Class.prototype.attributeChangedCallback;
-		Class.prototype.attributeChangedCallback = function (name, oldValue, value) {
-			this.constructor.props.attributeChanged(element, name, oldValue, value);
-			_attributeChangedCallback?.call(this, name, oldValue, value);
-		}
-
-		// To be called when the element is connected
-		Class.prototype.initializeProps ??= function (options = {}) {
-			if (this[propsInitialized] && !options.force) {
-				return;
-			}
-
-			this.constructor.props.initializeFor(this);
-		}
-
-		// FIXME how to combine with existing observedAttributes?
-		if (!Object.hasOwn(Class, "observedAttributes")) {
-			Object.defineProperty(Class, "observedAttributes", {
-				get: () => this.observedAttributes,
-				configurable: true,
-			});
-		}
-
 		// Define getters and setters for each prop
-		for (let name in props) {
-			let prop = new Prop(name, props[name], this);
-			this.set(name, prop);
-			Object.defineProperty(Class.prototype, name, prop.getDescriptor());
-		}
-
-		this.#initialized = true;
-		this.updateDependents();
+		this.add(props);
 	}
 
 	get observedAttributes () {
 		return [...this.values()].map(spec => spec.fromAttribute).filter(Boolean);
 	}
 
-	add (name, spec) {
-		let prop = new Prop(name, spec, this);
-		this.set(name, prop);
-		Object.defineProperty(this.Class.prototype, name, prop.getDescriptor());
+	add (props) {
+		if (arguments.length === 2) {
+			let [name, spec] = arguments;
+			return this.add({[name]: spec});
+		}
+
+		for (let [name, spec] of Object.entries(props)) {
+			let prop = new Prop(name, spec, this);
+			this.set(name, prop);
+			Object.defineProperty(this.Class.prototype, name, prop.getDescriptor());
+		}
+
 		this.updateDependents();
-		return prop;
 	}
 
 	attributeChanged (element, name, oldValue) {
@@ -131,12 +89,6 @@ export default class Props extends Map {
 	}
 
 	updateDependents () {
-		if (!this.#initialized) {
-			// We update all dependents at once after initialization
-			// no need to do it after every single property
-			return;
-		}
-
 		// Rebuild dependency graph
 		let dependents = {};
 
@@ -177,12 +129,5 @@ export default class Props extends Map {
 			});
 		}
 	}
-
-	static create (Class, props = Class.props) {
-		if (props instanceof Props) {
-			return props;
-		}
-
-		return new this(Class, props);
-	}
 }
+
