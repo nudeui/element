@@ -1,5 +1,5 @@
 import {
-	defineInstanceProperty,
+	defineLazyProperty,
 	resolveValue,
 } from "../util.js";
 
@@ -11,7 +11,7 @@ export default function (Class, {
 	internalsProp = "_internals",
 	getters = ["labels", "form", "type", "name", "validity", "validationMessage", "willValidate"],
 } = Class.formAssociated) {
-	defineInstanceProperty(Class, internalsProp, el => {
+	defineLazyProperty(Class.prototype, internalsProp, el => {
 		let source = resolveValue(like, [el, el]);
 		let internals = el.attachInternals?.();
 

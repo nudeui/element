@@ -1,28 +1,14 @@
 /**
- * Defines instance properties by defining an accessor that automatically replaces itself with a writable property when accessed.
+ * Defines lazy properties by defining an accessor that automatically replaces itself with a writable property when accessed.
  * @param {Function} Class
  * @param {string} name
- * @param {function} getValue
+ * @param {object | function} options - If function, then it provides the `get` option.
+ * @param {Function} options.get - The getter function
+ * @param {boolean} [options.writable=true] - Whether the property is writable
+ * @param {boolean} [options.configurable=true] - Whether the property is configurable
+ * @param {boolean} [options.enumerable=false] - Whether the property is enumerable
+ * @returns {void}
  */
-export function defineInstanceProperty (
-	Class, name, getValue,
-	{writable = true, configurable = true, enumerable = false} = {}) {
-	let setter = function (value) {
-		Object.defineProperty(this, name, { value, writable, configurable, enumerable });
-	}
-	Object.defineProperty(Class.prototype, name, {
-		get () {
-			let value = getValue.call(this, this);
-			setter.call(this, value);
-			return value;
-		},
-		set (value) { // Blind set
-			setter.call(this, value);
-		},
-		configurable: true,
-	});
-}
-
 export function defineLazyProperty (object, name, options) {
 	if (typeof options === "function") {
 		options = { get: options };
@@ -46,6 +32,11 @@ export function defineLazyProperty (object, name, options) {
 	});
 }
 
+/**
+ * Extract a list of property names from static `this.propertyName` in a function
+ * @param {function} fn
+ * @returns {Array<string>} Array of property names
+ */
 export function inferDependencies (fn) {
 	if (!fn || typeof fn !== "function") {
 		return [];
@@ -56,10 +47,12 @@ export function inferDependencies (fn) {
 	return [...code.matchAll(/\bthis\.([$\w]+)\b/g)].map(match => match[1]);
 }
 
+// Currently unused
 export async function wait (ms) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// Currently unused
 export async function nextTick (refreshRate = 20) {
 	let now = performance.now();
 	let remainder = now % refreshRate;
@@ -70,6 +63,12 @@ export async function nextTick (refreshRate = 20) {
 	return new Promise(resolve => setTimeout(() => resolve(nextAt - nextTick.start), delay));
 }
 
+/**
+ * Sort an object literal based on an arbitrary comparison function.
+ * @param {object} obj - The object to sort
+ * @param {Function} fn - Comparison function
+ * @returns {object} New object with the entries sorted
+ */
 export function sortObject (obj, fn) {
 	if (!obj) {
 		return obj;
@@ -78,6 +77,12 @@ export function sortObject (obj, fn) {
 	return Object.fromEntries(Object.entries(obj).sort(fn));
 }
 
+/**
+ * Extracts a subset of properties from an object.
+ * @param {object} obj
+ * @param {Array<string>} properties
+ * @returns {object}
+ */
 export function pick (obj, properties) {
 	if (!properties || !obj) {
 		return obj;
