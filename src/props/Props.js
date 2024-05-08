@@ -40,34 +40,10 @@ export default class Props extends Map {
 		defineLazyProperty(Class.prototype, "pendingChanges", el => ({}));
 		defineLazyProperty(Class.prototype, "updatingProps", el => new Set());
 
-		// Define the attributeChangedCallback iff not already defined
-		// We assume that if it's defined, it's defined from this
-		// This will fail if a class has a custom attributeChangedCallback
-		Class.prototype.attributeChangedCallback ??= function (name, oldValue, value) {
-			if (!this.isConnected || this.ignoredAttributes.has(name)) {
-				// We process attributes all at once when the element is connected
-				return;
-			}
-
-			if (name) {
-				// Find relevant props
-				// Update specific attribute
-				let allProps = [...this.constructor.props.values()];
-				let relevantProps = allProps.filter(spec => spec.fromAttribute === name);
-
-				for (let spec of relevantProps) {
-					spec.set(this, this.getAttribute(name), {source: "attribute", name, oldValue});
-				}
-			}
-			else {
-				// Update all reflected props from attributes at once
-				for (let name of this.constructor.observedAttributes) {
-					// Only process elements that have this attribute, or used to
-					if (this.hasAttribute(name)) {
-						this.attributeChangedCallback(name);
-					}
-				}
-			}
+		let _attributeChangedCallback = Class.prototype.attributeChangedCallback;
+		Class.prototype.attributeChangedCallback = function (name, oldValue, value) {
+			this.constructor.props.attributeChanged(element, name, oldValue, value);
+			_attributeChangedCallback?.call(this, name, oldValue, value);
 		}
 
 		// To be called when the element is connected
@@ -76,16 +52,10 @@ export default class Props extends Map {
 				return;
 			}
 
-			// Update all reflected props from attributes at once
-			this.attributeChangedCallback();
-
-			// Fire propchange events for any props not already handled
-			// FIXME this logic should probably live somewhere else
-			for (let prop of this.constructor.props.values()) {
-				prop.initializeFor(this);
-			}
+			this.constructor.props.initializeFor(this);
 		}
 
+		// FIXME how to combine with existing observedAttributes?
 		if (!Object.hasOwn(Class, "observedAttributes")) {
 			Object.defineProperty(Class, "observedAttributes", {
 				get: () => this.observedAttributes,
@@ -114,6 +84,35 @@ export default class Props extends Map {
 		Object.defineProperty(this.Class.prototype, name, prop.getDescriptor());
 		this.updateDependents();
 		return prop;
+	}
+
+	attributeChanged (element, name, oldValue) {
+		if (!element.isConnected || element.ignoredAttributes.has(name)) {
+			// We process attributes all at once when the element is connected
+			return;
+		}
+
+		// Find relevant props
+		let propsFromAttribute = [...this.values()].filter(spec => spec.fromAttribute === name);
+
+		for (let spec of propsFromAttribute) {
+			spec.set(this, this.getAttribute(name), {source: "attribute", name, oldValue});
+		}
+	}
+
+	initializeFor (element) {
+		// Update all reflected props from attributes at once
+		for (let name of this.observedAttributes) {
+			// Only process elements that have this attribute, or used to
+			if (element.hasAttribute(name)) {
+				this.attributeChanged(element, name);
+			}
+		}
+
+		// Fire propchange events for any props not already handled
+		for (let prop of this.values()) {
+			prop.initializeFor(element);
+		}
 	}
 
 	/**
