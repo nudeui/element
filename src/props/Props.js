@@ -81,13 +81,8 @@ export default class Props extends Map {
 
 			// Fire propchange events for any props not already handled
 			// FIXME this logic should probably live somewhere else
-			let props = this.constructor.props;
-			for (let name of props.keys()) {
-				let prop = props.get(name);
-				if (this.props[name] === undefined && !prop.defaultProp) {
-					// Is not set and its default is not another prop
-					prop.changed(this, {source: "default", element: this});
-				}
+			for (let prop of this.constructor.props.values()) {
+				prop.initializeFor(this);
 			}
 		}
 

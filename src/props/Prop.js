@@ -92,6 +92,13 @@ let Self = class Prop {
 		return Self.parse(value, this.type, this.typeOptions);
 	}
 
+	initializeFor (element) {
+		if (element.props[this.name] === undefined && !this.defaultProp) {
+			// Is not set and its default is not another prop
+			this.changed(element, {source: "default", element});
+		}
+	}
+
 	// Define the necessary getters and setters
 	getDescriptor ({enumerable = true} = this.spec) {
 		let me = this;
