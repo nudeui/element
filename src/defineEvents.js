@@ -27,8 +27,6 @@ export function defineEvent (Class, name, options = {}) {
 		});
 	}
 
-
-
 	if (isImplemented && !options.from) {
 		// Not much to do here
 		return;
@@ -53,13 +51,7 @@ export function defineEvent (Class, name, options = {}) {
 
 			if (event.name === options.propchange) {
 				// Shortcut for events that fire when a specific prop changes
-				let propName = options.propchange;
-				let EventConstructor = PropChangeEvent.for(propName);
-				let eventOptions = Object.assign(pick(event, ["bubbles", "cancelable", "composed", "detail"]), {
-					[propName]: this[propName],
-				});
-
-				this.dispatchEvent(new EventConstructor(name, eventOptions));
+				this.dispatchEvent(new PropChangeEvent(name, event));
 			}
 		});
 
