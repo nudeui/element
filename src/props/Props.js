@@ -53,8 +53,8 @@ export default class Props extends Map {
 		// Find relevant props
 		let propsFromAttribute = [...this.values()].filter(spec => spec.fromAttribute === name);
 
-		for (let spec of propsFromAttribute) {
-			spec.set(this, this.getAttribute(name), {source: "attribute", name, oldValue});
+		for (let prop of propsFromAttribute) {
+			prop.set(element, element.getAttribute(name), {source: "attribute", name, oldValue});
 		}
 	}
 

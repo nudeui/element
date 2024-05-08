@@ -22,7 +22,7 @@ export default function defineProps (Class, props = Class.props) {
 		return;
 	}
 
-	let props = Class.props = new Props(Class, props);
+	props = Class.props = new Props(Class, props);
 
 	// Internal prop values
 	defineLazyProperty(Class.prototype, "props", el => ({}));

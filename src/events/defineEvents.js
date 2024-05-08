@@ -1,5 +1,5 @@
 import defineProps from "../props/defineProps.js";
-import PropChangeEvent from "../common/PropChangeEvent.js";
+import PropChangeEvent from "../props/PropChangeEvent.js";
 import {
 	pick,
 	resolveValue,
