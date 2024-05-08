@@ -1,6 +1,6 @@
 import {
 	inferDependencies,
-	getValue,
+	resolveValue,
 } from "../util.js";
 import PropChangeEvent from "./PropChangeEvent.js";
 
@@ -129,11 +129,8 @@ let Self = class Prop {
 				if (this.defaultProp) {
 					return this.defaultProp.get(element);
 				}
-				else if (typeof this.default === "function") {
-					return this.default(element);
-				}
 				else {
-					return this.default;
+					return resolveValue(this.default, [element, element]);
 				}
 			}
 		}

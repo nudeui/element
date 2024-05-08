@@ -93,6 +93,6 @@ export function pick (obj, properties) {
  * @param {Array} callArgs - The arguments that will be passed to `function.call()` if the value is a function.
  * @returns {*}
  */
-export function getValue (value, callArgs) {
+export function resolveValue (value, callArgs) {
 	return typeof value === "function" ? value.call(...callArgs) : value;
 }

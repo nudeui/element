@@ -2,6 +2,7 @@ import Props from "../props/Props.js";
 import PropChangeEvent from "../common/PropChangeEvent.js";
 import {
 	pick,
+	resolveValue,
 } from "../util.js";
 
 /**
@@ -59,7 +60,7 @@ export function defineEvent (Class, name, options = {}) {
 		let from = typeof options.from === "function" ? { on: options.from } : options.from;
 
 		if (from) {
-			let target = typeof from?.on === "function" ? from.on.call(this) : from?.on ?? this;
+			let target = resolveValue(from?.on ?? this, [this]);
 			let host = this;
 			let type = from?.type ?? name;
 

@@ -1,6 +1,6 @@
 import {
 	defineInstanceProperty,
-	getValue,
+	resolveValue,
 } from "../util.js";
 
 export default function (Class, {
@@ -12,7 +12,7 @@ export default function (Class, {
 	getters = ["labels", "form", "type", "name", "validity", "validationMessage", "willValidate"],
 } = Class.formAssociated) {
 	defineInstanceProperty(Class, internalsProp, el => {
-		let source = getValue(like, [el, el]);
+		let source = resolveValue(like, [el, el]);
 		let internals = el.attachInternals?.();
 
 		if (internals) {
