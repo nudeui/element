@@ -1,7 +1,7 @@
 import {
 	defineLazyProperty,
 	sortObject,
-} from "./util.js";
+} from "../util.js";
 import Prop from "./Prop.js";
 
 let propsInitialized = Symbol("propsInitialized");

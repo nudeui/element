@@ -1,6 +1,7 @@
 import {
 	inferDependencies,
-} from "./util.js";
+	getValue,
+} from "../util.js";
 import PropChangeEvent from "./PropChangeEvent.js";
 
 const callableBuiltins = new Set([String, Number, Boolean, Array, Object, Function, Symbol, BigInt]);

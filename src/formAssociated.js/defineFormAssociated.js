@@ -1,7 +1,7 @@
 import {
 	defineInstanceProperty,
 	getValue,
-} from "./util.js";
+} from "../util.js";
 
 export default function (Class, {
 	like,

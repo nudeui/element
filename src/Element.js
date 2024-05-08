@@ -2,8 +2,8 @@
  * Base class for all elements
  */
 import Props from "../Props.js";
-import defineFormAssociated from "./defineFormAssociated.js";
-import defineEvents from "./defineEvents.js";
+import defineFormAssociated from "./formAssociated.js/defineFormAssociated.js";
+import defineEvents from "./events/defineEvents.js";
 
 const Self = class NudeElement extends HTMLElement {
 	static postConstruct = [];

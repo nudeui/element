@@ -1,8 +1,8 @@
-import Props from "./Props.js";
+import Props from "../props/Props.js";
 import PropChangeEvent from "../common/PropChangeEvent.js";
 import {
 	pick,
-} from "./util.js";
+} from "../util.js";
 
 /**
  *
