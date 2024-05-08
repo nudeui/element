@@ -1,13 +1,18 @@
-import { defineInstanceProperty } from "./util.js";
+import {
+	defineInstanceProperty,
+	getValue,
+} from "./util.js";
 
 export default function (Class, {
-	getSource,
+	like,
 	role,
 	valueProp = "value",
 	changeEvent = "input",
+	internalsProp = "_internals",
+	getters = ["labels", "form", "type", "name", "validity", "validationMessage", "willValidate"],
 } = Class.formAssociated) {
-	defineInstanceProperty(Class, "_internals", el => {
-		let source = getSource(el);
+	defineInstanceProperty(Class, internalsProp, el => {
+		let source = getValue(like, [el, el]);
 		let internals = el.attachInternals?.();
 
 		if (internals) {
@@ -19,10 +24,10 @@ export default function (Class, {
 		return internals;
 	});
 
-	for (let prop of ["labels", "form", "type", "name", "validity", "validationMessage", "willValidate"]) {
+	for (let prop of getters) {
 		Object.defineProperty(Class.prototype, prop, {
 			get () {
-				return this._internals[prop];
+				return this[internalsProp][prop];
 			},
 			enumerable: true,
 		});

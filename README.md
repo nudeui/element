@@ -2,8 +2,8 @@
 
 # Nude Element
 
-A collection of modular, incrementally adoptable, dependency-free helpers
-for creating web platform compatible reactive web components that behave just like native HTML elements.
+Composable web component helpers
+for creating reactive web components that behave just like native HTML elements.
 
 </header>
 
@@ -27,6 +27,8 @@ Try it and please report issues and provide feedback!
 Defining your element as a subclass of `NudeElement` gives you the nicest, most declarative syntax.
 
 ```js
+import NudeElement from "nude-element";
+
 class MySlider extends NudeElement {
 	constructor () {
 		// ...
@@ -78,7 +80,7 @@ class MySlider extends NudeElement {
 	};
 
 	static formAssociated = {
-		getSource: el => el._el.slider,
+		like: el => el._el.slider,
 		role: "slider",
 		valueProp: "value",
 		changeEvent: "valuechange",
@@ -88,13 +90,24 @@ class MySlider extends NudeElement {
 
 ### Composable helper functions
 
-If that seems too intrusive,
-you can implement the same API via one-off composable helper functions:
+If taking over your parent class seems too intrusive,
+you can implement the same API via one-off composable helper functions,
+but you may need to do more plumbing work yourself:
 
 ```js
+import {
+	Props,
+	defineEvents,
+	defineFormAssociated,
+} from "nude-element";
+
 class MySlider extends HTMLElement {
 	constructor () {
 		// ...
+
+		initEvents.call(this);
+		initFormAssociated.call(this);
+		this._initializeProps();
 	}
 }
 
@@ -129,7 +142,7 @@ Props.create(MySlider, {
 	},
 });
 
-defineEvents(MySlider, {
+let initEvents = defineEvents(MySlider, {
 	// Propagate event from shadow DOM element
 	change: {
 		from () {
@@ -143,8 +156,8 @@ defineEvents(MySlider, {
 	},
 });
 
-defineFormAssociated(MySlider, {
-	getSource: el => el._el.slider,
+let initFormAssociated = defineFormAssociated(MySlider, {
+	like: el => el._el.slider,
 	role: "slider",
 	valueProp: "value",
 	changeEvent: "valuechange",
