@@ -33,16 +33,16 @@ const Self = class NudeElement extends HTMLElement {
 			return;
 		}
 
+		if (this.props) {
+			defineProps(this);
+		}
+
 		if (this.events) {
 			defineEvents(this);
 		}
 
 		if (this.formAssociated) {
 			defineFormAssociated(this);
-		}
-
-		if (this.props) {
-			defineProps(this);
 		}
 
 		this._initialized = true;
