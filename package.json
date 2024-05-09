@@ -3,7 +3,10 @@
   "version": "0.0.1",
   "description": "Composable web component helpers",
   "main": "index.js",
+  "type": "module",
   "scripts": {
+    "eslint": "npx eslint .",
+    "eslint:fix": "npx eslint . --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,5 +21,10 @@
   "bugs": {
     "url": "https://github.com/nudeui/element/issues"
   },
-  "homepage": "https://github.com/nudeui/element#readme"
+  "homepage": "https://github.com/nudeui/element#readme",
+  "devDependencies": {
+    "@stylistic/eslint-plugin": "latest",
+    "eslint": "latest",
+    "globals": "latest"
+  }
 }
