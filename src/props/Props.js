@@ -54,6 +54,12 @@ export default class Props extends Map {
 
 		let keyIndices = Object.fromEntries([...this.keys()].map((key, i) => [key, i]));
 		let sort = false;
+		let values = [...this.values()];
+
+		if (!values.every(value => value instanceof Prop)) {
+			// Not ready, still adding props
+			return;
+		}
 
 		for (let prop of this.values()) {
 			// Add dependencies
