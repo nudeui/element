@@ -1,6 +1,6 @@
 {
   "name": "nude-element",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "Composable web component helpers",
   "main": "index.js",
   "type": "module",
@@ -25,6 +25,7 @@
   "devDependencies": {
     "@stylistic/eslint-plugin": "latest",
     "eslint": "latest",
-    "globals": "latest"
+    "globals": "latest",
+    "release-it": "^17.2.1"
   }
 }
