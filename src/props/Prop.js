@@ -25,10 +25,11 @@ let Self = class Prop {
 			let defaultDependencies = spec.defaultDependencies ?? inferDependencies(spec.default);
 			if (defaultDependencies.length > 0) {
 				let defaultProp = "default" + name.replace(/^\w/, c => c.toUpperCase());
-				this.default = this.props.add(defaultProp, {
+				this.props.add(defaultProp, {
 					get: spec.default,
 					dependencies: defaultDependencies,
 				});
+				this.default = this.props.get(defaultProp);
 			}
 		}
 
