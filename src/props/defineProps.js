@@ -32,7 +32,7 @@ export default function defineProps (Class, props = Class.props) {
 
 	let _attributeChangedCallback = Class.prototype.attributeChangedCallback;
 	Class.prototype.attributeChangedCallback = function (name, oldValue, value) {
-		this.constructor.props.attributeChanged(element, name, oldValue, value);
+		this.constructor.props.attributeChanged(this, name, oldValue, value);
 		_attributeChangedCallback?.call(this, name, oldValue, value);
 	}
 
