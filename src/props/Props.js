@@ -44,6 +44,48 @@ export default class Props extends Map {
 		this.updateDependents();
 	}
 
+	updateDependents () {
+		// Rebuild dependency graph
+		let dependents = {};
+
+		for (let name of this.keys()) {
+			dependents[name] = new Set();
+		}
+
+		let keyIndices = Object.fromEntries([...this.keys()].map((key, i) => [key, i]));
+		let sort = false;
+
+		for (let prop of this.values()) {
+			// Add dependencies
+			let dependencies = [...prop.dependencies];
+
+			if (prop.defaultProp) {
+				dependencies.push(prop.defaultProp.name);
+			}
+
+			for (let name of dependencies) {
+				// ${name} depends on ${prop.name}
+				dependents[name]?.add(prop);
+
+				// Dependent props should come after the prop they depend on
+				if (keyIndices[name] < keyIndices[prop.name]) {
+					// Swap the order of the props
+					[keyIndices[name], keyIndices[prop.name]] = [keyIndices[prop.name], keyIndices[name]];
+					sort = true;
+				}
+			}
+		}
+
+		if (sort) {
+			// Sort dependency graph using the new order in keyIndices
+			// TODO put props with no dependencies first
+			// TODO do we need a topological sort?
+			this.dependents = sortObject(dependents, ([a], [b]) => {
+				return keyIndices[a] - keyIndices[b];
+			});
+		}
+	}
+
 	attributeChanged (element, name, oldValue) {
 		if (!element.isConnected || element.ignoredAttributes.has(name)) {
 			// We process attributes all at once when the element is connected
@@ -85,48 +127,6 @@ export default class Props extends Map {
 		}
 		else {
 			Class.props[name] = spec;
-		}
-	}
-
-	updateDependents () {
-		// Rebuild dependency graph
-		let dependents = {};
-
-		for (let name of this.keys()) {
-			dependents[name] = new Set();
-		}
-
-		let keyIndices = Object.fromEntries([...this.keys()].map((key, i) => [key, i]));
-		let sort = false;
-
-		for (let prop of this.values()) {
-			// Add dependencies
-			let dependencies = [...prop.dependencies];
-
-			if (prop.defaultProp) {
-				dependencies.push(prop.defaultProp.name);
-			}
-
-			for (let name of dependencies) {
-				// ${name} depends on ${prop.name}
-				dependents[name]?.add(prop);
-
-				// Dependent props should come after the prop they depend on
-				if (keyIndices[name] < keyIndices[prop.name]) {
-					// Swap the order of the props
-					[keyIndices[name], keyIndices[prop.name]] = [keyIndices[prop.name], keyIndices[name]];
-					sort = true;
-				}
-			}
-		}
-
-		if (sort) {
-			// Sort dependency graph using the new order in keyIndices
-			// TODO put props with no dependencies first
-			// TODO do we need a topological sort?
-			this.dependents = sortObject(dependents, ([a], [b]) => {
-				return keyIndices[a] - keyIndices[b];
-			});
 		}
 	}
 }
