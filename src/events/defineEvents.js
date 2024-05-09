@@ -23,7 +23,8 @@ function retargetEvent (name, from) {
 
 	return function init () {
 		// Event is a subset of another event (either on this element or another element)
-		let target = resolveValue(from?.on ?? this, [this]);
+
+		let target = resolveValue(from?.on, [this]) ?? this;
 		let host = this;
 
 		target.addEventListener(type, event => {
