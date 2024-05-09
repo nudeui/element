@@ -4,6 +4,7 @@ import {
 	pick,
 	resolveValue,
 	queueInitFunction,
+	wait,
 } from "../util.js";
 
 /**
@@ -68,11 +69,31 @@ export default function defineEvents (Class, events = Class.events) {
 		propchange = Object.fromEntries(propchange);
 
 		defineProps(Class, props);
-		fns.push(function init () {
-			this.addEventListener("propchange", event => {
-				// Implement onEventName attributes/properties
 
+		fns.push(function init () {
+			// REFACTOR: Some repetition here
+			// Deal with existing values
+			for (let name in props) {
+				let value = this[name];
+				if (typeof value === "function") {
+					let eventName = name.slice(2);
+					this.addEventListener(eventName, value);
+				}
+			}
+
+			for (let name in propchange) {
+				let value = this[name];
+
+				if (value !== undefined) {
+					let eventName = propchange[name];
+					this.dispatchEvent(new PropChangeEvent(eventName));
+				}
+			}
+
+			// Listen for changes
+			this.addEventListener("propchange", event => {
 				if (props[event.name]) {
+					// Implement onEventName attributes/properties
 					let eventName = event.name.slice(2);
 					let change = event.detail;
 
