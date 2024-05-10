@@ -6,7 +6,6 @@ import defineFormAssociated from "./formAssociated.js/defineFormAssociated.js";
 import defineEvents from "./events/defineEvents.js";
 
 const Self = class NudeElement extends HTMLElement {
-	static initQueue = [];
 	#initialized = false;
 
 	constructor () {
@@ -32,6 +31,8 @@ const Self = class NudeElement extends HTMLElement {
 		if (this._initialized) {
 			return;
 		}
+
+		this.initQueue ??= [];
 
 		if (this.props) {
 			defineProps(this);
