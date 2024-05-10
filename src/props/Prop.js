@@ -3,8 +3,7 @@ import {
 	resolveValue,
 } from "../util.js";
 import PropChangeEvent from "./PropChangeEvent.js";
-
-const callableBuiltins = new Set([String, Number, Boolean, Array, Object, Function, Symbol, BigInt]);
+import { equals, stringify, parse } from "./types.js";
 
 let Self = class Prop {
 	constructor (name, spec, props) {
@@ -76,21 +75,21 @@ let Self = class Prop {
 		return this.default instanceof Prop ? this.default : null;
 	}
 
-	// Just calls Self.equals() by default but can be overridden
+	// Just calls equals() by default but can be overridden
 	equals(a, b) {
-		return Self.equals(a, b, this.type, this.typeOptions);
+		return equals(a, b, this.type, this.typeOptions);
 	}
 
 	// To attribute
 	stringify (value) {
-		return Self.stringify(value, this.type, this.typeOptions);
+		return stringify(value, this.type, this.typeOptions);
 	}
 
 	// Parse value into the correct type
 	// This could be coming from an attribute (string)
 	// Or directly setting the property (which could be a variety of types)
 	parse (value) {
-		return Self.parse(value, this.type, this.typeOptions);
+		return parse(value, this.type, this.typeOptions);
 	}
 
 	initializeFor (element) {
@@ -290,136 +289,6 @@ let Self = class Prop {
 			}
 		}
 	}
-
-	static equals (a, b, type, typeOptions) {
-		if (a === null || b === null || a === undefined || b === undefined) {
-			return a === b;
-		}
-
-		let equals = this.types.get(type)?.equals;
-		return equals ? equals(a, b, typeOptions) : this.defaultType.equals(a, b, type, typeOptions);
-	}
-
-	// Cast a value to the desired type
-	static parse (value, type, typeOptions) {
-		if (!type || value === undefined || value === null) {
-			return value;
-		}
-
-		let parse = this.types.get(type)?.parse;
-		return parse ? parse(value, typeOptions) : this.defaultType.parse(value, type, typeOptions);
-	}
-
-	static stringify (value, type, typeOptions) {
-		if (value === undefined || value === null) {
-			return null;
-		}
-
-		if (!type) {
-			return String(value);
-		}
-
-		let stringify = this.types.get(type)?.stringify;
-
-		if (stringify === false) {
-			throw new TypeError(`Cannot stringify ${type}`);
-		}
-
-		return stringify ? stringify(value, typeOptions) : this.defaultType.stringify(value, type, typeOptions);
-	}
-
-	static defaultType = {
-		equals (a, b, type) {
-			let simpleEquals = a === b;
-			if (simpleEquals || a === null || a === undefined || b === null || b === undefined) {
-				return simpleEquals;
-			}
-
-			if (typeof a.equals === "function") {
-				return a.equals(b);
-			}
-
-			// Roundtrip
-			return simpleEquals;
-		},
-		parse (value, type, typeOptions) {
-			if (value instanceof type) {
-				return value;
-			}
-
-			return callableBuiltins.has(type) ? type(value) : new type(value);
-		},
-
-		stringify (value, type, typeOptions) {
-			return String(value);
-		},
-	}
-
-	static types = new Map([
-		[Boolean, {
-			parse: value => value !== null,
-			stringify: value => value ? "" : null,
-		}],
-		[Number, {
-			equals: (a, b) => a === b || Number.isNaN(a) && Number.isNaN(b),
-		}],
-		[Function, {
-			equals: (a, b) => a === b || a.toString() === b.toString(),
-			parse (value, options = {}) {
-				if (typeof value === "function") {
-					return value;
-				}
-
-				value = String(value);
-
-				return Function(...(options.arguments ?? []), value);
-			},
-			// Just don’t do that
-			stringify: false,
-		}],
-		[Array, {
-			equals (a, b, { itemType } = {}) {
-				if (a.length !== b.length) {
-					return false;
-				}
-
-				if (itemType) {
-					return a.every((item, i) => Self.equals(item, b[i], itemType));
-				}
-				else {
-					return a.every((item, i) => item === b[i]);
-				}
-			},
-			parse (value, { itemType, separator = ",", splitter } = {}) {
-				if (!Array.isArray(value)) {
-					if (!splitter) {
-						// Make whitespace optional and flexible, unless the separator consists entirely of whitespace
-						let isSeparatorWhitespace = !separator.trim();
-						splitter = isSeparatorWhitespace ? /\s+/ : new RegExp(separator.replace(/\s+/g, "\\s*"));
-					}
-
-
-					value = typeof value === "string" ? value.trim().split(splitter) : [value];
-				}
-
-				if (itemType) {
-					return value.map(item => Self.parse(item, itemType));
-				}
-			},
-			stringify: (value, { itemType, separator = ",", joiner } = {}) => {
-				if (itemType) {
-					value = value.map(item => Self.stringify(item, itemType));
-				}
-
-				if (!joiner) {
-					let trimmedSeparator = separator.trim();
-					joiner = (!trimmedSeparator || trimmedSeparator === "," ? "" : " ") + separator + " ";
-				}
-
-				return value.join(joiner);
-			},
-		}],
-	])
 }
 
 export default Self;
