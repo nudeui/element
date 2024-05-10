@@ -5,9 +5,10 @@ import defineProps from "./props/defineProps.js";
 import defineFormAssociated from "./formAssociated.js/defineFormAssociated.js";
 import defineEvents from "./events/defineEvents.js";
 
-const Self = class NudeElement extends HTMLElement {
-	#initialized = false;
+let instanceInitialized = Symbol("instanceInitialized");
+let classInitialized = Symbol("classInitialized");
 
+const Self = class NudeElement extends HTMLElement {
 	constructor () {
 		super();
 		this.constructor.init();
@@ -18,17 +19,17 @@ const Self = class NudeElement extends HTMLElement {
 	}
 
 	connectedCallback () {
-		if (!this.#initialized) {
+		if (!this[instanceInitialized]) {
 			// Stuff that runs once per element
 			this.constructor.initQueue.forEach(init => init.call(this));
 
-			this.#initialized = true;
+			this[instanceInitialized] = true;
 		}
 	}
 
 	static init () {
 		// Stuff that runs once per class
-		if (this._initialized) {
+		if (this[classInitialized]) {
 			return;
 		}
 
@@ -46,7 +47,7 @@ const Self = class NudeElement extends HTMLElement {
 			defineFormAssociated(this);
 		}
 
-		this._initialized = true;
+		this[classInitialized] = true;
 	}
 }
 
