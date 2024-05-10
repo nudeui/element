@@ -244,16 +244,23 @@ let Self = class Prop {
 	update (element, dependency) {
 		let oldValue = element.props[this.name];
 
+		if (dependency === this.defaultProp) {
+			// We have no way of checking if the default prop has changed
+			// and there’s nothing to set, so let’s just called changed directly
+			this.changed(element, {element, source: "default"});
+			return;
+		}
+
+		let source = dependency ? "dependency" : "property";
+
 		if (this.spec.get) {
 			let value = this.spec.get.call(element);
-			this.set(element, value, {source: "property", oldValue});
+			this.set(element, value, {source, oldValue});
 		}
-		else if (this.spec.convert && oldValue !== undefined) {
+
+		if (this.spec.convert && oldValue !== undefined) {
 			let value = this.spec.convert.call(element, oldValue);
-			this.set(element, value, {source: "property", oldValue});
-		}
-		else if (dependency === this.defaultProp) {
-			this.changed(element, {element, source: "default"});
+			this.set(element, value, {source, oldValue});
 		}
 	}
 
