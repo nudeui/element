@@ -179,3 +179,6 @@ this.constructor.initQueue.forEach(init => init.call(this));
 ```
 
 the first time `connectedCallback` is called or at the end of your constructor.
+
+Read more:
+- [Using Props](src/props/)

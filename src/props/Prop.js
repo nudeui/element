@@ -145,7 +145,7 @@ let Self = class Prop {
 		return value;
 	}
 
-	set (element, value, {source = "property", name, oldValue} = {}) {
+	set (element, value, {source, name, oldValue} = {}) {
 		let oldInternalValue = element.props[this.name];
 
 		let attributeName = name;
@@ -250,16 +250,14 @@ let Self = class Prop {
 			return;
 		}
 
-		let source = dependency ? "dependency" : "property";
-
 		if (this.spec.get) {
 			let value = this.spec.get.call(element);
-			this.set(element, value, {source, oldValue});
+			this.set(element, value, {source: "get", oldValue});
 		}
 
 		if (this.spec.convert && oldValue !== undefined) {
 			let value = this.spec.convert.call(element, oldValue);
-			this.set(element, value, {source, oldValue});
+			this.set(element, value, {source: "convert", oldValue});
 		}
 	}
 
