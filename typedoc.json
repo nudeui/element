@@ -1,0 +1,17 @@
+{
+	"out": "./api",
+	"json": "./api/docs.json",
+	"name": "Nude Element API Docs",
+	"entryPoints": [
+		"src/**/*.js",
+	],
+	"entryPointStrategy": "expand",
+	"plugin": [
+		"typedoc-plugin-rename-defaults",
+	],
+	"excludeExternals": true,
+	"excludeReferences": true,
+	"includeVersion": true,
+	"readme": "API.md",
+	"customCss": "api.css",
+}
