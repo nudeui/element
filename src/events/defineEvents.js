@@ -22,12 +22,10 @@ function retargetEvent (name, from) {
 	let type = from?.type ?? name;
 
 	return function init () {
-		// Event is a subset of another event (either on this element or another element)
-
+		// Event is a subset of another event (either on this element or other element(s))
 		let target = resolveValue(from?.on, [this]) ?? this;
 		let host = this;
-
-		target.addEventListener(type, event => {
+		let listener = event => {
 			if (!from.when || from.when(event)) {
 				let EventConstructor = from.event ?? event.constructor;
 				let source = from.constructor
@@ -40,7 +38,17 @@ function retargetEvent (name, from) {
 				let newEvent = new EventConstructor(name, options);
 				host.dispatchEvent(newEvent);
 			}
-		});
+		};
+
+		if (Array.isArray(target)) {
+			for (let t of target) {
+				t.addEventListener(type, listener);
+			}
+		}
+		else {
+			target.addEventListener(type, listener);
+		}
+
 	}
 }
 
