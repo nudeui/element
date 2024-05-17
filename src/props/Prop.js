@@ -137,7 +137,8 @@ let Self = class Prop {
 					return this.defaultProp.get(element);
 				}
 				else {
-					return resolveValue(this.default, [element, element]);
+					value = resolveValue(this.default, [element, element]);
+					return this.parse?.(value) ?? value;
 				}
 			}
 		}
