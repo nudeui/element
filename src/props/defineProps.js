@@ -5,12 +5,13 @@ import {
 	queueInitFunction,
 } from "../util.js";
 
+let propsSymbol = Symbol("propsSymbol");
 
 function init () {
 	this.constructor.props.initializeFor(this);
 }
 
-export default function defineProps (Class, props = Class.props) {
+export default function defineProps (Class, props = Class[propsSymbol] ?? Class.props) {
 	if (props instanceof Props && props.Class === Class) {
 		// Already defined
 		return null;
@@ -22,6 +23,7 @@ export default function defineProps (Class, props = Class.props) {
 		return;
 	}
 
+	Class[propsSymbol] = Class.props;
 	props = Class.props = new Props(Class, props);
 
 	// Internal prop values
