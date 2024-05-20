@@ -5,6 +5,7 @@
 	"entryPoints": [
 		"src/**/*.js",
 	],
+	"exclude": ["src/formAssociated.js"], // Why? TypeDoc tries to work with it as with a *.js file and adds it to the docs as an empty module (folder)
 	"entryPointStrategy": "expand",
 	"plugin": [
 		"typedoc-plugin-rename-defaults",
