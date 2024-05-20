@@ -8,7 +8,7 @@
     "eslint": "npx eslint .",
     "eslint:fix": "npx eslint . --fix",
     "build:apidocs": "npx typedoc",
-    "watch:apidocs": "npx typedoc --watch",
+    "watch:apidocs": "npx typedoc --watch --preserveWatchOutput",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
