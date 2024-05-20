@@ -26,7 +26,8 @@ export default class Props extends Map {
 	}
 
 	get observedAttributes () {
-		return [...this.values()].map(spec => spec.fromAttribute).filter(Boolean);
+		let attributes = [...this.values()].map(spec => spec.fromAttribute).filter(Boolean);
+		return [...new Set(attributes)];
 	}
 
 	add (props) {
