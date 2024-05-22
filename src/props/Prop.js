@@ -93,7 +93,17 @@ let Self = class Prop {
 	}
 
 	initializeFor (element) {
-		if (element.props[this.name] === undefined && !this.defaultProp) {
+		// Handle any properties already set before initialization
+		let name = this.name;
+
+		if (Object.hasOwn(element, name)) {
+			// A local data property will shadow the accessor that is defined on the prototype
+			// See https://github.com/nudeui/element/issues/14
+			let value = element[name];
+			delete element[name]; // Deleting the data property will uncover the accessor
+			element[name] = value; // Invoking the accessor means the value doesn't skip parsing
+		}
+		else if (element.props[name] === undefined && !this.defaultProp) {
 			// Is not set and its default is not another prop
 			this.changed(element, {source: "default", element});
 		}
