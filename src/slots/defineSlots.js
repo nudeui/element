@@ -37,10 +37,12 @@ let mutationObserver;
 export default function (Class) {
 	// Class.prototype.assignSlots = assignSlots;
 
-	return queueInitFunction(function init () {
+	return queueInitFunction(Class, function init () {
 		if (!this.shadowRoot) {
 			return;
 		}
+
+		this._slots = {};
 
 		for (let slot of this.shadowRoot.querySelectorAll("slot")) {
 			let name = slot.name ?? "default";

@@ -27,7 +27,7 @@ export default function (Class, {
 
 	Class.formAssociated = true;
 
-	return queueInitFunction(function init () {
+	return queueInitFunction(Class, function init () {
 		let internals = this[internalsProp] ??= this.attachInternals();
 
 		if (internals) {
