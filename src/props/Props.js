@@ -1,6 +1,6 @@
 import {
 	sortObject,
-} from "../util.js";
+} from "./util.js";
 import Prop from "./Prop.js";
 
 export default class Props extends Map {

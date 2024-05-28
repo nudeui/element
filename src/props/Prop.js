@@ -1,7 +1,9 @@
 import {
-	inferDependencies,
 	resolveValue,
 } from "../util.js";
+import {
+	inferDependencies,
+} from "./util.js";
 import PropChangeEvent from "./PropChangeEvent.js";
 import { equals, stringify, parse } from "./types.js";
 
