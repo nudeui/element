@@ -1,7 +1,7 @@
 import {
 	resolveValue,
-	queueInitFunction,
 } from "../util.js";
+import defineMixin from "../mixins/defineMixin.js";
 
 export default function (Class, {
 	like,
@@ -27,7 +27,7 @@ export default function (Class, {
 
 	Class.formAssociated = true;
 
-	return queueInitFunction(Class, function init () {
+	return defineMixin(Class, function init () {
 		let internals = this[internalsProp] ??= this.attachInternals();
 
 		if (internals) {

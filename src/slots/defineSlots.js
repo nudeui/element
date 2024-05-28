@@ -1,6 +1,4 @@
-import {
-	queueInitFunction,
-} from "../util.js";
+import defineMixin from "../mixins/defineMixin.js";
 
 function assignSlots () {
 	let children = this.childNodes;
@@ -37,7 +35,7 @@ let mutationObserver;
 export default function (Class) {
 	// Class.prototype.assignSlots = assignSlots;
 
-	return queueInitFunction(Class, function init () {
+	return defineMixin(Class, function init () {
 		if (!this.shadowRoot) {
 			return;
 		}
