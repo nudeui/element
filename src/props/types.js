@@ -174,6 +174,8 @@ types.set(Object, {
 				value = parts.length > 1 ? parts[1] : true;
 			}
 
+			[key, value] = [key, value].map(v => v?.trim?.() ?? v);
+
 			if (value === "false") {
 				value = false;
 			}
