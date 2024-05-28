@@ -132,3 +132,69 @@ types.set(Array, {
 		return value.join(joiner);
 	},
 });
+
+types.set(Object, {
+	equals (a, b, { valueType } = {}) {
+		let aKeys = Object.keys(a);
+		let bKeys = Object.keys(b);
+
+		if (aKeys.length !== bKeys.length) {
+			return false;
+		}
+
+		return aKeys.every(key => equals(a[key], b[key], valueType));
+	},
+
+	/**
+	 * Parses a simple microsyntax for declaring key-value options:
+	 * If no value is provided, it becomes `true`. The string "false" is parsed as `false`.
+	 * Escapes for separators are supported, via backslash.
+	 * @param {string} value
+	 * @param {Object} [options]
+	 * @param {Function} [options.valueType] The type to parse the values as
+	 * @param {boolean} [options.useMap] Whether to return a Map instead of an object
+	 * @param {string} [options.separator=","] The separator between entries.
+	 */
+	parse (value, { valueType, useMap, separator = ", " } = {}) {
+		separator = separator.trim();
+		let entrySeparatorRegex = RegExp(`\\s*(?<!\\\\)${separator}\\s*`);
+		let entries = value.trim().split(entrySeparatorRegex);
+
+		entries = entries.map(entry => {
+			let parts = entry.split(/(?<!\\):/);
+			let key, value;
+
+			if (parts.length > 2) {
+				// Value contains colons
+				key = parts.shift();
+				value = parts.join(":");
+			}
+			else if (parts.length > 0) {
+				key = parts[0];
+				value = parts.length > 1 ? parts[1] : true;
+			}
+
+			if (value === "false") {
+				value = false;
+			}
+
+			if (valueType) {
+				value = parse(value, valueType);
+			}
+
+			return [key, value];
+		});
+
+		return useMap ? new Map(entries) : Object.fromEntries(entries);
+	},
+
+	stringify (value, { valueType, separator = ", " } = {}) {
+		let entries = value instanceof Map ? value.entries() : Object.entries(value);
+
+		if (valueType) {
+			entries = entries.map(([key, value]) => [key, stringify(value, valueType)]);
+		}
+
+		return entries.map(([key, value]) => `${key}: ${value}`).join(separator);
+	},
+});
