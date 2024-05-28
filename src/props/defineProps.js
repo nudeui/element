@@ -1,9 +1,6 @@
 
 import Props from "./Props.js";
-import {
-	defineLazyProperty,
-	queueInitFunction,
-} from "../util.js";
+import defineMixin from "../mixins/defineMixin.js";
 
 let propsSymbol = Symbol("propsSymbol");
 
@@ -26,12 +23,6 @@ export default function defineProps (Class, props = Class[propsSymbol] ?? Class.
 	Class[propsSymbol] = Class.props;
 	props = Class.props = new Props(Class, props);
 
-	// Internal prop values
-	defineLazyProperty(Class.prototype, "props", el => ({}));
-
-	// Ignore mutations on these attributes
-	defineLazyProperty(Class.prototype, "ignoredAttributes", el => new Set());
-
 	let _attributeChangedCallback = Class.prototype.attributeChangedCallback;
 	Class.prototype.attributeChangedCallback = function (name, oldValue, value) {
 		this.constructor.props.attributeChanged(this, name, oldValue, value);
@@ -46,5 +37,17 @@ export default function defineProps (Class, props = Class[propsSymbol] ?? Class.
 		});
 	}
 
-	return queueInitFunction(Class, init);
+	return defineMixin(Class, {
+		init,
+		properties: {
+			// Internal prop values
+			props () {
+				return {};
+			},
+			// Ignore mutations on these attributes
+			ignoredAttributes () {
+				return new Set();
+			}
+		},
+	});
 }

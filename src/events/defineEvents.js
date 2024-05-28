@@ -3,9 +3,9 @@ import PropChangeEvent from "../props/PropChangeEvent.js";
 import {
 	pick,
 	resolveValue,
-	queueInitFunction,
 	wait,
 } from "../util.js";
+import defineMixin from "../mixins/defineMixin.js";
 
 /**
  *
@@ -133,5 +133,5 @@ export default function defineEvents (Class, events = Class.events) {
 		}
 	}
 
-	return queueInitFunction(Class, fns);
+	return defineMixin(Class, fns);
 }

@@ -4,6 +4,8 @@
 import defineProps from "./props/defineProps.js";
 import defineFormAssociated from "./formAssociated.js/defineFormAssociated.js";
 import defineEvents from "./events/defineEvents.js";
+import defineSlots from "./slots/defineSlots.js";
+import Hooks from "./mixins/hooks.js";
 
 let instanceInitialized = Symbol("instanceInitialized");
 let classInitialized = Symbol("classInitialized");
@@ -16,15 +18,23 @@ const Self = class NudeElement extends HTMLElement {
 		if (this.propChangedCallback && this.constructor.props) {
 			this.addEventListener("propchange", this.propChangedCallback);
 		}
+
+		Promise.resolve().then(this.constructor.hooks.run("constructed", this));
 	}
 
 	connectedCallback () {
 		if (!this[instanceInitialized]) {
 			// Stuff that runs once per element
-			this.constructor.initQueue.forEach(init => init.call(this));
+			this.constructor.hooks.run("init", this);
 
 			this[instanceInitialized] = true;
 		}
+
+		this.constructor.hooks.run("connected", this);
+	}
+
+	disconnectedCallback () {
+		this.constructor.hooks.run("disconnected", this);
 	}
 
 	static init () {
@@ -33,7 +43,7 @@ const Self = class NudeElement extends HTMLElement {
 			return;
 		}
 
-		this.initQueue ??= [];
+		this.hooks = new Hooks(this.hooks);
 
 		if (this.props) {
 			defineProps(this);
@@ -46,6 +56,8 @@ const Self = class NudeElement extends HTMLElement {
 		if (this.formAssociated) {
 			defineFormAssociated(this);
 		}
+
+		this.hooks.run("start", this);
 
 		this[classInitialized] = true;
 	}
