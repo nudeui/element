@@ -162,7 +162,7 @@ let Self = class Prop {
 					return this.parse(value);
 				}
 				catch (e) {
-					console.warn(`Failed to parse default value ${value} for ${this.name}`);
+					console.warn("Failed to parse default value", value, `for ${this.name}`);
 					return null;
 				}
 			}
