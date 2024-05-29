@@ -53,12 +53,6 @@ let Self = class Prop {
 		}
 		// this.dependencies = new Set(spec.dependencies ?? inferDependencies(spec.get));
 
-		for (let fn of ["equals", "parse", "stringify"]) {
-			if (spec[fn]) {
-				this[fn] = spec[fn];
-			}
-		}
-
 		// Computed properties are not reflected by default
 		this.reflect = spec.reflect ?? !this.spec.get;
 	}
@@ -79,11 +73,19 @@ let Self = class Prop {
 
 	// Just calls equals() by default but can be overridden
 	equals(a, b) {
+		if (this.spec.equals) {
+			return this.spec.equals(a, b);
+		}
+
 		return equals(a, b, this.type, this.typeOptions);
 	}
 
 	// To attribute
 	stringify (value) {
+		if (this.spec.stringify) {
+			return this.spec.stringify(value);
+		}
+
 		return stringify(value, this.type, this.typeOptions);
 	}
 
@@ -91,6 +93,10 @@ let Self = class Prop {
 	// This could be coming from an attribute (string)
 	// Or directly setting the property (which could be a variety of types)
 	parse (value) {
+		if (this.spec.parse) {
+			return this.spec.parse(value);
+		}
+
 		return parse(value, this.type, this.typeOptions);
 	}
 
