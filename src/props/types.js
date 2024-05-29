@@ -133,6 +133,43 @@ types.set(Array, {
 	},
 });
 
+function parseEntries (value, {valueType, keyType, separator = ", "} = {}) {
+	separator = separator.trim();
+	let entrySeparatorRegex = RegExp(`\\s*(?<!\\\\)${separator}\\s*`);
+	let entries = value.trim().split(entrySeparatorRegex);
+
+	return entries.map(entry => {
+		let parts = entry.split(/(?<!\\):/);
+		let key, value;
+
+		if (parts.length > 2) {
+			// Value contains colons
+			key = parts.shift();
+			value = parts.join(":");
+		}
+		else if (parts.length > 0) {
+			key = parts[0];
+			value = parts.length > 1 ? parts[1] : true;
+		}
+
+		[key, value] = [key, value].map(v => v?.trim?.() ?? v);
+
+		if (value === "false") {
+			value = false;
+		}
+
+		if (keyType) {
+			key = parse(key, keyType);
+		}
+
+		if (valueType) {
+			value = parse(value, valueType);
+		}
+
+		return [key, value];
+	});
+}
+
 types.set(Object, {
 	equals (a, b, { valueType } = {}) {
 		let aKeys = Object.keys(a);
@@ -152,49 +189,57 @@ types.set(Object, {
 	 * @param {string} value
 	 * @param {Object} [options]
 	 * @param {Function} [options.valueType] The type to parse the values as
-	 * @param {boolean} [options.useMap] Whether to return a Map instead of an object
 	 * @param {string} [options.separator=","] The separator between entries.
 	 */
-	parse (value, { valueType, useMap, separator = ", " } = {}) {
-		separator = separator.trim();
-		let entrySeparatorRegex = RegExp(`\\s*(?<!\\\\)${separator}\\s*`);
-		let entries = value.trim().split(entrySeparatorRegex);
-
-		entries = entries.map(entry => {
-			let parts = entry.split(/(?<!\\):/);
-			let key, value;
-
-			if (parts.length > 2) {
-				// Value contains colons
-				key = parts.shift();
-				value = parts.join(":");
-			}
-			else if (parts.length > 0) {
-				key = parts[0];
-				value = parts.length > 1 ? parts[1] : true;
-			}
-
-			[key, value] = [key, value].map(v => v?.trim?.() ?? v);
-
-			if (value === "false") {
-				value = false;
-			}
-
-			if (valueType) {
-				value = parse(value, valueType);
-			}
-
-			return [key, value];
-		});
-
-		return useMap ? new Map(entries) : Object.fromEntries(entries);
+	parse (value, { valueType, separator = ", " } = {}) {
+		let entries = parseEntries(value, { valueType, separator });
+		return Object.fromEntries(entries);
 	},
 
 	stringify (value, { valueType, separator = ", " } = {}) {
-		let entries = value instanceof Map ? value.entries() : Object.entries(value);
+		let entries = Object.entries(value);
 
 		if (valueType) {
 			entries = entries.map(([key, value]) => [key, stringify(value, valueType)]);
+		}
+
+		return entries.map(([key, value]) => `${key}: ${value}`).join(separator);
+	},
+});
+
+types.set(Map, {
+	equals (a, b, { valueType } = {}) {
+		let aKeys = a.keys();
+		let bKeys = b.keys();
+
+		if (aKeys.length !== bKeys.length) {
+			return false;
+		}
+
+		return aKeys.every(key => equals(a.get(key), b.get(key), valueType));
+	},
+
+	/**
+	 * Parses a simple microsyntax for declaring key-value options:
+	 * If no value is provided, it becomes `true`. The string "false" is parsed as `false`.
+	 * Escapes for separators are supported, via backslash.
+	 * @param {string} value
+	 * @param {Object} [options]
+	 * @param {Function} [options.keyType] The type to parse the keys as
+	 * @param {Function} [options.valueType] The type to parse the values as
+	 * @param {string} [options.separator=","] The separator between entries.
+	 */
+	parse (value, { keyType, valueType, separator = ", " } = {}) {
+		let entries = parseEntries(value, { keyType, valueType, separator });
+
+		return new Map(entries);
+	},
+
+	stringify (value, { keyType, valueType, separator = ", " } = {}) {
+		let entries = value.entries();
+
+		if (keyType || valueType) {
+			entries = entries.map(([key, value]) => [stringify(key, keyType), stringify(value, valueType)]);
 		}
 
 		return entries.map(([key, value]) => `${key}: ${value}`).join(separator);
