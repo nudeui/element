@@ -158,7 +158,13 @@ let Self = class Prop {
 					value = resolveValue(this.default, [element, element]);
 				}
 
-				return this.parse(value) ?? value;
+				try {
+					return this.parse(value);
+				}
+				catch (e) {
+					console.warn(`Failed to parse default value ${value} for ${this.name}`);
+					return null;
+				}
 			}
 		}
 
@@ -169,7 +175,16 @@ let Self = class Prop {
 		let oldInternalValue = element.props[this.name];
 
 		let attributeName = name;
-		let parsedValue = this.parse(value);
+		let parsedValue;
+
+		try {
+			parsedValue = this.parse(value);
+		}
+		catch (e) {
+			// Abort mission
+			console.warn(`Failed to parse value ${value} for ${this.name}`);
+			return;
+		}
 
 		if (this.spec.convert) {
 			parsedValue = this.spec.convert.call(element, parsedValue);
