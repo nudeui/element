@@ -54,9 +54,36 @@ function retargetEvent (name, from) {
 }
 
 export default function defineEvents (Class, events = Class.events) {
-	let fns = [];
+	let ret = {
+		setup: [],
+		init: [],
+	}
 
-	let props = Object.keys(events)
+	let propchange = Object.entries(events)
+		.filter(([name, options]) => options.propchange)
+		.map(([eventName, options]) => [eventName, options.propchange]);
+
+	if (propchange.length > 0) {
+		// Shortcut for events that fire when a specific prop changes
+		propchange = Object.fromEntries(propchange);
+
+		ret.setup.push(function setup () {
+			for (let eventName in propchange) {
+				let propName = propchange[eventName];
+				let prop = Class.props.get(propName);
+
+				if (prop) {
+					(prop.eventNames ??= []).push(eventName);
+				}
+				else {
+					throw new TypeError(`No prop named ${propName} in ${Class.name}`);
+				}
+			}
+		});
+	}
+
+	let eventProps = Object.keys(events)
+		// Is not a native event (e.g. input)
 		.filter(name => !("on" + name in Class.prototype))
 		.map(name => [
 			"on" + name,
@@ -70,20 +97,14 @@ export default function defineEvents (Class, events = Class.events) {
 				}
 			}
 		]);
-	let propchange = Object.entries(events)
-		.filter(([name, options]) => options.propchange)
-		.map(([name, options]) => [options.propchange, name]);
 
-	if (props.length > 0 || propchange.length > 0) {
-		props = Object.fromEntries(props);
-		propchange = Object.fromEntries(propchange);
+	if (eventProps.length > 0) {
+		eventProps = Object.fromEntries(eventProps);
+		defineProps(Class, eventProps);
 
-		defineProps(Class, props);
-
-		fns.push(function init () {
-			// REFACTOR: Some repetition here
+		ret.init.push(function init () {
 			// Deal with existing values
-			for (let name in props) {
+			for (let name in eventProps) {
 				let value = this[name];
 				if (typeof value === "function") {
 					let eventName = name.slice(2);
@@ -91,18 +112,22 @@ export default function defineEvents (Class, events = Class.events) {
 				}
 			}
 
-			for (let name in propchange) {
-				let value = this[name];
+			// Often propchange events have already fired by the time the event handlers are added
+			for (let eventName in propchange) {
+				let propName = propchange[eventName];
+				let value = this[propName];
 
 				if (value !== undefined) {
-					let eventName = propchange[name];
-					this.dispatchEvent(new PropChangeEvent(eventName));
+					Class.props.firePropChangedEvent(this, eventName, {
+						name: propName,
+						prop: Class.props.get(propName),
+					});
 				}
 			}
 
 			// Listen for changes
 			this.addEventListener("propchange", event => {
-				if (props[event.name]) {
+				if (eventProps[event.name]) {
 					// Implement onEventName attributes/properties
 					let eventName = event.name.slice(2);
 					let change = event.detail;
@@ -115,12 +140,6 @@ export default function defineEvents (Class, events = Class.events) {
 						this.addEventListener(eventName, change.parsedValue);
 					}
 				}
-
-				if (propchange[event.name]) {
-					// Shortcut for events that fire when a specific prop changes
-					let eventName = propchange[event.name];
-					this.dispatchEvent(new PropChangeEvent(eventName, event));
-				}
 			});
 		})
 	}
@@ -129,10 +148,10 @@ export default function defineEvents (Class, events = Class.events) {
 		if (options.from) {
 			let fn = retargetEvent(name, options.from);
 			if (fn) {
-				fns.push(fn);
+				ret.init.push(fn);
 			}
 		}
 	}
 
-	return defineMixin(Class, fns);
+	return defineMixin(Class, ret);
 }
