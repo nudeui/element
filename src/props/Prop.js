@@ -152,12 +152,13 @@ let Self = class Prop {
 		if (value === undefined || value === null) {
 			if (this.default !== undefined) {
 				if (this.defaultProp) {
-					return this.defaultProp.get(element);
+					value = this.defaultProp.get(element);
 				}
 				else {
 					value = resolveValue(this.default, [element, element]);
-					return this.parse?.(value) ?? value;
 				}
+
+				return this.parse(value) ?? value;
 			}
 		}
 
