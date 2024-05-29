@@ -4,7 +4,7 @@ import {
 import {
 	inferDependencies,
 } from "./util.js";
-import PropChangeEvent from "./PropChangeEvent.js";
+
 import { equals, stringify, parse } from "./types.js";
 
 let Self = class Prop {
@@ -238,15 +238,7 @@ let Self = class Prop {
 	}
 
 	async changed (element, change) {
-		this.updateDependents(element);
-
-		let event = new PropChangeEvent("propchange", {
-			name: this.name,
-			prop: this,
-			detail: change
-		});
-
-		element.dispatchEvent(event);
+		this.props.propChanged(element, this, change);
 	}
 
 	/**
@@ -285,20 +277,6 @@ let Self = class Prop {
 
 		return this.dependencies.has(prop.name)
 		       || (this.defaultProp === prop && element.props[this.name] === undefined);
-	}
-
-	/**
-	 * Update all props that have this prop as a dependency
-	 * @param {*} element
-	 */
-	updateDependents (element) {
-		let dependents = this.props.dependents[this.name] ?? new Set();
-
-		for (let prop of dependents) {
-			if (prop.dependsOn(this, element)) {
-				prop.update(element, this);
-			}
-		}
 	}
 }
 

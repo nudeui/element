@@ -4,10 +4,6 @@ import defineMixin from "../mixins/defineMixin.js";
 
 let propsSymbol = Symbol("propsSymbol");
 
-function init () {
-	this.constructor.props.initializeFor(this);
-}
-
 export default function defineProps (Class, props = Class[propsSymbol] ?? Class.props) {
 	if (props instanceof Props && props.Class === Class) {
 		// Already defined
@@ -38,7 +34,9 @@ export default function defineProps (Class, props = Class[propsSymbol] ?? Class.
 	}
 
 	return defineMixin(Class, {
-		init,
+		init () {
+			this.constructor.props.initializeFor(this);
+		},
 		properties: {
 			// Internal prop values
 			props () {

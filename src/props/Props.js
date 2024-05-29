@@ -2,6 +2,7 @@ import {
 	sortObject,
 } from "./util.js";
 import Prop from "./Prop.js";
+import PropChangeEvent from "./PropChangeEvent.js";
 
 export default class Props extends Map {
 	/**
@@ -107,6 +108,35 @@ export default class Props extends Map {
 		}
 	}
 
+	eventDispatchQueue = new WeakMap();
+
+	propChanged (element, prop, change) {
+		// Update all props that have this prop as a dependency
+		let dependents = this.dependents[prop.name] ?? new Set();
+
+		for (let dependent of dependents) {
+			if (dependent.dependsOn(prop, element)) {
+				dependent.update(element, prop);
+			}
+		}
+
+		// Fire propchange event
+		let event = new PropChangeEvent("propchange", {
+			name: prop.name,
+			prop,
+			detail: change
+		});
+
+		if (element.isConnected) {
+			element.dispatchEvent(event);
+		}
+		else {
+			let queue = this.eventDispatchQueue.get(element) ?? [];
+			queue.push(event);
+			this.eventDispatchQueue.set(element, queue);
+		}
+	}
+
 	initializeFor (element) {
 		// Update all reflected props from attributes at once
 		for (let name of this.observedAttributes) {
@@ -119,6 +149,17 @@ export default class Props extends Map {
 		// Fire propchange events for any props not already handled
 		for (let prop of this.values()) {
 			prop.initializeFor(element);
+		}
+
+		// Dispatch any events that were queued
+		let queue = this.eventDispatchQueue.get(element);
+
+		if (queue) {
+			for (let event of queue) {
+				element.dispatchEvent(event);
+			}
+
+			this.eventDispatchQueue.delete(element);
 		}
 	}
 
