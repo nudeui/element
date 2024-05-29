@@ -79,3 +79,7 @@ const Self = class MyElement extends HTMLElement {
 | `constructed` | Instance | Called once per instance |
 | `connected` | Instance | Called when the element is connected to the DOM |
 | `disconnected` | Instance | Called when the element is disconnected from the DOM |
+
+Note that these are just the default hooks provided by `NudeElement`.
+You can define your own hooks as needed.
+All you need to do to define a hook is to add a callback to it.

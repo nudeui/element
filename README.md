@@ -111,13 +111,13 @@ class MySlider extends HTMLElement {
 	constructor () {
 		// ...
 
-		initEvents.call(this);
-		initFormAssociated.call(this);
-		initProps.call(this);
+		eventHooks.init.call(this);
+		formAssociatedHooks.init.call(this);
+		propHooks.init.call(this);
 	}
 }
 
-let initProps = defineProps(MySlider, {
+let propHooks = defineProps(MySlider, {
 	min: {
 		type: Number,
 		default: 0,
@@ -148,7 +148,7 @@ let initProps = defineProps(MySlider, {
 	},
 });
 
-let initEvents = defineEvents(MySlider, {
+let eventHooks = defineEvents(MySlider, {
 	// Propagate event from shadow DOM element
 	change: {
 		from () {
@@ -162,7 +162,7 @@ let initEvents = defineEvents(MySlider, {
 	},
 });
 
-let initFormAssociated = defineFormAssociated(MySlider, {
+let formAssociatedHooks = defineFormAssociated(MySlider, {
 	like: el => el._el.slider,
 	role: "slider",
 	valueProp: "value",
@@ -170,15 +170,32 @@ let initFormAssociated = defineFormAssociated(MySlider, {
 });
 ```
 
-Each mixin will also look for a static `initQueue` property on the element class and add its init function to it if it exists,
-so you can make things a little easier by defining such a property.
-Then all you need to do is run
+Each mixin will also look for a static `hooks` property on the element class and add its lifecycle hooks to it if it exists,
+so you can make things a little easier by defining such a property:
 
 ```js
-this.constructor.initQueue.forEach(init => init.call(this));
-```
+import { defineProps } from "nude-element";
+import Hooks from "nude-element/hooks";
 
-the first time `connectedCallback` is called or at the end of your constructor.
+class MyElement extends HTMLElement {
+	// Caution: if MyElement has subclasses, this will be shared among them!
+	static hooks = new Hooks();
+
+	constructor () {
+		super();
+
+		// Then you can call the hooks at the appropriate times:
+		this.constructor.hooks.run("init", this);
+	}
+}
+
+defineProps(MyElement, {
+	// Props…
+});
+```
 
 Read more:
 - [Using Props](src/props/)
+- [Events](src/events/)
+- [Form-associated elements](src/formAssociated/)
+- [Mixins](src/mixins/)
