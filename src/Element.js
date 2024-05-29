@@ -14,6 +14,7 @@ const Self = class NudeElement extends HTMLElement {
 	constructor () {
 		super();
 		this.constructor.init();
+		this.constructor.hooks.run("start", this);
 
 		if (this.propChangedCallback && this.constructor.props) {
 			this.addEventListener("propchange", this.propChangedCallback);
@@ -57,7 +58,7 @@ const Self = class NudeElement extends HTMLElement {
 			defineFormAssociated(this);
 		}
 
-		this.hooks.run("start", this);
+		this.hooks.run("setup", this);
 
 		this[classInitialized] = true;
 	}

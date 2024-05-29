@@ -74,7 +74,8 @@ const Self = class MyElement extends HTMLElement {
 
 | Hook | `this` | Description |
 |------|--------|-------------|
-| `start` | Class | Called when the first instance of the class is created. |
+| `setup` | Class | Called when the first instance of the class is created. |
+| `start` | Instance | Called when the constructor starts, but after `setup` has ran |
 | `init` | Instance | Called when the element is first connected to the DOM (once per instance). This is the most common hook used. |
 | `constructed` | Instance | Called once per instance |
 | `connected` | Instance | Called when the element is connected to the DOM |
