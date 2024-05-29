@@ -40,7 +40,7 @@ export default function (Class, {
 			}
 
 			internals.setFormValue(this[valueProp]);
-			el.addEventListener(changeEvent, () => internals.setFormValue(this[valueProp]));
+			source.addEventListener(changeEvent, () => internals.setFormValue(this[valueProp]));
 		}
 	});
 }
