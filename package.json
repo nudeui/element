@@ -11,6 +11,10 @@
     "watch:apidocs": "npx typedoc --watch --preserveWatchOutput",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "exports": {
+    ".": "./src/index.js",
+    "./hooks": "./src/mixins/hooks.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nudeui/element.git"
