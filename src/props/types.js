@@ -1,5 +1,6 @@
 export const types = new Map();
 const callableBuiltins = new Set([String, Number, Boolean, Array, Object, Function, Symbol, BigInt]);
+import { resolveValue } from "../util.js";
 
 export const defaultType = {
 	equals (a, b, type) {
@@ -133,23 +134,29 @@ types.set(Array, {
 	},
 });
 
-function parseEntries (value, {valueType, keyType, separator = ", "} = {}) {
+function parseEntries (value, { valueType, keyType, separator = ", ", defaultValue = true, defaultKey } = {}) {
 	separator = separator.trim();
 	let entrySeparatorRegex = RegExp(`\\s*(?<!\\\\)${separator}\\s*`);
 	let entries = value.trim().split(entrySeparatorRegex);
 
-	return entries.map(entry => {
+	return entries.map((entry, index) => {
 		let parts = entry.split(/(?<!\\):/);
 		let key, value;
 
-		if (parts.length > 2) {
+		if (parts.length >= 2) {
 			// Value contains colons
 			key = parts.shift();
 			value = parts.join(":");
 		}
-		else if (parts.length > 0) {
-			key = parts[0];
-			value = parts.length > 1 ? parts[1] : true;
+		else if (parts.length === 1) {
+			if (defaultKey) {
+				value = parts[0];
+				key = resolveValue(defaultKey, [null, value, index]);
+			}
+			else {
+				key = parts[0];
+				value = resolveValue(defaultValue, [null, key, index]);
+			}
 		}
 
 		[key, value] = [key, value].map(v => v?.trim?.() ?? v);
@@ -191,8 +198,8 @@ types.set(Object, {
 	 * @param {Function} [options.valueType] The type to parse the values as
 	 * @param {string} [options.separator=","] The separator between entries.
 	 */
-	parse (value, { valueType, separator = ", " } = {}) {
-		let entries = parseEntries(value, { valueType, separator });
+	parse (value, options) {
+		let entries = parseEntries(value, options);
 		return Object.fromEntries(entries);
 	},
 
@@ -229,8 +236,8 @@ types.set(Map, {
 	 * @param {Function} [options.valueType] The type to parse the values as
 	 * @param {string} [options.separator=","] The separator between entries.
 	 */
-	parse (value, { keyType, valueType, separator = ", " } = {}) {
-		let entries = parseEntries(value, { keyType, valueType, separator });
+	parse (value, options) {
+		let entries = parseEntries(value, options);
 
 		return new Map(entries);
 	},
