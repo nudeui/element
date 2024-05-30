@@ -129,13 +129,44 @@ which could be a built-in class such as `String`, `Number`, `Boolean`,
 or a custom class (e.g. `Color`).
 If provided, any value provided via attributes or properties will be converted to this type before being stored internally,
 and the equality check that checks if a prop has changed will be specific to that type.
-If a type is not provided, no conversion will happen and values will be stored untouched.
+If no type is provided, no conversion will happen and values will be stored untouched.
 
-Some types take additional options, which can be provided via `typeOptions`:
-- For `Array`, `itemType`
-- For `Function`, `arguments` with the argument names
+### Type options
 
-### Configuring attribute-property reflection
+Some types take additional optional options, which can be provided via `typeOptions`.
+All type options are optional.
+
+#### Lists: `Array` and `Set`
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| `itemType` | `Function` | The type of the items in the list. |
+
+#### Functions
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| `arguments` | `string[]` | The names of the arguments of the function. Default: `[]` (no arguments) |
+
+#### Dictionaries: `Object` and `Map`
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| `valueType` | `Function` | The type of the values in the dictionary. |
+| `keyType` | `Function` | The type of the keys in the dictionary (only applies to `Map`). Default: `String` |
+| `defaultKey` | `Function` | Default key for entries with no label. |
+| `defaultValue` | (any) | Default value for entries with no label. Default: `true` |
+
+`defaultKey` and `defaultValue` control what happens when parsing singular entries, i.e. entries with no colon (e.g. `foo: 1, bar: 2, baz` or `1: foo, 2: bar, baz`).
+If `defaultKey` is provided, these entries are considered values, and `defaultKey` is used to generate the keys.
+The `defaultKey` function is called with the value and the index as the key,
+which means `(v, i) => v` can be used to make the keys default to being the same as values,
+and `(v, i) => i` to make them default to numerical indices.
+While `defaultKey` *can* be a non-function, this is almost never what you want, since that would create collisions.
+If `defaultValue` is provided, singular entries are considered keys, and `defaultValue` is used to generate the values.
+It can be either a constant (e.g. `true`) or a function, in which case it’s passed the key and the index as arguments.
+
+### Attribute-property reflection
 
 The `reflect` property takes the following values:
 
