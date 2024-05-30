@@ -3,7 +3,7 @@ const callableBuiltins = new Set([String, Number, Boolean, Array, Object, Functi
 import { resolveValue } from "../util.js";
 
 export const defaultType = {
-	equals (a, b, type) {
+	equals (a, b) {
 		let simpleEquals = a === b;
 		if (simpleEquals || a === null || a === undefined || b === null || b === undefined) {
 			return simpleEquals;
@@ -16,7 +16,7 @@ export const defaultType = {
 		// Roundtrip
 		return simpleEquals;
 	},
-	parse (value, type, typeOptions) {
+	parse (value, type) {
 		if (value instanceof type) {
 			return value;
 		}
@@ -24,7 +24,7 @@ export const defaultType = {
 		return callableBuiltins.has(type) ? type(value) : new type(value);
 	},
 
-	stringify (value, type, typeOptions) {
+	stringify (value) {
 		return String(value);
 	},
 };
@@ -97,12 +97,7 @@ types.set(Array, {
 			return false;
 		}
 
-		if (itemType) {
-			return a.every((item, i) => equals(item, b[i], itemType));
-		}
-		else {
-			return a.every((item, i) => item === b[i]);
-		}
+		return a.every((item, i) => equals(item, b[i], itemType));
 	},
 	parse (value, { itemType, separator = ",", splitter } = {}) {
 		if (!Array.isArray(value)) {
