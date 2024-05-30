@@ -8,6 +8,7 @@ A way to define reactive properties on a custom element that optionally reflect 
 - Automatic dependency tracking (+ manual overrides)
 - Automatic type casting (+ custom conveters)
 - Reactive dynamic default values, just like native HTML elements (e.g. having `value` default to `(this.min + this.max) / 2` in a slider)
+- Cached getters for computed properties
 
 ## Usage
 

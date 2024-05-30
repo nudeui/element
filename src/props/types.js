@@ -199,7 +199,15 @@ types.set(Object, {
 	 * @param {string} [options.separator=","] The separator between entries.
 	 */
 	parse (value, options) {
-		let entries = parseEntries(value, options);
+		let entries;
+		if (value instanceof Map) {
+			entries = value.entries();
+		}
+		else if (typeof value === "object") {
+			return value;
+		}
+
+		entries = parseEntries(value, options);
 		return Object.fromEntries(entries);
 	},
 
@@ -237,9 +245,16 @@ types.set(Map, {
 	 * @param {string} [options.separator=","] The separator between entries.
 	 */
 	parse (value, options) {
-		let entries = parseEntries(value, options);
+		let entries;
+		if (value instanceof Map) {
+			return value;
+		}
+		else if (typeof value === "object") {
+			entries = Object.entries(value);
+		}
 
-		return new Map(entries);
+		entries = parseEntries(value, options);
+		return Array.isArray(entries) ? new Map(entries) : entries;
 	},
 
 	stringify (value, { keyType, valueType, separator = ", " } = {}) {
