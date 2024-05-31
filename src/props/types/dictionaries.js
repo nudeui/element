@@ -1,7 +1,7 @@
 import { resolveValue } from "../../util.js";
 import { parse, stringify, equals } from "../types.js";
 
-function parseEntries (value, { valueType, keyType, separator = ", ", defaultValue = true, defaultKey } = {}) {
+function parseEntries (value, { values, keys, separator = ", ", defaultValue = true, defaultKey } = {}) {
 	let entries;
 
 	if (!Array.isArray(entries)) {
@@ -40,12 +40,12 @@ function parseEntries (value, { valueType, keyType, separator = ", ", defaultVal
 	}
 
 	entries = entries.map(([key, value]) => {
-		if (keyType) {
-			key = parse(key, keyType);
+		if (keys) {
+			key = parse(key, keys);
 		}
 
-		if (valueType) {
-			value = parse(value, valueType);
+		if (values) {
+			value = parse(value, values);
 		}
 
 		return [key, value];
@@ -56,7 +56,7 @@ function parseEntries (value, { valueType, keyType, separator = ", ", defaultVal
 
 export const object = {
 	type: Object,
-	equals (a, b, { valueType } = {}) {
+	equals (a, b, { values } = {}) {
 		let aKeys = Object.keys(a);
 		let bKeys = Object.keys(b);
 
@@ -64,7 +64,7 @@ export const object = {
 			return false;
 		}
 
-		return aKeys.every(key => equals(a[key], b[key], valueType));
+		return aKeys.every(key => equals(a[key], b[key], values));
 	},
 
 	/**
@@ -73,7 +73,7 @@ export const object = {
 	 * Escapes for separators are supported, via backslash.
 	 * @param {string} value
 	 * @param {Object} [options]
-	 * @param {Function} [options.valueType] The type to parse the values as
+	 * @param {Function} [options.values] The type to parse the values as
 	 * @param {string} [options.separator=","] The separator between entries.
 	 */
 	parse (value, options = {}) {
@@ -82,9 +82,9 @@ export const object = {
 			value = value.entries();
 		}
 		else if (typeof value === "object") {
-			if (options.valueType) {
+			if (options.values) {
 				for (let key in value) {
-					value[key] = parse(value[key], options.valueType);
+					value[key] = parse(value[key], options.values);
 				}
 			}
 
@@ -95,11 +95,11 @@ export const object = {
 		return Object.fromEntries(entries);
 	},
 
-	stringify (value, { valueType, separator = ", " } = {}) {
+	stringify (value, { values, separator = ", " } = {}) {
 		let entries = Object.entries(value);
 
-		if (valueType) {
-			entries = entries.map(([key, value]) => [key, stringify(value, valueType)]);
+		if (values) {
+			entries = entries.map(([key, value]) => [key, stringify(value, values)]);
 		}
 
 		return entries.map(([key, value]) => `${key}: ${value}`).join(separator);
@@ -108,7 +108,7 @@ export const object = {
 
 export const map = {
 	type: Map,
-	equals (a, b, { valueType } = {}) {
+	equals (a, b, { values } = {}) {
 		let aKeys = a.keys();
 		let bKeys = b.keys();
 
@@ -116,7 +116,7 @@ export const map = {
 			return false;
 		}
 
-		return aKeys.every(key => equals(a.get(key), b.get(key), valueType));
+		return aKeys.every(key => equals(a.get(key), b.get(key), values));
 	},
 
 	/**
@@ -125,17 +125,17 @@ export const map = {
 	 * Escapes for separators are supported, via backslash.
 	 * @param {string} value
 	 * @param {Object} [options]
-	 * @param {Function} [options.keyType] The type to parse the keys as
-	 * @param {Function} [options.valueType] The type to parse the values as
+	 * @param {Function} [options.keys] The type to parse the keys as
+	 * @param {Function} [options.values] The type to parse the values as
 	 * @param {string} [options.separator=","] The separator between entries.
 	 */
 	parse (value, options) {
 		let entries;
 		if (value instanceof Map) {
-			if (keyType || valueType) {
+			if (keys || values) {
 				for (let [key, value] of value) {
 					value.delete(key);
-					value.set(parse(key, keyType), parse(value, valueType));
+					value.set(parse(key, keys), parse(value, values));
 				}
 			}
 
@@ -149,11 +149,11 @@ export const map = {
 		return Array.isArray(entries) ? new Map(entries) : entries;
 	},
 
-	stringify (value, { keyType, valueType, separator = ", " } = {}) {
+	stringify (value, { keys, values, separator = ", " } = {}) {
 		let entries = value.entries();
 
-		if (keyType || valueType) {
-			entries = entries.map(([key, value]) => [stringify(key, keyType), stringify(value, valueType)]);
+		if (keys || values) {
+			entries = entries.map(([key, value]) => [stringify(key, keys), stringify(value, values)]);
 		}
 
 		return entries.map(([key, value]) => `${key}: ${value}`).join(separator);

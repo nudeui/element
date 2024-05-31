@@ -1,6 +1,6 @@
 import { parse, stringify, equals } from "../types.js";
 
-function parseList (value, { itemType, separator = ",", splitter } = {}) {
+function parseList (value, { values, separator = ",", splitter } = {}) {
 	if (!Array.isArray(value)) {
 		if (!splitter) {
 			// Make whitespace optional and flexible, unless the separator consists entirely of whitespace
@@ -11,8 +11,8 @@ function parseList (value, { itemType, separator = ",", splitter } = {}) {
 		value = typeof value === "string" ? value.trim().split(splitter) : [value];
 	}
 
-	if (itemType) {
-		value = value.map(item => parse(item, itemType));
+	if (values) {
+		value = value.map(item => parse(item, values));
 	}
 
 	return value;
@@ -20,17 +20,17 @@ function parseList (value, { itemType, separator = ",", splitter } = {}) {
 
 export const array = {
 	type: Array,
-	equals (a, b, { itemType } = {}) {
+	equals (a, b, { values } = {}) {
 		if (a.length !== b.length) {
 			return false;
 		}
 
-		return a.every((item, i) => equals(item, b[i], itemType));
+		return a.every((item, i) => equals(item, b[i], values));
 	},
 	parse: parseList,
-	stringify: (value, { itemType, separator = ",", joiner } = {}) => {
-		if (itemType) {
-			value = value.map(item => stringify(item, itemType));
+	stringify: (value, { values, separator = ",", joiner } = {}) => {
+		if (values) {
+			value = value.map(item => stringify(item, values));
 		}
 
 		if (!joiner) {
@@ -44,7 +44,7 @@ export const array = {
 
 export const set = {
 	type: Set,
-	equals (a, b, { itemType } = {}) {
+	equals (a, b, { values } = {}) {
 		if (a.size !== b.size) {
 			return false;
 		}
@@ -59,10 +59,10 @@ export const set = {
 	},
 	parse (value, options) {
 		if (value instanceof Set) {
-			if (itemType) {
+			if (values) {
 				// Parse values in place
 				for (let item of value) {
-					let parsed = parse(item, itemType);
+					let parsed = parse(item, values);
 					if (parsed !== item) {
 						value.delete(item);
 						value.add(parsed);
@@ -76,9 +76,9 @@ export const set = {
 		let items = parseList(value, options);
 		return new Set(items);
 	},
-	stringify: (value, { itemType, separator = ",", joiner } = {}) => {
-		if (itemType) {
-			value = value.map(item => stringify(item, itemType));
+	stringify: (value, { values, separator = ",", joiner } = {}) => {
+		if (values) {
+			value = value.map(item => stringify(item, values));
 		}
 
 		if (!joiner) {

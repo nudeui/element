@@ -140,7 +140,7 @@ All type options are optional.
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| `itemType` | `Function` | The type of the items in the list. |
+| `values` | `Function` | The type of the items in the list. |
 
 #### Functions
 
@@ -152,8 +152,8 @@ All type options are optional.
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| `valueType` | `Function` | The type of the values in the dictionary. |
-| `keyType` | `Function` | The type of the keys in the dictionary (only applies to `Map`). Default: `String` |
+| `values` | `Function` | The type of the values in the dictionary. |
+| `keys` | `Function` | The type of the keys in the dictionary (only applies to `Map`). Default: `String` |
 | `defaultKey` | `Function` | Default key for entries with no label. |
 | `defaultValue` | (any) | Default value for entries with no label. Default: `true` |
 
