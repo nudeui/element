@@ -297,8 +297,10 @@ types.set(Map, {
 		else if (typeof value === "object") {
 			entries = Object.entries(value);
 		}
+		else {
+			entries = parseEntries(value, options);
+		}
 
-		entries = parseEntries(value, options);
 		return Array.isArray(entries) ? new Map(entries) : entries;
 	},
 
