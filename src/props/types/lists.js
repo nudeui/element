@@ -1,23 +1,25 @@
+import { parse, stringify, equals } from "../types.js";
+
 function parseList (value, { itemType, separator = ",", splitter } = {}) {
-	if (Array.isArray(value)) {
-		return value;
+	if (!Array.isArray(value)) {
+		if (!splitter) {
+			// Make whitespace optional and flexible, unless the separator consists entirely of whitespace
+			let isSeparatorWhitespace = !separator.trim();
+			splitter = isSeparatorWhitespace ? /\s+/ : new RegExp(separator.replace(/\s+/g, "\\s*"));
+		}
+
+		value = typeof value === "string" ? value.trim().split(splitter) : [value];
 	}
-
-	if (!splitter) {
-		// Make whitespace optional and flexible, unless the separator consists entirely of whitespace
-		let isSeparatorWhitespace = !separator.trim();
-		splitter = isSeparatorWhitespace ? /\s+/ : new RegExp(separator.replace(/\s+/g, "\\s*"));
-	}
-
-
-	value = typeof value === "string" ? value.trim().split(splitter) : [value];
 
 	if (itemType) {
 		value = value.map(item => parse(item, itemType));
 	}
+
+	return value;
 }
 
-export const Array = {
+export const array = {
+	type: Array,
 	equals (a, b, { itemType } = {}) {
 		if (a.length !== b.length) {
 			return false;
@@ -40,7 +42,8 @@ export const Array = {
 	},
 };
 
-export const Set = {
+export const set = {
+	type: Set,
 	equals (a, b, { itemType } = {}) {
 		if (a.size !== b.size) {
 			return false;
@@ -57,6 +60,7 @@ export const Set = {
 	parse (value, options) {
 		if (value instanceof Set) {
 			if (itemType) {
+				// Parse values in place
 				for (let item of value) {
 					let parsed = parse(item, itemType);
 					if (parsed !== item) {

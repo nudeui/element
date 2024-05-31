@@ -1,36 +1,45 @@
 import { resolveValue } from "../../util.js";
+import { parse, stringify, equals } from "../types.js";
 
 function parseEntries (value, { valueType, keyType, separator = ", ", defaultValue = true, defaultKey } = {}) {
-	separator = separator.trim();
-	let entrySeparatorRegex = RegExp(`\\s*(?<!\\\\)${separator}\\s*`);
-	let entries = value.trim().split(entrySeparatorRegex);
+	let entries;
 
-	return entries.map((entry, index) => {
-		let parts = entry.split(/(?<!\\):/);
-		let key, value;
+	if (!Array.isArray(entries)) {
+		separator = separator.trim();
+		let entrySeparatorRegex = RegExp(`\\s*(?<!\\\\)${separator}\\s*`);
+		entries = value.trim().split(entrySeparatorRegex);
 
-		if (parts.length >= 2) {
-			// Value contains colons
-			key = parts.shift();
-			value = parts.join(":");
-		}
-		else if (parts.length === 1) {
-			if (defaultKey) {
-				value = parts[0];
-				key = resolveValue(defaultKey, [null, value, index]);
+		entries = entries.map((entry, index) => {
+			let parts = entry.split(/(?<!\\):/);
+			let key, value;
+
+			if (parts.length >= 2) {
+				// Value contains colons
+				key = parts.shift();
+				value = parts.join(":");
 			}
-			else {
-				key = parts[0];
-				value = resolveValue(defaultValue, [null, key, index]);
+			else if (parts.length === 1) {
+				if (defaultKey) {
+					value = parts[0];
+					key = resolveValue(defaultKey, [null, value, index]);
+				}
+				else {
+					key = parts[0];
+					value = resolveValue(defaultValue, [null, key, index]);
+				}
 			}
-		}
 
-		[key, value] = [key, value].map(v => v?.trim?.() ?? v);
+			[key, value] = [key, value].map(v => v?.trim?.() ?? v);
 
-		if (value === "false") {
-			value = false;
-		}
+			if (value === "false") {
+				value = false;
+			}
 
+			return [key, value];
+		});
+	}
+
+	entries = entries.map(([key, value]) => {
 		if (keyType) {
 			key = parse(key, keyType);
 		}
@@ -41,9 +50,12 @@ function parseEntries (value, { valueType, keyType, separator = ", ", defaultVal
 
 		return [key, value];
 	});
+
+	return entries;
 }
 
-export const Object = {
+export const object = {
+	type: Object,
 	equals (a, b, { valueType } = {}) {
 		let aKeys = Object.keys(a);
 		let bKeys = Object.keys(b);
@@ -64,12 +76,18 @@ export const Object = {
 	 * @param {Function} [options.valueType] The type to parse the values as
 	 * @param {string} [options.separator=","] The separator between entries.
 	 */
-	parse (value, options) {
+	parse (value, options = {}) {
 		let entries;
 		if (value instanceof Map) {
-			entries = value.entries();
+			value = value.entries();
 		}
 		else if (typeof value === "object") {
+			if (options.valueType) {
+				for (let key in value) {
+					value[key] = parse(value[key], options.valueType);
+				}
+			}
+
 			return value;
 		}
 
@@ -88,7 +106,8 @@ export const Object = {
 	},
 };
 
-export const Map = {
+export const map = {
+	type: Map,
 	equals (a, b, { valueType } = {}) {
 		let aKeys = a.keys();
 		let bKeys = b.keys();
@@ -113,6 +132,13 @@ export const Map = {
 	parse (value, options) {
 		let entries;
 		if (value instanceof Map) {
+			if (keyType || valueType) {
+				for (let [key, value] of value) {
+					value.delete(key);
+					value.set(parse(key, keyType), parse(value, valueType));
+				}
+			}
+
 			return value;
 		}
 		else if (typeof value === "object") {
