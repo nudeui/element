@@ -5,7 +5,7 @@ import {
 	inferDependencies,
 } from "./util.js";
 
-import { equals, stringify, parse } from "./types.js";
+import * as types from "./types.js";
 
 let Self = class Prop {
 	constructor (name, spec, props) {
@@ -77,7 +77,7 @@ let Self = class Prop {
 			return this.spec.equals(a, b);
 		}
 
-		return equals(a, b, this.type, this.typeOptions);
+		return types.equals(a, b, this.type, this.typeOptions);
 	}
 
 	// To attribute
@@ -86,7 +86,7 @@ let Self = class Prop {
 			return this.spec.stringify(value);
 		}
 
-		return stringify(value, this.type, this.typeOptions);
+		return types.stringify(value, this.type, this.typeOptions);
 	}
 
 	// Parse value into the correct type
@@ -97,7 +97,7 @@ let Self = class Prop {
 			return this.spec.parse(value);
 		}
 
-		return parse(value, this.type, this.typeOptions);
+		return types.parse(value, this.type, this.typeOptions);
 	}
 
 	initializeFor (element) {
