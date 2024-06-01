@@ -59,13 +59,17 @@ export const set = {
 	},
 	parse (value, options) {
 		if (value instanceof Set) {
-			if (values) {
-				// Parse values in place
-				for (let item of value) {
-					let parsed = parse(item, values);
-					if (parsed !== item) {
-						value.delete(item);
-						value.add(parsed);
+			if (options) {
+				let { values } = options;
+
+				if (values) {
+					// Parse values in place
+					for (let item of value) {
+						let parsed = parse(item, values);
+						if (parsed !== item) {
+							value.delete(item);
+							value.add(parsed);
+						}
 					}
 				}
 			}

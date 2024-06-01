@@ -132,10 +132,13 @@ export const map = {
 	parse (value, options) {
 		let entries;
 		if (value instanceof Map) {
-			if (keys || values) {
-				for (let [key, value] of value) {
-					value.delete(key);
-					value.set(parse(key, keys), parse(value, values));
+			if (options) {
+				let { keys, values } = options;
+				if (keys || values) {
+					for (let [key, value] of value) {
+						value.delete(key);
+						value.set(parse(key, keys), parse(value, values));
+					}
 				}
 			}
 
