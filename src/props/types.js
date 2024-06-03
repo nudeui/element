@@ -19,7 +19,7 @@ export function equals (a, b, type) {
 
 	if (type) {
 		let {is: Type, ...typeOptions} = resolve(type);
-		let equals = types.get(type.is)?.equals;
+		let equals = types.get(Type)?.equals;
 
 		if (equals) {
 			return equals(a, b, type);
