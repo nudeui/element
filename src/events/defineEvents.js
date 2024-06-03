@@ -88,8 +88,8 @@ export default function defineEvents (Class, events = Class.events) {
 		.map(name => [
 			"on" + name,
 			{
-				type: Function,
-				typeOptions: {
+				type: {
+					is: Function,
 					arguments: ["event"],
 				},
 				reflect: {

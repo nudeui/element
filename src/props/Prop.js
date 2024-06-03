@@ -17,8 +17,7 @@ let Self = class Prop {
 		this.spec = spec;
 		this.props = props;
 
-		this.type = spec.type;
-		this.typeOptions = spec.typeOptions;
+		this.type = types.resolve(spec.type);
 
 		this.default = spec.default;
 
@@ -77,7 +76,7 @@ let Self = class Prop {
 			return this.spec.equals(a, b);
 		}
 
-		return types.equals(a, b, this.type, this.typeOptions);
+		return types.equals(a, b, this.type);
 	}
 
 	// To attribute
@@ -86,7 +85,7 @@ let Self = class Prop {
 			return this.spec.stringify(value);
 		}
 
-		return types.stringify(value, this.type, this.typeOptions);
+		return types.stringify(value, this.type);
 	}
 
 	// Parse value into the correct type
@@ -97,7 +96,7 @@ let Self = class Prop {
 			return this.spec.parse(value);
 		}
 
-		return types.parse(value, this.type, this.typeOptions);
+		return types.parse(value, this.type);
 	}
 
 	initializeFor (element) {

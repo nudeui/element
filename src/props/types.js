@@ -12,26 +12,43 @@ for (let name in allTypes) {
 	types.set(spec.type, spec);
 }
 
-export function equals (a, b, type, typeOptions) {
+export function equals (a, b, type) {
 	if (a === null || b === null || a === undefined || b === undefined) {
 		return a === b;
 	}
 
-	let equals = types.get(type)?.equals;
-	return equals ? equals(a, b, typeOptions) : defaultType.equals(a, b, type, typeOptions);
+	if (type) {
+		let {is: Type, ...typeOptions} = resolve(type);
+		let equals = types.get(type.is)?.equals;
+
+		if (equals) {
+			return equals(a, b, type);
+		}
+	}
+
+	return defaultType.equals(a, b, type);
 }
 
 // Cast a value to the desired type
-export function parse (value, type, typeOptions) {
+export function parse (value, type) {
 	if (!type || value === undefined || value === null) {
 		return value;
 	}
 
-	let parse = types.get(type)?.parse;
-	return parse ? parse(value, typeOptions) : defaultType.parse(value, type, typeOptions);
+	if (type) {
+		let {is: Type, ...typeOptions} = resolve(type);
+		let parse = types.get(Type)?.parse;
+
+		if (parse) {
+			return parse(value, type);
+		}
+	}
+
+
+	return defaultType.parse(value, type);
 }
 
-export function stringify (value, type, typeOptions) {
+export function stringify (value, type) {
 	if (value === undefined || value === null) {
 		return null;
 	}
@@ -40,14 +57,45 @@ export function stringify (value, type, typeOptions) {
 		return String(value);
 	}
 
-	let stringify = types.get(type)?.stringify;
+	let {is: Type, ...typeOptions} = resolve(type);
+
+	let stringify = types.get(Type)?.stringify;
 
 	if (stringify === false) {
 		// stringify is *explicitly* forbidden
 		throw new TypeError(`Cannot stringify ${type}`);
 	}
 
-	return stringify ? stringify(value, typeOptions) : defaultType.stringify(value, type, typeOptions);
+	return stringify ? stringify(value) : defaultType.stringify(value, type);
 }
 
+/**
+ * A resolved type spec
+ * @typedef {Object} TypeSpec
+ * @property {Function} is
+ * @property {object} [...typeOptions] Options specific to the defined type
+ */
 
+/**
+ * A type, as can be specified by users of the library
+ * @typedef {TypeSpec | Function | string} SpecifiedType
+ */
+
+/**
+ * Resolve a type value into a spec
+ * @param {SpecifiedType} type
+ * @returns {TypeSpec}
+ */
+export function resolve (type) {
+	if (typeof type === "string") {
+		type = globalThis[type];
+	}
+
+	if (type) {
+		if (typeof type === "function") {
+			type = { is: type };
+		}
+	}
+
+	return type;
+}

@@ -15,11 +15,12 @@ export const generic = {
 		return simpleEquals;
 	},
 	parse (value, type) {
-		if (value instanceof type) {
+		let Type = type.is;
+		if (!Type || value instanceof Type) {
 			return value;
 		}
 
-		return callableBuiltins.has(type) ? type(value) : new type(value);
+		return callableBuiltins.has(Type) ? Type(value) : new Type(value);
 	},
 
 	stringify (value) {

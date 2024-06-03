@@ -109,8 +109,7 @@ Each prop is defined by an object with the following properties:
 
 | Property | Type | Default | Description |
 | -------- | ---- | ------- | ----------- |
-| `type` | `Function` | undefined | The type of the property, to determine conversions when stored internally. If not provided, no conversion will happen. |
-| `typeOptions` | `object` | undefined | Additional, type-specific constraints. |
+| `type` | `Function` or `Object` or `string` | undefined | The type of the property, to determine conversions when stored internally. If not provided, no conversion will happen. It can be either a function (e.g. `type: Number`) or an object to set type-specific options (e.g. `type: {is: Array, values: Number}`). See [Types](#type-options) for more details on this. |
 | `default` | Any | undefined | The default value of the property. If a function, it will be called with the element as `this`. |
 | `defaultProp` | `string` | undefined | The name of another prop to use as the default value. |
 | `reflect` | `boolean` or `string` or `object` | `true` | Whether to reflect the property to/from an attribute. See below for description on values. |
@@ -122,40 +121,31 @@ Each prop is defined by an object with the following properties:
 | `parse` | `Function` | undefined | A function to parse the value from an attribute. If not provided, the value will be parsed based on the `type`. |
 | `stringify` | `Function` | undefined | A function to stringify the value to an attribute. If not provided, the value will be stringified based on the `type`. |
 
-### Types
+### Prop Types
 
 The `type` property takes a constructor function,
 which could be a built-in class such as `String`, `Number`, `Boolean`,
 or a custom class (e.g. `Color`).
+It can also be a string, and it resolves to the global variable with that name.
+
 If provided, any value provided via attributes or properties will be converted to this type before being stored internally,
 and the equality check that checks if a prop has changed will be specific to that type.
 If no type is provided, no conversion will happen and values will be stored untouched.
 
-### Type options
-
-Some types take additional optional options, which can be provided via `typeOptions`.
+The `type` property can also take an object that sets both the type (via the `is` property) and additional options specific to that type,
+listed below.
 All type options are optional.
 
-#### Lists: `Array` and `Set`
+| Property | Type | Applies to | Description |
+| -------- | ---- | ---------- | ----------- |
+| `is` | `Function` &#124; `string` &#124; `object` | _(All)_ | The type of the property. |
+| `values` | `Function` | Lists (`Array`, `Set`), Dictionaries (`Object`, `Map`) | The type of the items in the list. |
+| `keys` | `Function` | `Map` | The type of the keys in the dictionary. |
+| `defaultKey` | `Function` | Dictionaries (`Object`, `Map`) | Default key for entries with no label. |
+| `defaultValue` | (any) | Dictionaries (`Object`, `Map`) | Default value for entries with no label. Ignored if `defaultKey` is set. Default: `true` |
+| `arguments` | `string[]` | `Function` | The names of the arguments of the function. Default: `[]` (no arguments) |
 
-| Property | Type | Description |
-| -------- | ---- | ----------- |
-| `values` | `Function` | The type of the items in the list. |
-
-#### Functions
-
-| Property | Type | Description |
-| -------- | ---- | ----------- |
-| `arguments` | `string[]` | The names of the arguments of the function. Default: `[]` (no arguments) |
-
-#### Dictionaries: `Object` and `Map`
-
-| Property | Type | Description |
-| -------- | ---- | ----------- |
-| `values` | `Function` | The type of the values in the dictionary. |
-| `keys` | `Function` | The type of the keys in the dictionary (only applies to `Map`). Default: `String` |
-| `defaultKey` | `Function` | Default key for entries with no label. |
-| `defaultValue` | (any) | Default value for entries with no label. Default: `true` |
+#### Default key/value in dictionaries
 
 `defaultKey` and `defaultValue` control what happens when parsing singular entries, i.e. entries with no colon (e.g. `foo: 1, bar: 2, baz` or `1: foo, 2: bar, baz`).
 If `defaultKey` is provided, these entries are considered values, and `defaultKey` is used to generate the keys.
