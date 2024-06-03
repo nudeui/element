@@ -65,7 +65,7 @@ export const set = {
 				if (values) {
 					// Parse values in place
 					for (let item of value) {
-						let parsed = parse(item, options?.values);
+						let parsed = parse(item, values);
 						if (parsed !== item) {
 							value.delete(item);
 							value.add(parsed);
