@@ -145,7 +145,7 @@ export const map = {
 			return value;
 		}
 		else if (typeof value === "object") {
-			entries = Object.entries(value);
+			value = Object.entries(value);
 		}
 
 		entries = parseEntries(value, options);
