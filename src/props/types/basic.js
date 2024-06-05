@@ -1,3 +1,5 @@
+import { resolve } from "../types.js";
+
 const callableBuiltins = new Set([String, Number, Boolean, Array, Object, Function, Symbol, BigInt]);
 
 export const generic = {
@@ -15,7 +17,7 @@ export const generic = {
 		return simpleEquals;
 	},
 	parse (value, type) {
-		let Type = type.is;
+		let {is: Type, ...typeOptions} = resolve(type);
 		if (!Type || value instanceof Type) {
 			return value;
 		}
