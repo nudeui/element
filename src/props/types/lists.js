@@ -1,14 +1,12 @@
 import { parse, stringify, equals } from "../types.js";
+import { split } from "./util.js";
 
-function parseList (value, { values, separator = ",", splitter } = {}) {
-	if (!Array.isArray(value)) {
-		if (!splitter) {
-			// Make whitespace optional and flexible, unless the separator consists entirely of whitespace
-			let isSeparatorWhitespace = !separator.trim();
-			splitter = isSeparatorWhitespace ? /\s+/ : new RegExp(separator.replace(/\s+/g, "\\s*"));
-		}
-
-		value = typeof value === "string" ? value.trim().split(splitter) : [value];
+function parseList (value, { values, ...options } = {}) {
+	if (typeof value === "string") {
+		value = split(value, options);
+	}
+	else {
+		value = Array.isArray(value) ? value : [value];
 	}
 
 	if (values) {

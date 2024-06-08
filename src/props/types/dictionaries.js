@@ -1,13 +1,12 @@
 import { resolveValue } from "../../util.js";
 import { parse, stringify, equals } from "../types.js";
+import { split } from "./util.js";
 
-function parseEntries (value, { values, keys, separator = ", ", defaultValue = true, defaultKey } = {}) {
-	let entries;
+function parseEntries (value, { values, keys, separator = ", ", defaultValue = true, defaultKey, pairs } = {}) {
+	let entries = value;
 
-	if (!Array.isArray(entries)) {
-		separator = separator.trim();
-		let entrySeparatorRegex = RegExp(`\\s*(?<!\\\\)${separator}\\s*`);
-		entries = value.trim().split(entrySeparatorRegex);
+	if (typeof value === "string") {
+		entries = split(value, { separator, pairs });
 
 		entries = entries.map((entry, index) => {
 			let parts = entry.split(/(?<!\\):/);
