@@ -87,13 +87,13 @@ export function stringify (value, type) {
  * @returns {TypeSpec}
  */
 export function resolve (type) {
-	if (typeof type === "string") {
-		type = globalThis[type];
-	}
-
 	if (type) {
-		if (typeof type === "function") {
+		if (typeof type === "function" || typeof type === "string") {
 			type = { is: type };
+		}
+
+		if (typeof type.is === "string") {
+			type.is = globalThis[type.is];
 		}
 	}
 
