@@ -8,6 +8,11 @@ import {
 import * as types from "./types.js";
 
 let Self = class Prop {
+	/**
+	 * @type {Props} props - The props object this prop belongs to
+	 */
+	props;
+
 	constructor (name, spec, props) {
 		if (spec instanceof Prop && name === spec.name) {
 			return spec;
@@ -50,7 +55,6 @@ let Self = class Prop {
 				...inferDependencies(spec.convert),
 			]);
 		}
-		// this.dependencies = new Set(spec.dependencies ?? inferDependencies(spec.get));
 
 		// Computed properties are not reflected by default
 		this.reflect = spec.reflect ?? !this.spec.get;
