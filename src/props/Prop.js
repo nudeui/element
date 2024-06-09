@@ -53,6 +53,7 @@ let Self = class Prop {
 			this.dependencies = new Set([
 				...inferDependencies(spec.get),
 				...inferDependencies(spec.convert),
+				...(spec.additionalDependencies ?? []),
 			]);
 		}
 
