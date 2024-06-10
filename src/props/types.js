@@ -40,7 +40,7 @@ export function parse (value, type) {
 		let parse = types.get(Type)?.parse;
 
 		if (parse) {
-			return parse(value, type);
+			return parse(value, resolve(type));
 		}
 	}
 
