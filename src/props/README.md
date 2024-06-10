@@ -117,6 +117,7 @@ Each prop is defined by an object with the following properties:
 | `set` | `Function` | undefined | A setter function for the property, to be called when setting the prop programmatically. |
 | `convert` | `Function` | undefined | A function to convert the provided value to the internally stored value. This does not override the conversion performed due to `type` but runs *after* it. |
 | `dependencies` | `string[]` | undefined | Override the auto-detected dependencies with these prop names. Useful when the dependencies are not immediately obvious from the function body |
+| `additionalDependencies` | `string[]` | undefined | Add these prop names to the auto-detected dependencies. Useful when *most* of the dependencies are auto-detected, but some need to be added without redefining *all* the dependencies with the `dependencies` property. |
 | `equals` | `Function` | undefined | A function to compare two values for equality. If not provided the default equality check depends on the `type` of the value. |
 | `parse` | `Function` | undefined | A function to parse the value from an attribute. If not provided, the value will be parsed based on the `type`. |
 | `stringify` | `Function` | undefined | A function to stringify the value to an attribute. If not provided, the value will be stringified based on the `type`. |
