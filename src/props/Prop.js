@@ -38,6 +38,13 @@ let Self = class Prop {
 			}
 		}
 
+		if (spec.rawProp) {
+			// FIXME what if rawProp comes after this one?
+			let rawProp = this.props.get(spec.rawProp);
+			this.defaultProp ??= spec.rawProp;
+			rawProp.defaultProp ??= this.name;
+		}
+
 		if (spec.defaultProp) {
 			Object.defineProperty(this, "default", {
 				get: () => this.props.get(spec.defaultProp),
@@ -55,6 +62,10 @@ let Self = class Prop {
 				...inferDependencies(spec.convert),
 				...(spec.additionalDependencies ?? []),
 			]);
+
+			if (this.rawProp) {
+				this.dependencies.add(this.rawProp);
+			}
 		}
 
 		// Computed properties are not reflected by default

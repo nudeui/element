@@ -120,6 +120,13 @@ export default class Props extends Map {
 			}
 		}
 
+		if (prop.rawProp && element.props[prop.name] !== undefined && element.props[prop.rawProp] !== undefined) {
+			delete element.props[prop.rawProp];
+			let rawProp = this.get(prop.rawProp);
+			rawProp.defaultProp ??= prop;
+			this.propChanged(element, rawProp, {source: "property", value: element.props[prop.rawProp]});
+		}
+
 		// Fire propchange event
 		let eventNames = [ "propchange", ...(prop.eventNames ?? []) ];
 		for (let eventName of eventNames) {
