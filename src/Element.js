@@ -13,7 +13,11 @@ let classInitialized = Symbol("classInitialized");
 const Self = class NudeElement extends HTMLElement {
 	constructor () {
 		super();
-		this.constructor.init();
+
+		if (!this.constructor[classInitialized]) {
+			this.constructor.init();
+		}
+
 		this.constructor.hooks.run("start", this);
 
 		if (this.propChangedCallback && this.constructor.props) {
@@ -41,7 +45,7 @@ const Self = class NudeElement extends HTMLElement {
 	static init () {
 		// Stuff that runs once per class
 		if (this[classInitialized]) {
-			return;
+			return false;
 		}
 
 		this.hooks = new Hooks(this.hooks);
@@ -60,7 +64,7 @@ const Self = class NudeElement extends HTMLElement {
 
 		this.hooks.run("setup", this);
 
-		this[classInitialized] = true;
+		return this[classInitialized] = true;
 	}
 }
 
