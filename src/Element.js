@@ -35,6 +35,15 @@ const Self = class NudeElement extends HTMLElement {
 			this[instanceInitialized] = true;
 		}
 
+		if (this.constructor.globalStyleSheet) {
+			let rootNode = this.getRootNode();
+
+			if (!rootNode.querySelector(`style[data-for="${this.constructor.tagName}"]`)) {
+				let root = rootNode.nodeType === Node.DOCUMENT_NODE ? rootNode.head : rootNode;
+				root.append(this.constructor.globalStyleSheet.cloneNode(true));
+			}
+		}
+
 		this.constructor.hooks.run("connected", this);
 	}
 
@@ -60,6 +69,12 @@ const Self = class NudeElement extends HTMLElement {
 
 		if (this.formAssociated) {
 			defineFormAssociated(this);
+		}
+
+		if (this.globalStyle) {
+			this.globalStyleSheet = document.createElement("style");
+			this.globalStyleSheet.dataset.for = this.tagName;
+			this.globalStyleSheet.textContent = `@import url("${this.globalStyle}")`;
 		}
 
 		this.hooks.run("setup", this);
