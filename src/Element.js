@@ -13,7 +13,11 @@ let classInitialized = Symbol("classInitialized");
 const Self = class NudeElement extends HTMLElement {
 	constructor () {
 		super();
-		this.constructor.init();
+
+		if (!this.constructor[classInitialized]) {
+			this.constructor.init();
+		}
+
 		this.constructor.hooks.run("start", this);
 
 		if (this.propChangedCallback && this.constructor.props) {
@@ -31,6 +35,15 @@ const Self = class NudeElement extends HTMLElement {
 			this[instanceInitialized] = true;
 		}
 
+		if (this.constructor.globalStyleSheet) {
+			let rootNode = this.getRootNode();
+
+			if (!rootNode.querySelector(`style[data-for="${this.constructor.tagName}"]`)) {
+				let root = rootNode.nodeType === Node.DOCUMENT_NODE ? rootNode.head : rootNode;
+				root.append(this.constructor.globalStyleSheet.cloneNode(true));
+			}
+		}
+
 		this.constructor.hooks.run("connected", this);
 	}
 
@@ -41,7 +54,7 @@ const Self = class NudeElement extends HTMLElement {
 	static init () {
 		// Stuff that runs once per class
 		if (this[classInitialized]) {
-			return;
+			return false;
 		}
 
 		this.hooks = new Hooks(this.hooks);
@@ -58,9 +71,15 @@ const Self = class NudeElement extends HTMLElement {
 			defineFormAssociated(this);
 		}
 
+		if (this.globalStyle) {
+			this.globalStyleSheet = document.createElement("style");
+			this.globalStyleSheet.dataset.for = this.tagName;
+			this.globalStyleSheet.textContent = `@import url("${this.globalStyle}")`;
+		}
+
 		this.hooks.run("setup", this);
 
-		this[classInitialized] = true;
+		return this[classInitialized] = true;
 	}
 }
 

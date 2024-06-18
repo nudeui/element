@@ -36,7 +36,8 @@ export function parse (value, type) {
 	}
 
 	if (type) {
-		let {is: Type, ...typeOptions} = resolve(type);
+		type = resolve(type);
+		let {is: Type, ...typeOptions} = type;
 		let parse = types.get(Type)?.parse;
 
 		if (parse) {
