@@ -264,6 +264,7 @@ let Self = class Prop {
 	}
 
 	async changed (element, change) {
+		this.spec.changed?.call(element, change);
 		this.props.propChanged(element, this, change);
 	}
 
