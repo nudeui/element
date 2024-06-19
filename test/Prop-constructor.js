@@ -85,56 +85,70 @@ export default {
 			expect: { dependencies: new Set(), reflect: true },
 		},
 		{
-			name: "With simple type",
-			args: "simpleType",
-			expect: {
-				type: { is: String },
-			},
-		},
-		{
-			name: "With complex type",
-			args: "complexType",
-			expect: {
-				type: {
-					is: String,
-					foo: 42,
+			name: "Types",
+			tests: [
+				{
+					name: "Simple",
+					args: "simpleType",
+					expect: {
+						type: { is: String },
+					},
 				},
-			},
+				{
+					name: "Complex",
+					args: "complexType",
+					expect: {
+						type: {
+							is: String,
+							foo: 42,
+						},
+					},
+				},
+			],
 		},
 		{
-			name: "With default value",
-			args: "defaultValue",
-			expect: { default: "default" },
+			name: "Defaults",
+			tests: [
+				{
+					name: "Value",
+					args: "defaultValue",
+					expect: { default: "default" },
+				},
+				{
+					name: "Function",
+					args: "defaultFunction",
+					expect: { default: props.defaultFunction.default },
+				},
+				{
+					name: "Prop",
+					args: "defaultProp",
+					expect: { default: propsMap.get("defaultValue") },
+				},
+			],
 		},
 		{
-			name: "With default function",
-			args: "defaultFunction",
-			expect: { default: props.defaultFunction.default },
-		},
-		{
-			name: "With default prop",
-			args: "defaultProp",
-			expect: { default: propsMap.get("defaultValue") },
-		},
-		{
-			name: "With dependencies",
-			args: "dependencies",
-			expect: { dependencies: new Set(["foo", "bar"]) },
-		},
-		{
-			name: "Inferred dependencies",
-			args: "dependenciesInferred",
-			expect: { dependencies: new Set(["foo", "bar", "baz"]) },
-		},
-		{
-			name: "Additional dependencies",
-			args: "dependenciesAdditional",
-			expect: { dependencies: new Set(["foo", "bar", "baz", "yolo"]) },
-		},
-		{
-			name: "Ignore inferred dependencies",
-			args: "dependenciesIgnoreInferred",
-			expect: { dependencies: new Set(["yolo"]) },
+			name: "Dependencies",
+			tests: [
+				{
+					args: "dependencies",
+					expect: { dependencies: new Set(["foo", "bar"]) },
+				},
+				{
+					name: "Inferred dependencies",
+					args: "dependenciesInferred",
+					expect: { dependencies: new Set(["foo", "bar", "baz"]) },
+				},
+				{
+					name: "Additional dependencies",
+					args: "dependenciesAdditional",
+					expect: { dependencies: new Set(["foo", "bar", "baz", "yolo"]) },
+				},
+				{
+					name: "Ignore inferred dependencies",
+					args: "dependenciesIgnoreInferred",
+					expect: { dependencies: new Set(["yolo"]) },
+				},
+			],
 		},
 	],
 };
