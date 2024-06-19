@@ -58,7 +58,7 @@ let props = {
 		default: "default",
 	},
 	defaultFunction: {
-		default: () => "default",
+		default () {},
 	},
 	defaultProp: {
 		defaultProp: "defaultValue",
