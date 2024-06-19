@@ -63,6 +63,14 @@ let props = {
 	defaultProp: {
 		defaultProp: "defaultValue",
 	},
+	defaultValueAndProp: {
+		default: "default",
+		defaultProp: "defaultValue",
+	},
+	defaultFunctionAndProp: {
+		default: () => this.foo + this.bar, // We need dependencies to add the defaultDefaultFunctionAndProp prop
+		defaultProp: "defaultValue",
+	},
 	dependencies: {
 		dependencies: ["foo", "bar"],
 	},
@@ -171,6 +179,18 @@ export default {
 							name: "Prop",
 							args: "defaultProp",
 							expect: realProps.get("defaultValue"),
+						},
+						{
+							name: "Value and prop",
+							description: "What should be used if both default and defaultProp are specified? If defaultProp, where should default go?",
+							args: "defaultValueAndProp",
+							expect: "default", // Fail for now
+						},
+						{
+							name: "Function and prop",
+							description: "What should be used if both default and defaultProp are specified? If defaultProp, where should default go?",
+							args: "defaultFunctionAndProp",
+							expect: realProps.get("defaultDefaultFunctionAndProp"), // Fail for now
 						},
 					],
 				},
