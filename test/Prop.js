@@ -73,6 +73,15 @@ let props = {
 		convert: () => this.bar + this.baz,
 		dependencies: ["yolo"],
 	},
+	dependenciesDefault: {
+		default () {},
+		defaultDependencies: ["foo"],
+	},
+	dependenciesDefaultInferred: {
+		default () {
+			return this.foo + this.bar;
+		},
+	},
 };
 
 let propsMap = new Map(Object.entries(props));
@@ -170,6 +179,18 @@ export default {
 							name: "Ignore inferred dependencies",
 							args: "dependenciesIgnoreInferred",
 							expect: { dependencies: new Set(["yolo"]) },
+						},
+						{
+							name: "Default dependencies",
+							args: "dependenciesDefault",
+							expect: {},
+							skip: true,
+						},
+						{
+							name: "Inferred default dependencies",
+							args: "dependenciesDefaultInferred",
+							expect: {},
+							skip: true,
 						},
 					],
 				},
