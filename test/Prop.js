@@ -1,5 +1,10 @@
 import { default as Prop } from "../src/props/Prop.js";
+import { default as Props } from "../src/props/Props.js";
 import { equals } from "htest.dev/check";
+
+class FakeClass {
+	static props = {};
+}
 
 let props = {
 	empty: {},
@@ -84,7 +89,7 @@ let props = {
 	},
 };
 
-let propsMap = new Map(Object.entries(props));
+let realProps = new Props(FakeClass, props);
 
 export default {
 	name: "Prop class",
@@ -92,7 +97,7 @@ export default {
 		{
 			name: "constructor()",
 			run (name) {
-				return new Prop(name, props[name], propsMap);
+				return new Prop(name, props[name]);
 			},
 			check (actual, expected) {
 				let keys = Object.keys(expected);
@@ -140,21 +145,24 @@ export default {
 				},
 				{
 					name: "Defaults",
+					run (name) {
+						return realProps.get(name).default;
+					},
 					tests: [
 						{
 							name: "Value",
 							args: "defaultValue",
-							expect: { default: "default" },
+							expect: "default",
 						},
 						{
 							name: "Function",
 							args: "defaultFunction",
-							expect: { default: props.defaultFunction.default },
+							expect: props.defaultFunction.default,
 						},
 						{
 							name: "Prop",
 							args: "defaultProp",
-							expect: { default: propsMap.get("defaultValue") },
+							expect: realProps.get("defaultValue"),
 						},
 					],
 				},
@@ -182,15 +190,27 @@ export default {
 						},
 						{
 							name: "Default dependencies",
-							args: "dependenciesDefault",
-							expect: {},
-							skip: true,
-						},
-						{
-							name: "Inferred default dependencies",
-							args: "dependenciesDefaultInferred",
-							expect: {},
-							skip: true,
+							run (name) {
+								name = "default" + name.replace(/^\w/, c => c.toUpperCase());
+								return realProps.get(name)?.dependencies;
+							},
+							check: {deep: true}, // Use default checking function instead of the inherited one
+							tests: [
+								{
+									args: "dependenciesDefault",
+									expect: new Set(["foo"]),
+								},
+								{
+									name: "Inferred dependencies",
+									args: "dependenciesDefaultInferred",
+									expect: new Set(["foo", "bar"]),
+								},
+								{
+									name: "No dependencies",
+									args: "defaultValue",
+									expect: undefined,
+								},
+							],
 						},
 					],
 				},
@@ -224,7 +244,7 @@ export default {
 		{
 			name: "fromAttribute()",
 			run (name) {
-				let prop = new Prop(name, props[name], propsMap);
+				let prop = new Prop(name, props[name]);
 				return prop.fromAttribute;
 			},
 			tests: [
@@ -263,7 +283,7 @@ export default {
 		{
 			name: "toAttribute()",
 			run (name) {
-				let prop = new Prop(name, props[name], propsMap);
+				let prop = new Prop(name, props[name]);
 				return prop.toAttribute;
 			},
 			tests: [
