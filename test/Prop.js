@@ -79,22 +79,22 @@ let propsMap = new Map(Object.entries(props));
 
 export default {
 	name: "Prop class",
-	run (name) {
-		return new Prop(name, props[name], propsMap);
-	},
-	check (actual, expected) {
-		let keys = Object.keys(expected);
-		for (let key of keys) {
-			if (!equals(actual[key], expected[key])) {
-				return false;
-			}
-		}
-
-		return true;
-	},
 	tests: [
 		{
 			name: "constructor()",
+			run (name) {
+				return new Prop(name, props[name], propsMap);
+			},
+			check (actual, expected) {
+				let keys = Object.keys(expected);
+				for (let key of keys) {
+					if (!equals(actual[key], expected[key])) {
+						return false;
+					}
+				}
+
+				return true;
+			},
 			tests: [
 				{
 					name: "Empty spec",
@@ -197,6 +197,45 @@ export default {
 							expect: { reflect: false },
 						},
 					],
+				},
+			],
+		},
+		{
+			name: "fromAttribute()",
+			run (name) {
+				let prop = new Prop(name, props[name], propsMap);
+				return prop.fromAttribute;
+			},
+			tests: [
+				{
+					name: "No reflect",
+					arg: "empty",
+					expect: "empty",
+				},
+				{
+					name: "reflect: { from: true }",
+					args: "reflectFromTrue",
+					expect: "reflectFromTrue",
+				},
+				{
+					name: "reflect: { from: false }",
+					args: "reflectFromFalse",
+					expect: null,
+				},
+				{
+					name: `reflect: { from: "foo" }`,
+					args: "reflectFromName",
+					expect: "foo",
+				},
+				{
+					name: "reflect: { from: true, to: false }",
+					args: "reflectBoth",
+					expect: "reflectBoth",
+				},
+				{
+					name: `reflect: { from: "foo", to: "bar" }`,
+					args: "reflectBothName",
+					expect: "foo",
 				},
 			],
 		},
