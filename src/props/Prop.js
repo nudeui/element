@@ -237,14 +237,16 @@ let Self = class Prop {
 
 	applyChange (element, change) {
 		if (change.source === "attribute") {
-			let attributeName = change.attributeName ?? this.toAttribute;
-			let attributeValue = change.attributeValue ?? change.element.getAttribute(attributeName);
+			if (element.setAttribute) {
+				let attributeName = change.attributeName ?? this.toAttribute;
+				let attributeValue = change.attributeValue ?? change.element.getAttribute(attributeName);
 
-			if (attributeValue === null) {
-				element.removeAttribute(attributeName);
-			}
-			else {
-				element.setAttribute(attributeName, attributeValue);
+				if (attributeValue === null) {
+					element.removeAttribute(attributeName);
+				}
+				else {
+					element.setAttribute(attributeName, attributeValue);
+				}
 			}
 		}
 		else if (change.source === "property") {
