@@ -70,6 +70,14 @@ let props = {
 		get: () => this.foo + this.bar,
 		convert: () => this.bar + this.baz,
 	},
+	dependenciesInferredFromType: {
+		type: {
+			is: Object,
+			values: String,
+			defaultKey: () => this.foo,
+			defaultValue: () => this.bar,
+		},
+	},
 	dependenciesAdditional: {
 		get: () => this.foo + this.bar,
 		additionalDependencies: ["yolo"],
@@ -177,6 +185,12 @@ export default {
 							name: "Inferred dependencies",
 							args: "dependenciesInferred",
 							expect: { dependencies: new Set(["foo", "bar", "baz"]) },
+						},
+						{
+							name: "Inferred from type",
+							args: "dependenciesInferredFromType",
+							expect: { dependencies: new Set(["foo", "bar"]) },
+							skip: true, // Not implemented yet. See https://github.com/nudeui/element/issues/29
 						},
 						{
 							name: "Additional dependencies",
