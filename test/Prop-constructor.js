@@ -141,7 +141,7 @@ export default {
 				{
 					name: "Additional dependencies",
 					args: "dependenciesAdditional",
-					expect: { dependencies: new Set(["foo", "bar", "baz", "yolo"]) },
+					expect: { dependencies: new Set(["foo", "bar", "yolo"]) },
 				},
 				{
 					name: "Ignore inferred dependencies",
