@@ -10,6 +10,36 @@ let props = {
 		get () {},
 		reflect: true,
 	},
+	reflectFalse: {
+		reflect: false,
+	},
+	reflectName: {
+		reflect: "foo",
+	},
+	reflectFromTrue: {
+		reflect: { from: true },
+	},
+	reflectFromFalse: {
+		reflect: { from: false },
+	},
+	reflectFromName: {
+		reflect: { from: "foo" },
+	},
+	reflectToTrue: {
+		reflect: { to: true },
+	},
+	reflectToFalse: {
+		reflect: { to: false },
+	},
+	reflectToName: {
+		reflect: { to: "foo" },
+	},
+	reflectBoth: {
+		reflect: { from: true, to: false },
+	},
+	reflectBothName: {
+		reflect: { from: "foo", to: "bar" },
+	},
 	simpleType: {
 		type: String,
 	},
@@ -75,16 +105,6 @@ export default {
 			},
 		},
 		{
-			name: "Computed prop",
-			args: "computed",
-			expect: { dependencies: new Set(), reflect: false},
-		},
-		{
-			name: "Reflected computed prop",
-			args: "computedReflected",
-			expect: { dependencies: new Set(), reflect: true },
-		},
-		{
 			name: "Types",
 			tests: [
 				{
@@ -147,6 +167,31 @@ export default {
 					name: "Ignore inferred dependencies",
 					args: "dependenciesIgnoreInferred",
 					expect: { dependencies: new Set(["yolo"]) },
+				},
+			],
+		},
+		{
+			name: "Reflections",
+			tests: [
+				{
+					name: "No reflect, no getter",
+					arg: "empty",
+					expect: { reflect: true },
+				},
+				{
+					name: "Computed prop",
+					args: "computed",
+					expect: { reflect: false },
+				},
+				{
+					name: "Reflected computed prop",
+					args: "computedReflected",
+					expect: { reflect: true },
+				},
+				{
+					name: "Disable reflection",
+					args: "reflectFalse",
+					expect: { reflect: false },
 				},
 			],
 		},
