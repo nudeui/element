@@ -78,7 +78,7 @@ let props = {
 let propsMap = new Map(Object.entries(props));
 
 export default {
-	name: "Prop constructor",
+	name: "Prop class",
 	run (name) {
 		return new Prop(name, props[name], propsMap);
 	},
@@ -94,104 +94,109 @@ export default {
 	},
 	tests: [
 		{
-			name: "Empty spec",
-			arg: "empty",
-			expect: {
-				name: "empty",
-				type: undefined,
-				default: undefined,
-				dependencies: new Set(),
-				reflect: true,
-			},
-		},
-		{
-			name: "Types",
+			name: "constructor()",
 			tests: [
 				{
-					name: "Simple",
-					args: "simpleType",
-					expect: {
-						type: { is: String },
-					},
-				},
-				{
-					name: "Complex",
-					args: "complexType",
-					expect: {
-						type: {
-							is: String,
-							foo: 42,
-						},
-					},
-				},
-			],
-		},
-		{
-			name: "Defaults",
-			tests: [
-				{
-					name: "Value",
-					args: "defaultValue",
-					expect: { default: "default" },
-				},
-				{
-					name: "Function",
-					args: "defaultFunction",
-					expect: { default: props.defaultFunction.default },
-				},
-				{
-					name: "Prop",
-					args: "defaultProp",
-					expect: { default: propsMap.get("defaultValue") },
-				},
-			],
-		},
-		{
-			name: "Dependencies",
-			tests: [
-				{
-					args: "dependencies",
-					expect: { dependencies: new Set(["foo", "bar"]) },
-				},
-				{
-					name: "Inferred dependencies",
-					args: "dependenciesInferred",
-					expect: { dependencies: new Set(["foo", "bar", "baz"]) },
-				},
-				{
-					name: "Additional dependencies",
-					args: "dependenciesAdditional",
-					expect: { dependencies: new Set(["foo", "bar", "yolo"]) },
-				},
-				{
-					name: "Ignore inferred dependencies",
-					args: "dependenciesIgnoreInferred",
-					expect: { dependencies: new Set(["yolo"]) },
-				},
-			],
-		},
-		{
-			name: "Reflections",
-			tests: [
-				{
-					name: "No reflect, no getter",
+					name: "Empty spec",
 					arg: "empty",
-					expect: { reflect: true },
+					expect: {
+						name: "empty",
+						type: undefined,
+						default: undefined,
+						dependencies: new Set(),
+						reflect: true,
+					},
 				},
 				{
-					name: "Computed prop",
-					args: "computed",
-					expect: { reflect: false },
+					name: "Types",
+					tests: [
+						{
+							name: "Simple",
+							args: "simpleType",
+							expect: {
+								type: { is: String },
+							},
+						},
+						{
+							name: "Complex",
+							args: "complexType",
+							expect: {
+								type: {
+									is: String,
+									foo: 42,
+								},
+							},
+						},
+					],
 				},
 				{
-					name: "Reflected computed prop",
-					args: "computedReflected",
-					expect: { reflect: true },
+					name: "Defaults",
+					tests: [
+						{
+							name: "Value",
+							args: "defaultValue",
+							expect: { default: "default" },
+						},
+						{
+							name: "Function",
+							args: "defaultFunction",
+							expect: { default: props.defaultFunction.default },
+						},
+						{
+							name: "Prop",
+							args: "defaultProp",
+							expect: { default: propsMap.get("defaultValue") },
+						},
+					],
 				},
 				{
-					name: "Disable reflection",
-					args: "reflectFalse",
-					expect: { reflect: false },
+					name: "Dependencies",
+					tests: [
+						{
+							args: "dependencies",
+							expect: { dependencies: new Set(["foo", "bar"]) },
+						},
+						{
+							name: "Inferred dependencies",
+							args: "dependenciesInferred",
+							expect: { dependencies: new Set(["foo", "bar", "baz"]) },
+						},
+						{
+							name: "Additional dependencies",
+							args: "dependenciesAdditional",
+							expect: { dependencies: new Set(["foo", "bar", "yolo"]) },
+						},
+						{
+							name: "Ignore inferred dependencies",
+							args: "dependenciesIgnoreInferred",
+							expect: { dependencies: new Set(["yolo"]) },
+						},
+					],
+				},
+				{
+					name: "Reflections",
+					tests: [
+						{
+							name: "No reflect, no getter",
+							arg: "empty",
+							expect: { reflect: true },
+						},
+						{
+							name: "Computed prop",
+							args: "computed",
+							expect: { reflect: false },
+						},
+						{
+							name: "Reflected computed prop",
+							args: "computedReflected",
+							expect: { reflect: true },
+						},
+						{
+							name: "Disable reflection",
+							args: "reflectFalse",
+							expect: { reflect: false },
+						},
+					],
 				},
 			],
 		},
