@@ -135,7 +135,7 @@ export default class Props extends Map {
 		let event = new PropChangeEvent(eventName, eventProps);
 
 		if (element.isConnected) {
-			element.dispatchEvent(event);
+			element.dispatchEvent?.(event);
 		}
 		else {
 			let queue = this.eventDispatchQueue.get(element) ?? [];
@@ -165,7 +165,7 @@ export default class Props extends Map {
 
 		if (queue) {
 			for (let event of queue) {
-				element.dispatchEvent(event);
+				element.dispatchEvent?.(event);
 			}
 
 			this.eventDispatchQueue.delete(element);
