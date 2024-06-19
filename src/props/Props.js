@@ -145,11 +145,13 @@ export default class Props extends Map {
 	}
 
 	initializeFor (element) {
-		// Update all reflected props from attributes at once
-		for (let name of this.observedAttributes) {
-			// Only process elements that have this attribute, or used to
-			if (element.hasAttribute(name)) {
-				this.attributeChanged(element, name);
+		if (element.hasAttribute) {
+			// Update all reflected props from attributes at once
+			for (let name of this.observedAttributes) {
+				// Only process elements that have this attribute, or used to
+				if (element.hasAttribute(name)) {
+					this.attributeChanged(element, name);
+				}
 			}
 		}
 
