@@ -34,8 +34,8 @@ let propsMap = new Map(Object.entries(props));
 
 export default {
 	name: "Prop constructor",
-	run (...args) {
-		return new Prop(...args);
+	run (name) {
+		return new Prop(name, props[name], propsMap);
 	},
 	check (actual, expected) {
 		let keys = Object.keys(expected);
@@ -50,7 +50,7 @@ export default {
 	tests: [
 		{
 			name: "Empty spec",
-			args: ["empty", props.empty, propsMap],
+			arg: "empty",
 			expect: {
 				name: "empty",
 				type: undefined,
@@ -61,83 +61,45 @@ export default {
 		},
 		{
 			name: "Computed prop",
-			args: ["computed", props.computed, propsMap],
-			expect: {
-				name: "computed",
-				type: undefined,
-				default: undefined,
-				dependencies: new Set(),
-				reflect: false,
-			},
+			args: "computed",
+			expect: { dependencies: new Set(), reflect: false},
 		},
 		{
 			name: "Reflected computed prop",
-			args: ["computedReflected", props.computedReflected, propsMap],
-			expect: {
-				name: "computedReflected",
-				type: undefined,
-				default: undefined,
-				dependencies: new Set(),
-				reflect: true,
-			},
+			args: "computedReflected",
+			expect: { dependencies: new Set(), reflect: true },
 		},
 		{
 			name: "With simple type",
-			args: ["simpleType", props.simpleType, propsMap],
+			args: "simpleType",
 			expect: {
-				name: "simpleType",
 				type: { is: String },
-				default: undefined,
-				dependencies: new Set(),
-				reflect: true,
 			},
 		},
 		{
 			name: "With complex type",
-			args: ["complexType", props.complexType, propsMap],
+			args: "complexType",
 			expect: {
-				name: "complexType",
 				type: {
 					is: String,
 					foo: 42,
 				},
-				default: undefined,
-				dependencies: new Set(),
-				reflect: true,
 			},
 		},
 		{
 			name: "With default value",
-			args: ["defaultValue", props.defaultValue, propsMap],
-			expect: {
-				name: "defaultValue",
-				type: undefined,
-				default: "default",
-				dependencies: new Set(),
-				reflect: true,
-			},
+			args: "defaultValue",
+			expect: { default: "default" },
 		},
 		{
 			name: "With default function",
-			args: ["defaultFunction", props.defaultFunction, propsMap],
-			expect: {
-				name: "defaultFunction",
-				type: undefined,
-				default: props.defaultFunction.default,
-				dependencies: new Set(),
-				reflect: true,
-			},
+			args: "defaultFunction",
+			expect: { default: props.defaultFunction.default },
 		},
 		{
 			name: "With default prop",
-			args: ["defaultProp", props.defaultProp, propsMap],
-			expect: {
-				name: "defaultProp",
-				type: undefined,
-				default: propsMap.get("defaultValue"),
-				dependencies: new Set(),
-				reflect: true,
-			},
+			args: "defaultProp",
+			expect: { default: propsMap.get("defaultValue") },
 		},
 	],
 };
