@@ -239,5 +239,44 @@ export default {
 				},
 			],
 		},
+		{
+			name: "toAttribute()",
+			run (name) {
+				let prop = new Prop(name, props[name], propsMap);
+				return prop.toAttribute;
+			},
+			tests: [
+				{
+					name: "No reflect",
+					arg: "empty",
+					expect: "empty",
+				},
+				{
+					name: "reflect: { to: true }",
+					args: "reflectToTrue",
+					expect: "reflectToTrue",
+				},
+				{
+					name: "reflect: { to: false }",
+					args: "reflectToFalse",
+					expect: null,
+				},
+				{
+					name: `reflect: { to: "foo" }`,
+					args: "reflectToName",
+					expect: "foo",
+				},
+				{
+					name: "reflect: { from: true, to: false }",
+					args: "reflectBoth",
+					expect: null,
+				},
+				{
+					name: `reflect: { from: "foo", to: "bar" }`,
+					args: "reflectBothName",
+					expect: "bar",
+				},
+			],
+		},
 	],
 };
