@@ -9,7 +9,7 @@
     "eslint:fix": "npx eslint . --fix",
     "build:apidocs": "npx typedoc",
     "watch:apidocs": "npx typedoc --watch --preserveWatchOutput",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npx htest ./test"
   },
   "exports": {
     ".": "./src/index.js",
@@ -32,7 +32,7 @@
     "@stylistic/eslint-plugin": "latest",
     "eslint": "latest",
     "globals": "latest",
-    "htest.dev": "^0.0.14",
+    "htest.dev": "^0.0.15",
     "release-it": "^17.2.1",
     "typedoc": "latest",
     "typedoc-plugin-rename-defaults": "latest"
