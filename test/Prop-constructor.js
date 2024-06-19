@@ -28,6 +28,21 @@ let props = {
 	defaultProp: {
 		defaultProp: "defaultValue",
 	},
+	dependencies: {
+		dependencies: ["foo", "bar"],
+	},
+	dependenciesInferred: {
+		get: () => this.foo + this.bar,
+		convert: () => this.bar + this.baz,
+	},
+	dependenciesAdditional: {
+		get: () => this.foo + this.bar,
+		additionalDependencies: ["yolo"],
+	},
+	dependenciesIgnoreInferred: {
+		convert: () => this.bar + this.baz,
+		dependencies: ["yolo"],
+	},
 };
 
 let propsMap = new Map(Object.entries(props));
@@ -100,6 +115,26 @@ export default {
 			name: "With default prop",
 			args: "defaultProp",
 			expect: { default: propsMap.get("defaultValue") },
+		},
+		{
+			name: "With dependencies",
+			args: "dependencies",
+			expect: { dependencies: new Set(["foo", "bar"]) },
+		},
+		{
+			name: "Inferred dependencies",
+			args: "dependenciesInferred",
+			expect: { dependencies: new Set(["foo", "bar", "baz"]) },
+		},
+		{
+			name: "Additional dependencies",
+			args: "dependenciesAdditional",
+			expect: { dependencies: new Set(["foo", "bar", "baz", "yolo"]) },
+		},
+		{
+			name: "Ignore inferred dependencies",
+			args: "dependenciesIgnoreInferred",
+			expect: { dependencies: new Set(["yolo"]) },
 		},
 	],
 };
