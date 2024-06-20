@@ -2,7 +2,7 @@ import { default as Prop } from "../src/props/Prop.js";
 import { default as Props } from "../src/props/Props.js";
 import { equals } from "htest.dev/check";
 
-class FakeClass {
+class FooClass {
 	static props = {};
 }
 
@@ -105,7 +105,7 @@ let props = {
 	},
 };
 
-let realProps = new Props(FakeClass, props);
+let realProps = new Props(FooClass, props);
 
 export default {
 	name: "Prop class",
