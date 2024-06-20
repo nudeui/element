@@ -25,7 +25,7 @@ export default {
 					expect: ["foo"],
 				},
 				{
-					name: "Object with props",
+					name: "Object literal with props",
 					args: [{ foo: {}, bar: {} }],
 					expect: ["foo", "bar"],
 				},
