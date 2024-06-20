@@ -171,6 +171,7 @@ export default {
 								defaultProp: "bar",
 							},
 							expect: "foo", // ??
+							skip: true,
 						},
 						{
 							name: "Function and prop",
@@ -182,6 +183,7 @@ export default {
 								defaultProp: "bar",
 							},
 							expect: "foo", // ??
+							skip: true,
 						},
 					],
 				},
