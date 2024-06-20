@@ -70,6 +70,17 @@ export default {
 					},
 					expect: ["foo"],
 				},
+				{
+					name: "Ignore empty reflections",
+					arg: class {
+						static props = {
+							foo: {
+								reflect: "",
+							},
+						};
+					},
+					expect: [],
+				},
 			],
 		},
 	],
