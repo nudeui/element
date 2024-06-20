@@ -187,6 +187,42 @@ export default {
 						},
 					],
 				},
+				{
+					name: "Reflections",
+					run (spec) {
+						let prop = new Prop("foo", spec);
+						return prop.reflect;
+					},
+					tests: [
+						{
+							name: "By default, props are reflected",
+							arg: {},
+							expect: true,
+						},
+						{
+							name: "Disable reflection",
+							arg: {
+								reflect: false,
+							},
+							expect: false,
+						},
+						{
+							name: "Computed props are not reflected by default",
+							arg: {
+								get () {},
+							},
+							expect: false,
+						},
+						{
+							name: "Reflected computed prop",
+							arg: {
+								get () {},
+								reflect: true,
+							},
+							expect: true,
+						},
+					],
+				},
 			],
 		},
 	],
