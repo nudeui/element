@@ -116,14 +116,7 @@ export default {
 				return new Prop(name, props[name]);
 			},
 			check (actual, expected) {
-				let keys = Object.keys(expected);
-				for (let key of keys) {
-					if (!equals(actual[key], expected[key])) {
-						return false;
-					}
-				}
-
-				return true;
+				return Object.keys(expected).every(key => equals(actual[key], expected[key]));
 			},
 			tests: [
 				{
