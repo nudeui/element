@@ -151,10 +151,10 @@ export default {
 							name: "Function",
 							arg: {
 								default () {
-									return "foo";
+									return 42;
 								},
 							},
-							expect: "foo",
+							expect: 42,
 						},
 						{
 							name: "Prop",
@@ -178,11 +178,11 @@ export default {
 							description: "What should be used if both default and defaultProp are specified? If defaultProp, where should default go?",
 							arg: {
 								default () {
-									return "foo";
+									return 42;
 								},
 								defaultProp: "bar",
 							},
-							expect: "foo", // ??
+							expect: 42, // ??
 							skip: true,
 						},
 					],
