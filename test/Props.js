@@ -13,10 +13,7 @@ export default {
 				let props = new Props(Class);
 				props.add(...args);
 
-				return props;
-			},
-			check (actual, expected) {
-				return expected.every(name => actual.has(name));
+				return [...props.keys()];
 			},
 			tests: [
 				{
