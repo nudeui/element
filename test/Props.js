@@ -83,5 +83,39 @@ export default {
 				},
 			],
 		},
+		{
+			name: "Static add()",
+			tests: [
+				{
+					name: "Class property",
+					run (name) {
+						let Class = class {
+							static props = {};
+						};
+
+						Props.add(Class, name, {});
+
+						return Class.props;
+					},
+					arg: "foo",
+					expect: { foo: {} },
+				},
+				{
+					name: "Prop",
+					run (name) {
+						let Class = class {
+							static props = {};
+						};
+
+						Class.props = new Props(Class);
+						Props.add(Class, name, {});
+
+						return Class.props.get(name).name;
+					},
+					arg: "foo",
+					expect: "foo",
+				},
+			],
+		},
 	],
 };
