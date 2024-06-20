@@ -4,6 +4,20 @@ export default {
 	name: "Props class",
 	tests: [
 		{
+			name: "Class with a static props property",
+			run (Class) {
+				let props = new Props(Class);
+				return [...props.keys()];
+			},
+			arg: class {
+				static props = {
+					foo: {},
+					bar: {},
+				};
+			},
+			expect: ["foo", "bar"],
+		},
+		{
 			name: "add()",
 			run (...args) {
 				let Class = class {
