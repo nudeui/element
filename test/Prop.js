@@ -1,5 +1,6 @@
 import { default as Prop } from "../src/props/Prop.js";
 import { default as Props } from "../src/props/Props.js";
+import { resolveValue } from "../src/util.js";
 
 export default {
 	name: "Prop class",
@@ -114,6 +115,75 @@ export default {
 									expect: undefined,
 								},
 							],
+						},
+					],
+				},
+				{
+					name: "Defaults",
+					run (spec) {
+						let Class = class {
+							static props = {
+								foo: spec,
+								bar: {
+									default: "bar",
+								},
+							};
+						};
+
+						let props = new Props(Class);
+
+						let ret = props.get("foo").default;
+						if (ret instanceof Prop) {
+							ret = ret.default;
+						}
+
+						return resolveValue(ret, []);
+					},
+					tests: [
+						{
+							name: "Value",
+							arg: {
+								default: "foo",
+							},
+							expect: "foo",
+						},
+						{
+							name: "Function",
+							arg: {
+								default () {
+									return 42;
+								},
+							},
+							expect: 42,
+						},
+						{
+							name: "Prop",
+							arg: {
+								defaultProp: "bar",
+							},
+							expect: "bar",
+						},
+						{
+							name: "Value and prop",
+							description: "What should be used if both default and defaultProp are specified? If defaultProp, where should default go?",
+							arg: {
+								default: "foo",
+								defaultProp: "bar",
+							},
+							expect: "foo", // ??
+							skip: true,
+						},
+						{
+							name: "Function and prop",
+							description: "What should be used if both default and defaultProp are specified? If defaultProp, where should default go?",
+							arg: {
+								default () {
+									return 42;
+								},
+								defaultProp: "bar",
+							},
+							expect: 42, // ??
+							skip: true,
 						},
 					],
 				},
