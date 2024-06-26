@@ -123,7 +123,7 @@ export default class Props extends Map {
 		// Fire propchange event
 		let eventNames = [ "propchange", ...(prop.eventNames ?? []) ];
 		for (let eventName of eventNames) {
-			this.firePropChangedEvent(element, eventName, {
+			this.firePropChangeEvent(element, eventName, {
 				name: prop.name,
 				prop,
 				detail: change
@@ -131,7 +131,7 @@ export default class Props extends Map {
 		}
 	}
 
-	firePropChangedEvent (element, eventName, eventProps) {
+	firePropChangeEvent (element, eventName, eventProps) {
 		let event = new PropChangeEvent(eventName, eventProps);
 
 		if (element.isConnected) {
