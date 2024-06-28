@@ -236,28 +236,24 @@ export default {
 							expect: ["foo", "foo"],
 						},
 						{
-							name: `reflect: true`,
 							arg: {
 								reflect: true,
 							},
 							expect: ["foo", "foo"],
 						},
 						{
-							name: `reflect: false`,
 							arg: {
 								reflect: false,
 							},
 							expect: [null, null],
 						},
 						{
-							name: `reflect: "bar"`,
 							arg: {
 								reflect: "bar",
 							},
 							expect: ["bar", "bar"],
 						},
 						{
-							name: `reflect: {from: "bar", to: "bar"}`,
 							arg: {
 								reflect: {
 									from: "bar",
@@ -267,7 +263,6 @@ export default {
 							expect: ["bar", "bar"],
 						},
 						{
-							name: `reflect: {from: "bar", to: "baz"}`,
 							arg: {
 								reflect: {
 									from: "bar",
@@ -277,7 +272,6 @@ export default {
 							expect: ["bar", "baz"],
 						},
 						{
-							name: `reflect: {from: "bar"}`,
 							arg: {
 								reflect: {
 									from: "bar",
@@ -286,7 +280,6 @@ export default {
 							expect: ["bar", null],
 						},
 						{
-							name: `reflect: {to: "baz"}`,
 							arg: {
 								reflect: {
 									to: "baz",
@@ -295,7 +288,6 @@ export default {
 							expect: [null, "baz"],
 						},
 						{
-							name: `reflect: {from: true}`,
 							arg: {
 								reflect: {
 									from: true,
@@ -304,7 +296,6 @@ export default {
 							expect: ["foo", null],
 						},
 						{
-							name: `reflect: {to: true}`,
 							arg: {
 								reflect: {
 									to: true,
@@ -313,7 +304,6 @@ export default {
 							expect: [null, "foo"],
 						},
 						{
-							name: `reflect: {from: false}`,
 							arg: {
 								reflect: {
 									from: false,
@@ -322,7 +312,6 @@ export default {
 							expect: [null, null],
 						},
 						{
-							name: `reflect: {to: false}`,
 							arg: {
 								reflect: {
 									to: false,
@@ -331,7 +320,6 @@ export default {
 							expect: [null, null],
 						},
 						{
-							name: `reflect: {from: true, to: "baz"}`,
 							arg: {
 								reflect: {
 									from: true,
@@ -341,7 +329,6 @@ export default {
 							expect: ["foo", "baz"],
 						},
 						{
-							name: `reflect: {from: "bar", to: true}`,
 							arg: {
 								reflect: {
 									from: "bar",
@@ -351,7 +338,6 @@ export default {
 							expect: ["bar", "foo"],
 						},
 						{
-							name: `reflect: {from: false, to: "baz"}`,
 							arg: {
 								reflect: {
 									from: false,
@@ -361,7 +347,6 @@ export default {
 							expect: [null, "baz"],
 						},
 						{
-							name: `reflect: {from: "bar", to: false}`,
 							arg: {
 								reflect: {
 									from: "bar",
@@ -371,7 +356,6 @@ export default {
 							expect: ["bar", null],
 						},
 						{
-							name: `reflect: {from: false, to: false}`,
 							arg: {
 								reflect: {
 									from: false,
@@ -381,7 +365,6 @@ export default {
 							expect: [null, null],
 						},
 						{
-							name: `reflect: {from: true, to: true}`,
 							arg: {
 								reflect: {
 									from: true,
@@ -391,7 +374,6 @@ export default {
 							expect: ["foo", "foo"],
 						},
 						{
-							name: `reflect: {from: true, to: false}`,
 							arg: {
 								reflect: {
 									from: true,
@@ -401,7 +383,6 @@ export default {
 							expect: ["foo", null],
 						},
 						{
-							name: `reflect: {from: false, to: true}`,
 							arg: {
 								reflect: {
 									from: false,
