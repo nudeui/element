@@ -223,6 +223,176 @@ export default {
 						},
 					],
 				},
+				{
+					name: "fromAttribute() / toAttribute()",
+					run (spec) {
+						let prop = new Prop("foo", spec);
+						return [prop.fromAttribute, prop.toAttribute];
+					},
+					tests: [
+						{
+							name: "By default, props are reflected",
+							arg: {},
+							expect: ["foo", "foo"],
+						},
+						{
+							arg: {
+								reflect: true,
+							},
+							expect: ["foo", "foo"],
+						},
+						{
+							arg: {
+								reflect: false,
+							},
+							expect: [null, null],
+						},
+						{
+							arg: {
+								reflect: "bar",
+							},
+							expect: ["bar", "bar"],
+						},
+						{
+							arg: {
+								reflect: {
+									from: "bar",
+									to: "bar",
+								},
+							},
+							expect: ["bar", "bar"],
+						},
+						{
+							arg: {
+								reflect: {
+									from: "bar",
+									to: "baz",
+								},
+							},
+							expect: ["bar", "baz"],
+						},
+						{
+							arg: {
+								reflect: {
+									from: "bar",
+								},
+							},
+							expect: ["bar", null],
+						},
+						{
+							arg: {
+								reflect: {
+									to: "baz",
+								},
+							},
+							expect: [null, "baz"],
+						},
+						{
+							arg: {
+								reflect: {
+									from: true,
+								},
+							},
+							expect: ["foo", null],
+						},
+						{
+							arg: {
+								reflect: {
+									to: true,
+								},
+							},
+							expect: [null, "foo"],
+						},
+						{
+							arg: {
+								reflect: {
+									from: false,
+								},
+							},
+							expect: [null, null],
+						},
+						{
+							arg: {
+								reflect: {
+									to: false,
+								},
+							},
+							expect: [null, null],
+						},
+						{
+							arg: {
+								reflect: {
+									from: true,
+									to: "baz",
+								},
+							},
+							expect: ["foo", "baz"],
+						},
+						{
+							arg: {
+								reflect: {
+									from: "bar",
+									to: true,
+								},
+							},
+							expect: ["bar", "foo"],
+						},
+						{
+							arg: {
+								reflect: {
+									from: false,
+									to: "baz",
+								},
+							},
+							expect: [null, "baz"],
+						},
+						{
+							arg: {
+								reflect: {
+									from: "bar",
+									to: false,
+								},
+							},
+							expect: ["bar", null],
+						},
+						{
+							arg: {
+								reflect: {
+									from: false,
+									to: false,
+								},
+							},
+							expect: [null, null],
+						},
+						{
+							arg: {
+								reflect: {
+									from: true,
+									to: true,
+								},
+							},
+							expect: ["foo", "foo"],
+						},
+						{
+							arg: {
+								reflect: {
+									from: true,
+									to: false,
+								},
+							},
+							expect: ["foo", null],
+						},
+						{
+							arg: {
+								reflect: {
+									from: false,
+									to: true,
+								},
+							},
+							expect: [null, "foo"],
+						},
+					],
+				},
 			],
 		},
 	],
