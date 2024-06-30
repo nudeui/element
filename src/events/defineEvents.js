@@ -118,7 +118,7 @@ export default function defineEvents (Class, events = Class.events) {
 				let value = this[propName];
 
 				if (value !== undefined) {
-					Class.props.firePropChangedEvent(this, eventName, {
+					Class.props.firePropChangeEvent(this, eventName, {
 						name: propName,
 						prop: Class.props.get(propName),
 					});
