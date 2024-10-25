@@ -12,6 +12,8 @@ export default class Props extends Map {
 	 */
 	dependents = {};
 
+	#initialized = false;
+
 	/**
 	 *
 	 * @param {HTMLElement} Class The class to define props for
@@ -134,7 +136,7 @@ export default class Props extends Map {
 	firePropChangeEvent (element, eventName, eventProps) {
 		let event = new PropChangeEvent(eventName, eventProps);
 
-		if (element.isConnected) {
+		if (element.isConnected && this.#initialized) {
 			element.dispatchEvent?.(event);
 		}
 		else {
@@ -160,6 +162,8 @@ export default class Props extends Map {
 			prop.initializeFor(element);
 		}
 
+		this.#initialized = true;
+
 		// Dispatch any events that were queued
 		let queue = this.eventDispatchQueue.get(element);
 
@@ -170,6 +174,10 @@ export default class Props extends Map {
 
 			this.eventDispatchQueue.delete(element);
 		}
+	}
+
+	get initialized () {
+		return this.#initialized;
 	}
 
 	/**
