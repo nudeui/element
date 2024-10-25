@@ -50,14 +50,14 @@ function retargetEvent (name, from) {
 			target.addEventListener(type, listener);
 		}
 
-	}
+	};
 }
 
 export default function defineEvents (Class, events = Class.events) {
 	let ret = {
 		setup: [],
 		init: [],
-	}
+	};
 
 	let propchange = Object.entries(events)
 		.filter(([name, options]) => options.propchange)
@@ -94,8 +94,8 @@ export default function defineEvents (Class, events = Class.events) {
 				},
 				reflect: {
 					from: true,
-				}
-			}
+				},
+			},
 		]);
 
 	if (eventProps.length > 0) {
@@ -141,7 +141,7 @@ export default function defineEvents (Class, events = Class.events) {
 					}
 				}
 			});
-		})
+		});
 	}
 
 	for (let [name, options] of Object.entries(events)) {

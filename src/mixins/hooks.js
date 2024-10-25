@@ -39,7 +39,7 @@ export default class Hooks {
 
 		if (callback) {
 			this[name] ??= [];
-			this[name][first? "unshift" : "push"](callback);
+			this[name][first ? "unshift" : "push"](callback);
 		}
 	}
 
@@ -53,7 +53,7 @@ export default class Hooks {
 			return;
 		}
 
-		this[name].forEach(function(callback) {
+		this[name].forEach(function (callback) {
 			callback.call(env?.context ?? env, env);
 		});
 	}

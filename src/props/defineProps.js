@@ -23,7 +23,7 @@ export default function defineProps (Class, props = Class[propsSymbol] ?? Class.
 	Class.prototype.attributeChangedCallback = function (name, oldValue, value) {
 		this.constructor.props.attributeChanged(this, name, oldValue, value);
 		_attributeChangedCallback?.call(this, name, oldValue, value);
-	}
+	};
 
 	// FIXME how to combine with existing observedAttributes?
 	if (!Object.hasOwn(Class, "observedAttributes")) {
@@ -45,7 +45,7 @@ export default function defineProps (Class, props = Class[propsSymbol] ?? Class.
 			// Ignore mutations on these attributes
 			ignoredAttributes () {
 				return new Set();
-			}
+			},
 		},
 	});
 }

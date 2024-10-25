@@ -18,7 +18,7 @@ export function defineLazyProperty (object, name, options) {
 
 	let setter = function (value) {
 		Object.defineProperty(this, name, { value, writable, configurable, enumerable });
-	}
+	};
 	Object.defineProperty(object, name, {
 		get () {
 			let value = get.call(this);

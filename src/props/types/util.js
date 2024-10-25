@@ -47,7 +47,7 @@ export function split (value, { separator = ",", pairs = defaultPairs } = {}) {
 	let lastIndex = 0;
 	let ignoreUntil;
 
-	for (let i = 0; i<matches.length; i++) {
+	for (let i = 0; i < matches.length; i++) {
 		let match = matches[i];
 		let index = match.index;
 		let matched = match[0];
@@ -71,7 +71,7 @@ export function split (value, { separator = ",", pairs = defaultPairs } = {}) {
 			let closingPair = pairs.ignore[matched];
 
 			// Do we have its closing pair in the string?
-			if (matches.slice(i+1).find(m => m[0] === closingPair)) {
+			if (matches.slice(i + 1).find(m => m[0] === closingPair)) {
 				ignoreUntil = closingPair;
 			}
 		}
@@ -80,7 +80,7 @@ export function split (value, { separator = ",", pairs = defaultPairs } = {}) {
 			let closingPair = pairs.nest[matched];
 
 			// Do we have its closing pair in the string?
-			if (matches.slice(i+1).find(m => m[0] === closingPair)) {
+			if (matches.slice(i + 1).find(m => m[0] === closingPair)) {
 				stack.push(matched);
 			}
 		}

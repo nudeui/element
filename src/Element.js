@@ -81,6 +81,6 @@ const Self = class NudeElement extends HTMLElement {
 
 		return this[classInitialized] = true;
 	}
-}
+};
 
 export default Self;

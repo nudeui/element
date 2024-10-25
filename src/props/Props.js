@@ -126,7 +126,7 @@ export default class Props extends Map {
 			this.firePropChangeEvent(element, eventName, {
 				name: prop.name,
 				prop,
-				detail: change
+				detail: change,
 			});
 		}
 	}

@@ -48,6 +48,6 @@ export default {
 			name: "Unterminated quotes",
 			arg: `a ", b, c`,
 			expect: [`a "`, "b", "c"],
-		}
-	]
-}
+		},
+	],
+};

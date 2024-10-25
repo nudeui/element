@@ -76,7 +76,7 @@ let Self = class Prop {
 	}
 
 	// Just calls equals() by default but can be overridden
-	equals(a, b) {
+	equals (a, b) {
 		if (this.spec.equals) {
 			return this.spec.equals(a, b);
 		}
@@ -307,6 +307,6 @@ let Self = class Prop {
 		return this.dependencies.has(prop.name)
 		       || (this.defaultProp === prop && element.props[this.name] === undefined);
 	}
-}
+};
 
 export default Self;
