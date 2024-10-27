@@ -9,8 +9,8 @@
     "eslint:fix": "npx eslint . --fix",
     "build:apidocs": "npx typedoc",
     "watch:apidocs": "npx typedoc --watch --preserveWatchOutput",
-    "build": "npx build:apidocs",
-    "watch": "npx watch:apidocs",
+    "build": "npm run build:apidocs",
+    "watch": "npm run watch:apidocs",
     "test": "npx htest ./test",
     "release": "npx release-it"
   },
