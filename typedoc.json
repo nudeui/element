@@ -14,5 +14,5 @@
 	"excludeReferences": true,
 	"includeVersion": true,
 	"readme": "API.md",
-	"customCss": "api.css",
+	"customCss": "api.css"
 }
