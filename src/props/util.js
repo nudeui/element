@@ -14,20 +14,15 @@ export function inferDependencies (fn) {
 }
 
 /**
- * Sort a map based on an arbitrary comparison function.
- * @param {Map} map - The map to sort
+ * Sort an object literal based on an arbitrary comparison function.
+ * @param {object} obj - The object to sort
  * @param {Function} fn - Comparison function
- * @returns {Map} New map with the entries sorted
+ * @returns {object} New object with the entries sorted
  */
-export function sortMap (map, fn) {
-	if (!map) {
-		return map;
+export function sortObject (obj, fn) {
+	if (!obj) {
+		return obj;
 	}
 
-	let ret = new Map();
-	for (let [key, value] of [...map.entries()].sort(fn)) {
-		ret.set(key, value);
-	}
-
-	return ret;
+	return Object.fromEntries(Object.entries(obj).sort(fn));
 }
