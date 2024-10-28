@@ -18,8 +18,9 @@ Try it and please report issues and provide feedback!
 - Easy reactive attribute-property reflection (_props_)
 - Automatic dependency tracking (+ manual overrides)
 - Reactive dynamic default values, just like native HTML elements (e.g. having `value` default to `(this.min + this.max) / 2` in a slider)
-- Events that can properly create `oneventname` attributes, just like native HTML elements
-- Accessible, form associated elements with a sigle line of code
+- Events that properly create `oneventname` attributes and props, just like native HTML elements
+- Accessible, form associated elements with a single line of code
+- No build process required, just import and use
 
 ## Usage
 

@@ -1,6 +1,6 @@
 {
   "name": "nude-element",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Composable web component helpers",
   "main": "index.js",
   "type": "module",
@@ -9,7 +9,10 @@
     "eslint:fix": "npx eslint . --fix",
     "build:apidocs": "npx typedoc",
     "watch:apidocs": "npx typedoc --watch --preserveWatchOutput",
-    "test": "npx htest ./test"
+    "build": "npm run build:apidocs",
+    "watch": "npm run watch:apidocs",
+    "test": "npx htest ./test",
+    "release": "npx release-it"
   },
   "exports": {
     ".": "./src/index.js",
