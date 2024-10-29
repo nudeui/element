@@ -13,6 +13,8 @@ let Self = class Prop {
 	 */
 	props;
 
+	#initialized = false;
+
 	constructor (name, spec, props) {
 		if (spec instanceof Prop && name === spec.name) {
 			return spec;
@@ -119,6 +121,8 @@ let Self = class Prop {
 			// Is not set and its default is not another prop
 			this.changed(element, {source: "default", element});
 		}
+
+		this.#initialized = true;
 	}
 
 	// Define the necessary getters and setters
@@ -306,6 +310,10 @@ let Self = class Prop {
 
 		return this.dependencies.has(prop.name)
 		       || (this.defaultProp === prop && element.props[this.name] === undefined);
+	}
+
+	get initialized () {
+		return this.#initialized;
 	}
 };
 

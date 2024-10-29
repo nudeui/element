@@ -160,7 +160,7 @@ export default class Props extends Map {
 	firePropChangeEvent (element, eventName, eventProps) {
 		let event = new PropChangeEvent(eventName, eventProps);
 
-		if (element.isConnected) {
+		if (element.isConnected && eventProps.prop.initialized) {
 			element.dispatchEvent?.(event);
 		}
 		else {
