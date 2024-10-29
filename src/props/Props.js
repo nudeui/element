@@ -76,7 +76,7 @@ export default class Props extends Map {
 				dependents[name]?.add(prop);
 
 				// Dependent props should come after the prop they depend on
-				if (keyIndices[name] < keyIndices[prop.name]) {
+				if (keyIndices[name] > keyIndices[prop.name]) {
 					// Swap the order of the props
 					[keyIndices[name], keyIndices[prop.name]] = [keyIndices[prop.name], keyIndices[name]];
 					sort = true;
@@ -84,13 +84,39 @@ export default class Props extends Map {
 			}
 		}
 
-		if (sort) {
+		if (!sort) {
+			this.dependents = dependents;
+		}
+		else {
 			// Sort dependency graph using the new order in keyIndices
 			// TODO put props with no dependencies first
 			// TODO do we need a topological sort?
 			this.dependents = sortObject(dependents, ([a], [b]) => {
 				return keyIndices[a] - keyIndices[b];
 			});
+
+			// Reorder the props according to their order in the dependency graph
+			// so that every time we use this.values() or this.keys(), the result is in the correct order
+			for (let propName of Object.keys(this.dependents)) {
+				let prop = this.get(propName);
+				this.delete(propName);
+				this.set(propName, prop);
+			}
+
+			// Reorder dependents of every prop according to the dependency graph built
+			for (let [name, dependents] of Object.entries(this.dependents)) {
+				if (dependents.size < 2) {
+					// Nothing to reorder
+					continue;
+				}
+
+				let props = [...dependents]
+					.map(prop => [prop, keyIndices[prop.name]])
+					.sort((a, b) => a[1] - b[1])
+					.map(([prop, i]) => prop);
+
+				this.dependents[name] = new Set(props);
+			}
 		}
 	}
 
