@@ -37,11 +37,19 @@ const Self = class NudeElement extends HTMLElement {
 
 		if (this.constructor.globalStyleSheet) {
 			let rootNode = this.getRootNode();
+			let stylesheet = rootNode.querySelector(`style[data-for="${this.constructor.tagName}"]`);
 
-			if (!rootNode.querySelector(`style[data-for="${this.constructor.tagName}"]`)) {
+			if (!stylesheet) {
 				let root = rootNode.nodeType === Node.DOCUMENT_NODE ? rootNode.head : rootNode;
-				root.append(this.constructor.globalStyleSheet.cloneNode(true));
+				stylesheet = this.constructor.globalStyleSheet.cloneNode(true);
+				root.append(stylesheet);
 			}
+
+			stylesheet.onload = () => {
+				let name = `${this.constructor.tagName}-global-style-ready`;
+				(rootNode.body ?? rootNode).classList.add(name);
+				this.constructor.hooks.run(name, this);
+			};
 		}
 
 		this.constructor.hooks.run("connected", this);
@@ -74,7 +82,24 @@ const Self = class NudeElement extends HTMLElement {
 		if (this.globalStyle) {
 			this.globalStyleSheet = document.createElement("style");
 			this.globalStyleSheet.dataset.for = this.tagName;
-			this.globalStyleSheet.textContent = `@import url("${this.globalStyle}")`;
+
+			let styles = Array.isArray(this.globalStyle) ? this.globalStyle : [this.globalStyle];
+			let imports = [];
+			let rules = [];
+			styles.forEach(style => {
+				// Try converting `style` to a URL and using it inside an `@import` rule; otherwise, use it as-is
+				try {
+					let url = new URL(style);
+					imports.push(`@import url("${ url.href }");`);
+				}
+				catch {
+					rules.push(style);
+				}
+
+			});
+
+			// Place `@import` rules at the top of the stylesheet, preserving the original order of the URLs
+			this.globalStyleSheet.textContent = [...imports, ...rules].join("\n");
 		}
 
 		this.hooks.run("setup", this);
