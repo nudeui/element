@@ -35,15 +35,6 @@ const Self = class NudeElement extends HTMLElement {
 			this[instanceInitialized] = true;
 		}
 
-		if (this.constructor.globalStyleSheet) {
-			let rootNode = this.getRootNode();
-
-			if (!rootNode.querySelector(`style[data-for="${this.constructor.tagName}"]`)) {
-				let root = rootNode.nodeType === Node.DOCUMENT_NODE ? rootNode.head : rootNode;
-				root.append(this.constructor.globalStyleSheet.cloneNode(true));
-			}
-		}
-
 		this.constructor.hooks.run("connected", this);
 	}
 
@@ -72,9 +63,19 @@ const Self = class NudeElement extends HTMLElement {
 		}
 
 		if (this.globalStyle) {
-			this.globalStyleSheet = document.createElement("style");
-			this.globalStyleSheet.dataset.for = this.tagName;
-			this.globalStyleSheet.textContent = `@import url("${this.globalStyle}")`;
+			let link = document.createElement("link");
+
+			// Initiate the download immediately
+			link.rel = "preload";
+			link.as = "style";
+			link.href = this.globalStyle;
+
+			link.onload = () => {
+				// Once loaded, apply the styles
+				link.rel = "stylesheet";
+			};
+
+			document.head.append(link);
 		}
 
 		this.hooks.run("setup", this);
