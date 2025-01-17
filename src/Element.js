@@ -63,12 +63,12 @@ const Self = class NudeElement extends HTMLElement {
 		}
 
 		if (this.globalStyle) {
-			let link = document.createElement("link");
-
 			// Initiate the download immediately
-			link.rel = "preload";
-			link.as = "style";
-			link.href = this.globalStyle;
+			let link = Object.assign(document.createElement("link"), {
+				rel: "preload",
+				as: "style",
+				href: this.globalStyle,
+			});
 
 			link.onload = () => {
 				// Once loaded, apply the styles
