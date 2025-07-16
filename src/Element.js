@@ -7,8 +7,8 @@ import defineEvents from "./events/defineEvents.js";
 import defineSlots from "./slots/defineSlots.js";
 import Hooks from "./mixins/hooks.js";
 
-let instanceInitialized = Symbol("instanceInitialized");
-let classInitialized = Symbol("classInitialized");
+const instanceInitialized = Symbol("instanceInitialized");
+const classInitialized = Symbol("classInitialized");
 
 const Self = class NudeElement extends HTMLElement {
 	constructor () {
