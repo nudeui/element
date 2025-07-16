@@ -2,6 +2,7 @@ import { defineLazyProperty } from "./util.js";
 
 export default function defineMixin (Class, config) {
 	if (Array.isArray(config)) {
+		// Multiple mixins
 		return config.map(f => defineMixin(Class, f));
 	}
 
@@ -15,6 +16,7 @@ export default function defineMixin (Class, config) {
 	}
 
 	if (Class.hooks) {
+		// Class already supports hooks
 		if (Class.hooks.add) {
 			Class.hooks.add(hooks);
 		}
