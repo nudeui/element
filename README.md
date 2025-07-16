@@ -200,3 +200,12 @@ Read more:
 - [Events](src/events/)
 - [Form-associated elements](src/formAssociated/)
 - [Mixins](src/mixins/)
+
+
+## NudeElement Hooks
+
+- `setup`: Runs once per class, before any element is constructed
+- `start`: Runs on element constructor
+- `init`: Runs when element is connected for the first time
+- `constructed`: Runs after element constructor
+- `disconnected`: Runs when element is disconnected
