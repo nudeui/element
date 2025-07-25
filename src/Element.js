@@ -1,10 +1,12 @@
 /**
  * Base class for all elements
  */
+import defineMixin from "./mixins/defineMixin.js";
 import defineProps from "./props/defineProps.js";
 import defineFormAssociated from "./formAssociated.js/defineFormAssociated.js";
 import defineEvents from "./events/defineEvents.js";
-import defineSlots from "./slots/defineSlots.js";
+
+import { shadowStyles, globalStyles } from "./styles/index.js";
 import Hooks from "./mixins/hooks.js";
 
 const instanceInitialized = Symbol("instanceInitialized");
@@ -24,6 +26,7 @@ const Self = class NudeElement extends HTMLElement {
 			this.addEventListener("propchange", this.propChangedCallback);
 		}
 
+		// We use a microtask so that this executes after the subclass constructor has run as well
 		Promise.resolve().then(this.constructor.hooks.run("constructed", this));
 	}
 
@@ -62,13 +65,18 @@ const Self = class NudeElement extends HTMLElement {
 			defineFormAssociated(this);
 		}
 
-		if (this.globalStyle) {
-			let link = Object.assign(document.createElement("link"), {
-				rel: "stylesheet",
-				href: this.globalStyle,
-			});
 
-			document.head.append(link);
+
+		if (this.styles) {
+			defineMixin(this, shadowStyles);
+		}
+
+		if (this.globalStyle) {
+			this.globalStyles ??= this.globalStyle;
+		}
+
+		if (this.globalStyles) {
+			defineMixin(this, globalStyles);
 		}
 
 		this.hooks.run("setup", this);

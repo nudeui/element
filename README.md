@@ -207,5 +207,5 @@ Read more:
 - `setup`: Runs once per class, before any element is constructed
 - `start`: Runs on element constructor
 - `init`: Runs when element is connected for the first time
-- `constructed`: Runs after element constructor
+- `constructed`: Runs after element constructor (async)
 - `disconnected`: Runs when element is disconnected
