@@ -1,14 +1,10 @@
 /**
  * Mixin for adding light DOM styles
  */
-import { adoptCSS, toArray, fetchCSS } from "./util.js";
+import { adoptCSS, fetchCSS } from "./util.js";
 
 export default {
-	async setup () {
-		if (this.globalStyles instanceof Promise) {
-			this.globalStyles = await this.globalStyles;
-		}
-
+	setup () {
 		if (!this.globalStyles) {
 			return;
 		}
