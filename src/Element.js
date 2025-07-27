@@ -65,8 +65,6 @@ const Self = class NudeElement extends HTMLElement {
 			defineFormAssociated(this);
 		}
 
-
-
 		if (this.styles) {
 			defineMixin(this, shadowStyles);
 		}
