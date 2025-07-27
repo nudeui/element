@@ -202,10 +202,14 @@ Read more:
 - [Mixins](src/mixins/)
 
 
-## NudeElement Hooks
+## Known Hooks
 
-- `setup`: Runs once per class, before any element is constructed
+These hooks are automatically managed when you use the `NudeElement` class.
+If you choose to import mixins directly, you need to manage when to call them yourself.
+
+- `prepare`: Runs once per class, as soon as a mixin is added
+- `setup`: Runs once per class, before any element is fully constructed
 - `start`: Runs on element constructor
-- `init`: Runs when element is connected for the first time
 - `constructed`: Runs after element constructor (async)
+- `init`: Runs when element is connected for the first time
 - `disconnected`: Runs when element is disconnected

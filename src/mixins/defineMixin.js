@@ -7,12 +7,16 @@ export default function defineMixin (Class, config) {
 	}
 
 	config = typeof config === "function" ? { init: config } : config;
-	let {properties, ...hooks} = config;
+	let {properties, prepare, ...hooks} = config;
 
 	if (properties) {
 		for (let name in properties) {
 			defineLazyProperty(Class.prototype, name, properties[name]);
 		}
+	}
+
+	if (prepare) {
+		prepare.call(Class);
 	}
 
 	if (Class.hooks) {

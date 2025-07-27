@@ -4,7 +4,7 @@
 import { adoptCSS, fetchCSS } from "./util.js";
 
 export default {
-	setup () {
+	prepare () {
 		if (!this.globalStyles) {
 			return;
 		}
