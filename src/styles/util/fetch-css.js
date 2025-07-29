@@ -1,4 +1,3 @@
-
 /**
  * We store promises of fetched styles here to avoid fetching the same style multiple times
  * @type {Record<string, string | Promise<string>>}
@@ -34,7 +33,7 @@ export function fetchCSS (style, baseUrl = defaultBaseURL) {
 		if (!css) {
 			// Haven't fetched yet
 			css = fetchedStyles[fullUrl] = fetch(fullUrl).then(response => response.text());
-			css.then(css => fetchedStyles[fullUrl] = css);
+			css.then(css => (fetchedStyles[fullUrl] = css));
 		}
 	}
 

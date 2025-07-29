@@ -9,7 +9,6 @@ export const defaultPairs = {
 		// "'": "'",
 		// "`": "`",
 	},
-
 };
 
 export function regexEscape (string) {
@@ -28,9 +27,16 @@ export function split (value, { separator = ",", pairs = defaultPairs } = {}) {
 	// Make whitespace optional and flexible, unless the separator consists entirely of whitespace
 	separator = separator.trim();
 	let isSeparatorWhitespace = !separator;
-	let separatorRegex = isSeparatorWhitespace ? /\s+/g : RegExp(regexEscape(separator).replace(/^\s*|\s*$/g, "\\s*"), "g");
+	let separatorRegex = isSeparatorWhitespace
+		? /\s+/g
+		: RegExp(regexEscape(separator).replace(/^\s*|\s*$/g, "\\s*"), "g");
 
-	let pairStrings = new Set([...Object.keys(pairs.nest), ...Object.values(pairs.nest), ...Object.keys(pairs.ignore), ...Object.values(pairs.ignore)]);
+	let pairStrings = new Set([
+		...Object.keys(pairs.nest),
+		...Object.values(pairs.nest),
+		...Object.keys(pairs.ignore),
+		...Object.values(pairs.ignore),
+	]);
 	let pairRegex = RegExp([...pairStrings].map(regexEscape).join("|"), "g");
 
 	if (!pairRegex.test(value)) {
@@ -38,7 +44,9 @@ export function split (value, { separator = ",", pairs = defaultPairs } = {}) {
 		return value.trim().split(separatorRegex);
 	}
 
-	let invertedNestPairs = Object.fromEntries(Object.entries(pairs.nest).map(([start, end]) => [end, start]));
+	let invertedNestPairs = Object.fromEntries(
+		Object.entries(pairs.nest).map(([start, end]) => [end, start]),
+	);
 	let splitter = RegExp([separatorRegex.source, pairRegex.source].join("|"), "g");
 	let stack = [];
 	let items = [];

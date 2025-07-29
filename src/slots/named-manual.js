@@ -28,7 +28,7 @@ export function assign (child, slots) {
 
 		if (!isAssigned) {
 			slot.assign(child);
-			slot.dispatchEvent(new Event("slotchange"), {bubbles: true});
+			slot.dispatchEvent(new Event("slotchange"), { bubbles: true });
 		}
 	}
 }
@@ -41,7 +41,7 @@ export function unassign (child, slots) {
 
 		if (isAssigned) {
 			slot.assign(...assignedNodes.filter(node => node !== child));
-			slot.dispatchEvent(new Event("slotchange"), {bubbles: true});
+			slot.dispatchEvent(new Event("slotchange"), { bubbles: true });
 		}
 	}
 }
@@ -52,7 +52,7 @@ export function slotsChanged (records) {
 	}
 }
 
-export default function (Class, options = {}) {
+export default function  (Class, options = {}) {
 	return {
 		init () {
 			if (this.shadowRoot?.slotAssignment !== "manual") {
@@ -64,8 +64,10 @@ export default function (Class, options = {}) {
 			mutationObserver ??= new MutationObserver(mutations => {
 				let slots = {};
 
-				let nodesToAssign = records.flatMap(r => r.type === "attributes" ? [r.target] : r.addedNodes);
-				let nodesToUnassign = records.flatMap(r => r.type === "attributes" ? [] : r.removedNodes);
+				let nodesToAssign = records.flatMap(r =>
+					r.type === "attributes" ? [r.target] : r.addedNodes);
+				let nodesToUnassign = records.flatMap(r =>
+					r.type === "attributes" ? [] : r.removedNodes);
 
 				for (let node of nodesToAssign) {
 					assign(node, slots);
@@ -80,7 +82,7 @@ export default function (Class, options = {}) {
 			mutationObserver.observe(this, {
 				childList: true,
 				attributes: true,
-				attributeFilter: ["slot"]
+				attributeFilter: ["slot"],
 			});
 
 			if (options.dynamicSlots) {
@@ -101,6 +103,6 @@ export default function (Class, options = {}) {
 				});
 				slotObserver.observe(this);
 			}
-		}
-	}
+		},
+	};
 }

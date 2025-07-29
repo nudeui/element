@@ -49,7 +49,7 @@ export class Slots {
 	}
 
 	/** Observe slot mutations */
-	observe(options) {
+	observe (options) {
 		this.#slotObserver ??= new SlotObserver(records => {
 			for (let r of records) {
 				this[r.type](r.target, r.oldName);
@@ -60,7 +60,7 @@ export class Slots {
 	}
 
 	/** Stop observing slot mutations */
-	unobserve() {
+	unobserve () {
 		this.#slotObserver?.disconnect();
 	}
 
@@ -70,7 +70,9 @@ export class Slots {
 		this.#all[name] ??= [];
 
 		// Insert, maintaining source order
-		let index = this.#all[name].findIndex(s => slot.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_PRECEDING);
+		let index = this.#all[name].findIndex(
+			s => slot.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_PRECEDING,
+		);
 		this.#all[name].splice(index + 1, 0, slot);
 		this[name] = this.#all[name][0];
 
@@ -97,8 +99,8 @@ export class Slots {
 	}
 }
 
-export default function (Class, options = {}) {
-	let {slotsProperty = "_slots", dynamicSlots = false} = options;
+export default function  (Class, options = {}) {
+	let { slotsProperty = "_slots", dynamicSlots = false } = options;
 
 	return {
 		start () {
@@ -111,6 +113,6 @@ export default function (Class, options = {}) {
 			if (dynamicSlots) {
 				slots.observe();
 			}
-		}
+		},
 	};
 }

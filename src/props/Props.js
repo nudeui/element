@@ -1,6 +1,4 @@
-import {
-	sortObject,
-} from "./util.js";
+import { sortObject } from "./util.js";
 import Prop from "./Prop.js";
 import PropChangeEvent from "./PropChangeEvent.js";
 
@@ -34,7 +32,7 @@ export default class Props extends Map {
 	add (props) {
 		if (arguments.length === 2) {
 			let [name, spec] = arguments;
-			return this.add({[name]: spec});
+			return this.add({ [name]: spec });
 		}
 
 		for (let [name, spec] of Object.entries(props)) {
@@ -78,7 +76,10 @@ export default class Props extends Map {
 				// Dependent props should come after the prop they depend on
 				if (keyIndices[name] > keyIndices[prop.name]) {
 					// Swap the order of the props
-					[keyIndices[name], keyIndices[prop.name]] = [keyIndices[prop.name], keyIndices[name]];
+					[keyIndices[name], keyIndices[prop.name]] = [
+						keyIndices[prop.name],
+						keyIndices[name],
+					];
 					sort = true;
 				}
 			}
@@ -130,7 +131,7 @@ export default class Props extends Map {
 		let propsFromAttribute = [...this.values()].filter(spec => spec.fromAttribute === name);
 
 		for (let prop of propsFromAttribute) {
-			prop.set(element, element.getAttribute(name), {source: "attribute", name, oldValue});
+			prop.set(element, element.getAttribute(name), { source: "attribute", name, oldValue });
 		}
 	}
 
@@ -147,7 +148,7 @@ export default class Props extends Map {
 		}
 
 		// Fire propchange event
-		let eventNames = [ "propchange", ...(prop.eventNames ?? []) ];
+		let eventNames = ["propchange", ...(prop.eventNames ?? [])];
 		for (let eventName of eventNames) {
 			this.firePropChangeEvent(element, eventName, {
 				name: prop.name,
@@ -213,4 +214,3 @@ export default class Props extends Map {
 		}
 	}
 }
-

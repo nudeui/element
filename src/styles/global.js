@@ -13,9 +13,14 @@ export default {
 		let Super;
 
 		for (let Class of supers) {
-			if (Object.hasOwn(Class, "globalStyles") && !Object.hasOwn(Class, "fetchedGlobalStyles")) {
+			if (
+				Object.hasOwn(Class, "globalStyles") &&
+				!Object.hasOwn(Class, "fetchedGlobalStyles")
+			) {
 				// Initiate fetching when the first element is constructed
-				let styles = Class.fetchedGlobalStyles = Array.isArray(Class.globalStyles) ? Class.globalStyles.slice() : [Class.globalStyles];
+				let styles = (Class.fetchedGlobalStyles = Array.isArray(Class.globalStyles)
+					? Class.globalStyles.slice()
+					: [Class.globalStyles]);
 				Class.roots = new WeakSet();
 
 				for (let i = 0; i < styles.length; i++) {
@@ -23,7 +28,6 @@ export default {
 				}
 			}
 		}
-
 	},
 
 	async connected () {
@@ -47,7 +51,6 @@ export default {
 			// Recursively adopt style on all shadow roots all the way up to the document
 			let root = this;
 			do {
-
 				root = root.host ?? root;
 				root = root.getRootNode();
 
@@ -55,8 +58,7 @@ export default {
 					adoptCSS(css, root);
 					Self.roots.add(root);
 				}
-			}
-			while (root && root.nodeType !== Node.DOCUMENT_NODE);
+			} while (root && root.nodeType !== Node.DOCUMENT_NODE);
 		}
-	}
-}
+	},
+};

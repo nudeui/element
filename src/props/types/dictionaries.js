@@ -2,7 +2,10 @@ import { resolveValue } from "../../util.js";
 import { parse, stringify, equals } from "../types.js";
 import { split } from "./util.js";
 
-function parseEntries (value, { values, keys, separator = ", ", defaultValue = true, defaultKey, pairs } = {}) {
+function parseEntries (
+	value,
+	{ values, keys, separator = ", ", defaultValue = true, defaultKey, pairs } = {},
+) {
 	let entries = value;
 
 	if (typeof value === "string") {
@@ -155,7 +158,10 @@ export const map = {
 		let entries = value.entries();
 
 		if (keys || values) {
-			entries = entries.map(([key, value]) => [stringify(key, keys), stringify(value, values)]);
+			entries = entries.map(([key, value]) => [
+				stringify(key, keys),
+				stringify(value, values),
+			]);
 		}
 
 		return entries.map(([key, value]) => `${key}: ${value}`).join(separator);
