@@ -1,4 +1,4 @@
-export { default as default} from "./Element.js";
+export { default as default } from "./Element.js";
 
 export { default as defineProps } from "./props/defineProps.js";
 export { default as defineEvents } from "./events/defineEvents.js";

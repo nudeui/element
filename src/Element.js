@@ -79,7 +79,7 @@ const Self = class NudeElement extends HTMLElement {
 
 		this.hooks.run("setup", this);
 
-		return this[classInitialized] = true;
+		return (this[classInitialized] = true);
 	}
 };
 

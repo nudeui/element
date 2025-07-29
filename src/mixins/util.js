@@ -14,7 +14,7 @@ export function defineLazyProperty (object, name, options) {
 		options = { get: options };
 	}
 
-	let {get, writable = true, configurable = true, enumerable = false} = options;
+	let { get, writable = true, configurable = true, enumerable = false } = options;
 
 	let setter = function (value) {
 		Object.defineProperty(this, name, { value, writable, configurable, enumerable });
@@ -25,7 +25,8 @@ export function defineLazyProperty (object, name, options) {
 			setter.call(this, value);
 			return value;
 		},
-		set (value) { // Blind set
+		set (value) {
+			// Blind set
 			setter.call(this, value);
 		},
 		configurable: true,

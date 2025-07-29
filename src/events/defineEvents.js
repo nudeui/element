@@ -1,11 +1,7 @@
 import defineProps from "../props/defineProps.js";
 import PropChangeEvent from "../props/PropChangeEvent.js";
-import {
-	resolveValue,
-} from "../util.js";
-import {
-	pick,
-} from "./util.js";
+import { resolveValue } from "../util.js";
+import { pick } from "./util.js";
 import defineMixin from "../mixins/defineMixin.js";
 
 /**
@@ -30,10 +26,10 @@ function retargetEvent (name, from) {
 			if (!from.when || from.when(event)) {
 				let EventConstructor = from.event ?? event.constructor;
 				let source = from.constructor
-					// Construct specific event object
-					? pick(event, ["bubbles", "cancelable", "composed", "detail"])
-					// Retarget this event
-					: event;
+					? // Construct specific event object
+						pick(event, ["bubbles", "cancelable", "composed", "detail"])
+					: // Retarget this event
+						event;
 				let options = Object.assign({}, source, from.options);
 
 				let newEvent = new EventConstructor(name, options);
@@ -49,7 +45,6 @@ function retargetEvent (name, from) {
 		else {
 			target.addEventListener(type, listener);
 		}
-
 	};
 }
 

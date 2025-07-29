@@ -165,7 +165,8 @@ export default {
 						},
 						{
 							name: "Value and prop",
-							description: "What should be used if both default and defaultProp are specified? If defaultProp, where should default go?",
+							description:
+								"What should be used if both default and defaultProp are specified? If defaultProp, where should default go?",
 							arg: {
 								default: "foo",
 								defaultProp: "bar",
@@ -175,7 +176,8 @@ export default {
 						},
 						{
 							name: "Function and prop",
-							description: "What should be used if both default and defaultProp are specified? If defaultProp, where should default go?",
+							description:
+								"What should be used if both default and defaultProp are specified? If defaultProp, where should default go?",
 							arg: {
 								default () {
 									return 42;

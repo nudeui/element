@@ -1,16 +1,25 @@
-import {
-	resolveValue,
-} from "../util.js";
+import { resolveValue } from "../util.js";
 import defineMixin from "../mixins/defineMixin.js";
 
-export default function (Class, {
-	like,
-	role,
-	valueProp = "value",
-	changeEvent = "input",
-	internalsProp = "_internals",
-	getters = ["labels", "form", "type", "name", "validity", "validationMessage", "willValidate"],
-} = Class.formAssociated) {
+export default function  (
+	Class,
+	{
+		like,
+		role,
+		valueProp = "value",
+		changeEvent = "input",
+		internalsProp = "_internals",
+		getters = [
+			"labels",
+			"form",
+			"type",
+			"name",
+			"validity",
+			"validationMessage",
+			"willValidate",
+		],
+	} = Class.formAssociated,
+) {
 	if (HTMLElement.prototype.attachInternals === undefined) {
 		// Not supported
 		return;
@@ -28,7 +37,7 @@ export default function (Class, {
 	Class.formAssociated = true;
 
 	return defineMixin(Class, function init () {
-		let internals = this[internalsProp] ??= this.attachInternals();
+		let internals = (this[internalsProp] ??= this.attachInternals());
 
 		if (internals) {
 			let source = resolveValue(like, [this, this]);

@@ -7,7 +7,7 @@ export default function defineMixin (Class, config) {
 	}
 
 	config = typeof config === "function" ? { init: config } : config;
-	let {properties, prepare, ...hooks} = config;
+	let { properties, prepare, ...hooks } = config;
 
 	if (properties) {
 		for (let name in properties) {

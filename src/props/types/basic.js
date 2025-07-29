@@ -1,6 +1,15 @@
 import { resolve } from "../types.js";
 
-const callableBuiltins = new Set([String, Number, Boolean, Array, Object, Function, Symbol, BigInt]);
+const callableBuiltins = new Set([
+	String,
+	Number,
+	Boolean,
+	Array,
+	Object,
+	Function,
+	Symbol,
+	BigInt,
+]);
 
 export const generic = {
 	equals (a, b) {
@@ -17,7 +26,7 @@ export const generic = {
 		return simpleEquals;
 	},
 	parse (value, type) {
-		let {is: Type, ...typeOptions} = resolve(type);
+		let { is: Type, ...typeOptions } = resolve(type);
 		if (!Type || value instanceof Type) {
 			return value;
 		}
@@ -33,12 +42,12 @@ export const generic = {
 export const boolean = {
 	type: Boolean,
 	parse: value => value !== null,
-	stringify: value => value ? "" : null,
+	stringify: value => (value ? "" : null),
 };
 
 export const number = {
 	type: Number,
-	equals: (a, b) => a === b || Number.isNaN(a) && Number.isNaN(b),
+	equals: (a, b) => a === b || (Number.isNaN(a) && Number.isNaN(b)),
 };
 
 export const fn = {

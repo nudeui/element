@@ -32,7 +32,7 @@ function assignSlots () {
 
 let mutationObserver;
 
-export default function (Class) {
+export default function  (Class) {
 	// Class.prototype.assignSlots = assignSlots;
 
 	return defineMixin(Class, function init () {
@@ -56,7 +56,7 @@ export default function (Class) {
 					assignSlots.call(mutation.target);
 				}
 			});
-			mutationObserver.observe(this, {childList: true});
+			mutationObserver.observe(this, { childList: true });
 		}
 	});
 }

@@ -18,15 +18,15 @@ export default class SlotObserver {
 		// we only get one record
 		for (let r of mutationRecords) {
 			if (r.type === "attributes" && r.target.tagName === "SLOT") {
-				slots.set(r.target, {type: "renamed", target: r.target, oldName: r.oldValue});
+				slots.set(r.target, { type: "renamed", target: r.target, oldName: r.oldValue });
 			}
 			else {
 				for (let node of r.addedNodes) {
-					slots.set(node, {type: "added", target: node});
+					slots.set(node, { type: "added", target: node });
 				}
 
 				for (let node of r.removedNodes) {
-					slots.set(node, {type: "removed", target: node});
+					slots.set(node, { type: "removed", target: node });
 				}
 			}
 		}
@@ -38,7 +38,7 @@ export default class SlotObserver {
 		}
 	}
 
-	observe (host, options = {existing: true, added: true, removed: true, renamed: true}) {
+	observe (host, options = { existing: true, added: true, removed: true, renamed: true }) {
 		if (!host.shadowRoot) {
 			return;
 		}
@@ -48,12 +48,14 @@ export default class SlotObserver {
 			subtree: true,
 			attributes: options.renamed,
 			attributeFilter: ["name"],
-			attributeOldValue: options.renamed
+			attributeOldValue: options.renamed,
 		});
 
 		// Fire callback for existing slots
 		if (options.existing !== false) {
-			let records = [...host.shadowRoot.querySelectorAll("slot")].map(slot => ({target: slot}));
+			let records = [...host.shadowRoot.querySelectorAll("slot")].map(slot => ({
+				target: slot,
+			}));
 
 			if (records.length > 0) {
 				this.callback(records);

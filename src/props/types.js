@@ -18,7 +18,7 @@ export function equals (a, b, type) {
 	}
 
 	if (type) {
-		let {is: Type, ...typeOptions} = resolve(type);
+		let { is: Type, ...typeOptions } = resolve(type);
 		let equals = types.get(Type)?.equals;
 
 		if (equals) {
@@ -37,14 +37,13 @@ export function parse (value, type) {
 
 	if (type) {
 		type = resolve(type);
-		let {is: Type, ...typeOptions} = type;
+		let { is: Type, ...typeOptions } = type;
 		let parse = types.get(Type)?.parse;
 
 		if (parse) {
 			return parse(value, type);
 		}
 	}
-
 
 	return defaultType.parse(value, type);
 }
@@ -58,7 +57,7 @@ export function stringify (value, type) {
 		return String(value);
 	}
 
-	let {is: Type, ...typeOptions} = resolve(type);
+	let { is: Type, ...typeOptions } = resolve(type);
 
 	let stringify = types.get(Type)?.stringify;
 

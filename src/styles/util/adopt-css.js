@@ -1,4 +1,3 @@
-
 /**
  * We store adopted stylesheets here to avoid adopting the same style multiple times
  * @type {WeakMap<Document | ShadowRoot, Map<string, CSSStyleSheet | HTMLStyleElement>>}

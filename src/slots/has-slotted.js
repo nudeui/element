@@ -12,7 +12,7 @@ function update (slot) {
 const SUPPORTS_HAS_SLOTTED = globalThis.CSS?.supports("selector(:has-slotted)");
 
 export default {
-	init() {
+	init () {
 		// Get all slots
 		if (SUPPORTS_HAS_SLOTTED || !this.shadowRoot) {
 			return;
@@ -34,5 +34,5 @@ export default {
 		});
 
 		slotObserver.observe(this);
-	}
-}
+	},
+};

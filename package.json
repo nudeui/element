@@ -36,6 +36,9 @@
     "eslint": "latest",
     "globals": "latest",
     "htest.dev": "^0.0.15",
+    "prettier-plugin-brace-style": "latest",
+    "prettier-plugin-merge": "latest",
+    "prettier-plugin-space-before-function-paren": "latest",
     "release-it": "^17.2.1",
     "typedoc": "latest",
     "typedoc-plugin-rename-defaults": "latest"

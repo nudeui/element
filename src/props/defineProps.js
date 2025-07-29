@@ -1,4 +1,3 @@
-
 import Props from "./Props.js";
 import defineMixin from "../mixins/defineMixin.js";
 

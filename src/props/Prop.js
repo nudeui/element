@@ -1,9 +1,5 @@
-import {
-	resolveValue,
-} from "../util.js";
-import {
-	inferDependencies,
-} from "./util.js";
+import { resolveValue } from "../util.js";
+import { inferDependencies } from "./util.js";
 
 import * as types from "./types.js";
 
@@ -65,7 +61,11 @@ let Self = class Prop {
 
 	get fromAttribute () {
 		let reflectFrom = typeof this.reflect === "object" ? this.reflect.from : this.reflect;
-		return reflectFrom === true ? this.name : typeof reflectFrom === "string" ? reflectFrom : null;
+		return reflectFrom === true
+			? this.name
+			: typeof reflectFrom === "string"
+				? reflectFrom
+				: null;
 	}
 
 	get toAttribute () {
@@ -119,14 +119,14 @@ let Self = class Prop {
 		}
 		else if (element.props[name] === undefined && !this.defaultProp) {
 			// Is not set and its default is not another prop
-			this.changed(element, {source: "default", element});
+			this.changed(element, { source: "default", element });
 		}
 
 		this.#initialized = true;
 	}
 
 	// Define the necessary getters and setters
-	getDescriptor ({enumerable = true} = this.spec) {
+	getDescriptor ({ enumerable = true } = this.spec) {
 		let me = this;
 		let descriptor = {
 			get () {
@@ -137,7 +137,7 @@ let Self = class Prop {
 
 		if (!this.spec.get || this.spec.set === true) {
 			descriptor.set = function (value) {
-				me.set(this, value, {source: "property"});
+				me.set(this, value, { source: "property" });
 			};
 		}
 		else if (this.spec.set) {
@@ -170,7 +170,12 @@ let Self = class Prop {
 					return this.parse(value);
 				}
 				catch (e) {
-					console.warn("Failed to parse default value", value, `for prop ${this.name}. Original error was: `, e);
+					console.warn(
+						"Failed to parse default value",
+						value,
+						`for prop ${this.name}. Original error was: `,
+						e,
+					);
 					return null;
 				}
 			}
@@ -179,7 +184,7 @@ let Self = class Prop {
 		return value;
 	}
 
-	set (element, value, {source, name, oldValue} = {}) {
+	set (element, value, { source, name, oldValue } = {}) {
 		let oldInternalValue = element.props[this.name];
 
 		let attributeName = name;
@@ -190,7 +195,10 @@ let Self = class Prop {
 		}
 		catch (e) {
 			// Abort mission
-			console.warn(`Failed to parse value ${value} for prop ${this.name}. Original error was:`, e);
+			console.warn(
+				`Failed to parse value ${value} for prop ${this.name}. Original error was:`,
+				e,
+			);
 			return;
 		}
 
@@ -205,8 +213,11 @@ let Self = class Prop {
 		element.props[this.name] = parsedValue;
 
 		let change = {
-			element, source,
-			value, parsedValue, oldInternalValue,
+			element,
+			source,
+			value,
+			parsedValue,
+			oldInternalValue,
 			attributeName: name,
 		};
 
@@ -222,7 +233,7 @@ let Self = class Prop {
 					element.ignoredAttributes.add(this.toAttribute);
 
 					Object.assign(change, { attributeName, attributeValue, oldAttributeValue });
-					this.applyChange(element, {...change, source: "attribute"});
+					this.applyChange(element, { ...change, source: "attribute" });
 
 					element.ignoredAttributes.delete(attributeName);
 				}
@@ -243,7 +254,8 @@ let Self = class Prop {
 		if (change.source === "attribute") {
 			if (element.setAttribute) {
 				let attributeName = change.attributeName ?? this.toAttribute;
-				let attributeValue = change.attributeValue ?? change.element.getAttribute(attributeName);
+				let attributeValue =
+					change.attributeValue ?? change.element.getAttribute(attributeName);
 
 				if (attributeValue === null) {
 					element.removeAttribute(attributeName);
@@ -264,8 +276,8 @@ let Self = class Prop {
 		}
 		else {
 			// Mixed
-			this.applyChange(element, {...change, source: "attribute"});
-			this.applyChange(element, {...change, source: "property"});
+			this.applyChange(element, { ...change, source: "attribute" });
+			this.applyChange(element, { ...change, source: "property" });
 		}
 	}
 
@@ -284,18 +296,18 @@ let Self = class Prop {
 		if (dependency === this.defaultProp) {
 			// We have no way of checking if the default prop has changed
 			// and there’s nothing to set, so let’s just called changed directly
-			this.changed(element, {element, source: "default"});
+			this.changed(element, { element, source: "default" });
 			return;
 		}
 
 		if (this.spec.get) {
 			let value = this.spec.get.call(element);
-			this.set(element, value, {source: "get", oldValue});
+			this.set(element, value, { source: "get", oldValue });
 		}
 
 		if (this.spec.convert && oldValue !== undefined) {
 			let value = this.spec.convert.call(element, oldValue);
-			this.set(element, value, {source: "convert", oldValue});
+			this.set(element, value, { source: "convert", oldValue });
 		}
 	}
 
@@ -308,8 +320,10 @@ let Self = class Prop {
 			return true;
 		}
 
-		return this.dependencies.has(prop.name)
-		       || (this.defaultProp === prop && element.props[this.name] === undefined);
+		return (
+			this.dependencies.has(prop.name) ||
+			(this.defaultProp === prop && element.props[this.name] === undefined)
+		);
 	}
 
 	get initialized () {
