@@ -1,7 +1,7 @@
 import defineProps from "../props/defineProps.js";
 import PropChangeEvent from "../props/PropChangeEvent.js";
 import { resolveValue } from "../util.js";
-import { pick } from "./util.js";
+import { pick } from "../util/pick.js";
 import defineMixin from "../mixins/define-mixin.js";
 
 /**
