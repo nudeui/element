@@ -1,10 +1,10 @@
 /**
  * Base class for all elements
  */
-import defineMixin from "./mixins/defineMixin.js";
 import defineProps from "./props/defineProps.js";
 import defineFormAssociated from "./formAssociated.js/defineFormAssociated.js";
 import defineEvents from "./events/defineEvents.js";
+import defineMixin from "./mixins/define-mixin.js";
 
 import { shadowStyles, globalStyles } from "./styles/index.js";
 import Hooks from "./mixins/hooks.js";

@@ -1,4 +1,4 @@
-import defineMixin from "../mixins/defineMixin.js";
+import defineMixin from "../mixins/define-mixin.js";
 
 function assignSlots () {
 	let children = this.childNodes;

@@ -1,5 +1,5 @@
 import Props from "./Props.js";
-import defineMixin from "../mixins/defineMixin.js";
+import defineMixin from "../mixins/define-mixin.js";
 
 let propsSymbol = Symbol("propsSymbol");
 

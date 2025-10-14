@@ -1,5 +1,5 @@
 import { resolveValue } from "../util.js";
-import defineMixin from "../mixins/defineMixin.js";
+import defineMixin from "../mixins/define-mixin.js";
 
 export default function  (
 	Class,
