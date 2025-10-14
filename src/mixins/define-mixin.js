@@ -1,4 +1,4 @@
-import { defineLazyProperty } from "./util.js";
+import { defineLazyProperty } from "../util/lazy.js";
 
 export default function defineMixin (Class, config) {
 	if (Array.isArray(config)) {
