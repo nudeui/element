@@ -5,7 +5,7 @@
 export const hasConnected = Symbol("is mounted");
 export const anyMounted = Symbol("any instance mounted");
 
-export class MounteddMixin extends HTMLElement {
+export class MountedMixin extends HTMLElement {
 	connectedCallback () {
 		if (this[hasConnected]) {
 			return;
@@ -31,4 +31,4 @@ export class MounteddMixin extends HTMLElement {
 	}
 }
 
-export default MounteddMixin;
+export default MountedMixin;
