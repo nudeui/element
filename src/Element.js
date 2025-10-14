@@ -2,8 +2,8 @@
  * Base class for all elements
  */
 import defineProps from "./props/defineProps.js";
-import defineFormAssociated from "./formAssociated.js/defineFormAssociated.js";
 import defineEvents from "./events/defineEvents.js";
+import defineFormAssociated from "./form-associated.js";
 import defineMixin from "./mixins/define-mixin.js";
 
 import { shadowStyles, globalStyles } from "./styles/index.js";
