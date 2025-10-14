@@ -2,9 +2,9 @@ import { copyProperties } from "./copy-properties.js";
 
 /**
  * Use a class as a mixin on another class
- * @param Class {Function}
- * @param Mixin {Function}
- * @param options {CopyPropertiesOptions}
+ * @param {Function} Class
+ * @param {Function} Mixin
+ * @param {import("./copy-properties.js").CopyPropertiesOptions} [options={}]
  */
 export function extendClass (Class, Mixin, options = {}) {
 	if (options.recursive) {
@@ -15,6 +15,3 @@ export function extendClass (Class, Mixin, options = {}) {
 		copyProperties(Class.prototype, Mixin.prototype, options);
 	}
 }
-
-
-

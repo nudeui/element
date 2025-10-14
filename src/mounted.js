@@ -3,7 +3,7 @@
  */
 export const hasConnected = Symbol("is mounted");
 
-export class MounteddMixin extends HTMLElement {
+export class MountedMixin extends HTMLElement {
 	connectedCallback () {
 		if (this[hasConnected]) {
 			return;
@@ -15,9 +15,7 @@ export class MounteddMixin extends HTMLElement {
 	}
 
 	/** Automatically gets called the first time the element is connected */
-	mounted() {
-
-	}
+	mounted () {}
 }
 
-export default MounteddMixin;
+export default MountedMixin;

@@ -18,7 +18,7 @@ export function applyMixins (Class, mixins = Class.mixins) {
 	}
 }
 
-export function applyMixin(Class, mixin, config) {
+export function applyMixin (Class, mixin, config) {
 	if (!Class.mixinsApplied) {
 		Class.mixinsApplied = [];
 	}

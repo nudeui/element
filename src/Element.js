@@ -38,14 +38,7 @@ const Self = class NudeElement extends HTMLElement {
 		this.constructor.hooks.run("disconnected", this);
 	}
 
-	static mixins = [
-		mounted,
-		props,
-		events,
-		formAssociated,
-		shadowStyles,
-		globalStyles,
-	];
+	static mixins = [mounted, props, events, formAssociated, shadowStyles, globalStyles];
 
 	static {
 		if (this.globalStyle) {
