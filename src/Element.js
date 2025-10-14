@@ -31,6 +31,7 @@ const Self = class NudeElement extends HTMLElement {
 	}
 
 	connectedCallback () {
+		this.connectedCallback?.();
 		this.constructor.hooks.run("connected", this);
 	}
 
@@ -38,15 +39,7 @@ const Self = class NudeElement extends HTMLElement {
 		this.constructor.hooks.run("disconnected", this);
 	}
 
-	static mixins = [mounted, props, events, formAssociated, shadowStyles, globalStyles];
-
-	static {
-		if (this.globalStyle) {
-			this.globalStyles ??= this.globalStyle;
-		}
-
-		applyMixins(this);
-	}
+	static mixins = [mounted];
 
 	static init () {
 		// Stuff that runs once per class
@@ -55,6 +48,32 @@ const Self = class NudeElement extends HTMLElement {
 		}
 
 		this.hooks = new Hooks(this.hooks);
+
+		if (this.props) {
+			this.mixins.push(props);
+		}
+
+		if (this.events) {
+			this.mixins.push(events);
+		}
+
+		if (this.formAssociated) {
+			this.mixins.push(formAssociated);
+		}
+
+		if (this.styles) {
+			this.mixins.push(shadowStyles);
+		}
+
+		if (this.globalStyle) {
+			this.globalStyles ??= this.globalStyle;
+		}
+
+		if (this.globalStyles) {
+			this.mixins.push(globalStyles);
+		}
+
+		applyMixins(this);
 
 		this.hooks.run("setup", this);
 

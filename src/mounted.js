@@ -15,7 +15,10 @@ export class MountedMixin extends HTMLElement {
 	}
 
 	/** Automatically gets called the first time the element is connected */
-	mounted () {}
+	mounted () {
+		// Stuff that runs once per element
+		this.constructor.hooks.run("init", this);
+	}
 }
 
 export default MountedMixin;
