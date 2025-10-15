@@ -18,7 +18,7 @@ export default function (
 			"validationMessage",
 			"willValidate",
 		],
-	} = Class.formAssociated,
+	} = Class.formAssociated ?? {},
 ) {
 	// Stuff that runs once per mixin
 	if (HTMLElement.prototype.attachInternals === undefined) {
