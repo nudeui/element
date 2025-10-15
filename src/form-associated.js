@@ -1,7 +1,7 @@
 import { resolveValue } from "./util/resolve-value.js";
 import mounted from "./mounted.js";
 
-export default function (
+export default function  (
 	Class,
 	{
 		like,
@@ -18,7 +18,7 @@ export default function (
 			"validationMessage",
 			"willValidate",
 		],
-	} = Class.formAssociated ?? {},
+	} = Class.formAssociated,
 ) {
 	// Stuff that runs once per mixin
 	if (HTMLElement.prototype.attachInternals === undefined) {
