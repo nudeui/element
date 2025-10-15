@@ -1,7 +1,7 @@
 import { resolveValue } from "./util/resolve-value.js";
 import mounted from "./mounted.js";
 
-export default function  (
+export default function (
 	Class,
 	{
 		like,
