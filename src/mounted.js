@@ -1,7 +1,9 @@
 /**
- * Mixin to add a mounted function that runs the first time an element connects
+ * Mixin to add a functions that run the first time an element connects
+ * both on a per-element and a per-class basis
  */
 export const hasConnected = Symbol("is mounted");
+export const anyMounted = Symbol("any instance mounted");
 
 export class MounteddMixin extends HTMLElement {
 	connectedCallback () {
@@ -16,7 +18,16 @@ export class MounteddMixin extends HTMLElement {
 
 	/** Automatically gets called the first time the element is connected */
 	mounted() {
+		this.constructor.mounted();
+	}
 
+	/** Automatically gets called the first time an instance is connected */
+	static mounted () {
+		if (this[anyMounted]) {
+			return;
+		}
+
+		this[anyMounted] = true;
 	}
 }
 
