@@ -31,7 +31,6 @@ const Self = class NudeElement extends HTMLElement {
 	}
 
 	connectedCallback () {
-		this.connectedCallback?.();
 		this.constructor.hooks.run("connected", this);
 	}
 
@@ -39,13 +38,15 @@ const Self = class NudeElement extends HTMLElement {
 		this.constructor.hooks.run("disconnected", this);
 	}
 
-	static mixins = [mounted];
-
 	static init () {
 		// Stuff that runs once per class
 		if (this[classInitialized]) {
 			return false;
 		}
+
+		// Every child class has to have the mounted mixin applied,
+		// but we don't want to share specific child class mixins with all other classes
+		this.mixins = [mounted];
 
 		this.hooks = new Hooks(this.hooks);
 
