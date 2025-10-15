@@ -1,7 +1,7 @@
 /**
  * Base class for all elements
  */
-import mounted, { hasConnected } from "./mounted.js";
+import mounted from "./mounted.js";
 import props from "./props/defineProps.js";
 import formAssociated from "./form-associated.js";
 import events from "./events/defineEvents.js";
@@ -31,16 +31,15 @@ const Self = class NudeElement extends HTMLElement {
 	}
 
 	connectedCallback () {
-		if (!this.constructor[hasConnected]) {
-			// Stuff that runs once per element
-			this.constructor.hooks.run("init", this);
-		}
-
 		this.constructor.hooks.run("connected", this);
 	}
 
 	disconnectedCallback () {
 		this.constructor.hooks.run("disconnected", this);
+	}
+
+	static {
+		this.init();
 	}
 
 	static init () {
