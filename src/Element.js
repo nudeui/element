@@ -38,14 +38,8 @@ const Self = class NudeElement extends HTMLElement {
 		this.constructor.hooks.run("disconnected", this);
 	}
 
-	static mixins = [mounted, props, events, formAssociated, shadowStyles, globalStyles];
-
 	static {
-		if (this.globalStyle) {
-			this.globalStyles ??= this.globalStyle;
-		}
-
-		applyMixins(this);
+		this.init();
 	}
 
 	static init () {
@@ -54,7 +48,37 @@ const Self = class NudeElement extends HTMLElement {
 			return false;
 		}
 
+		// Every child class has to have the mounted mixin applied,
+		// but we don't want to share specific child class mixins with all other classes
+		this.mixins = [mounted];
+
 		this.hooks = new Hooks(this.hooks);
+
+		if (this.props) {
+			this.mixins.push(props);
+		}
+
+		if (this.events) {
+			this.mixins.push(events);
+		}
+
+		if (this.formAssociated) {
+			this.mixins.push(formAssociated);
+		}
+
+		if (this.styles) {
+			this.mixins.push(shadowStyles);
+		}
+
+		if (this.globalStyle) {
+			this.globalStyles ??= this.globalStyle;
+		}
+
+		if (this.globalStyles) {
+			this.mixins.push(globalStyles);
+		}
+
+		applyMixins(this);
 
 		this.hooks.run("setup", this);
 
