@@ -10,6 +10,8 @@ import { shadowStyles, globalStyles } from "./styles/index.js";
 import Hooks from "./mixins/hooks.js";
 import { applyMixins } from "./mixins/apply-mixins.js";
 
+const mixins = {props, events, formAssociated, styles: shadowStyles, shadowStyles, globalStyles};
+
 const classInitialized = Symbol("classInitialized");
 
 const Self = class NudeElement extends HTMLElement {
@@ -54,28 +56,14 @@ const Self = class NudeElement extends HTMLElement {
 
 		this.hooks = new Hooks(this.hooks);
 
-		if (this.props) {
-			this.mixins.push(props);
-		}
-
-		if (this.events) {
-			this.mixins.push(events);
-		}
-
-		if (this.formAssociated) {
-			this.mixins.push(formAssociated);
-		}
-
-		if (this.styles) {
-			this.mixins.push(shadowStyles);
-		}
-
 		if (this.globalStyle) {
 			this.globalStyles ??= this.globalStyle;
 		}
 
-		if (this.globalStyles) {
-			this.mixins.push(globalStyles);
+		for (const [name, mixin] of Object.entries(mixins)) {
+			if (this[name]) {
+				this.mixins.push(mixin);
+			}
 		}
 
 		applyMixins(this);
