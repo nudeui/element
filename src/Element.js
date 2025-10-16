@@ -16,9 +16,7 @@ const Self = class NudeElement extends HTMLElement {
 	constructor () {
 		super();
 
-		if (!this.constructor[classInitialized]) {
-			this.constructor.init();
-		}
+		this.constructor.init();
 
 		this.constructor.hooks.run("start", this);
 
