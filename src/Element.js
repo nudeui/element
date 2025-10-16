@@ -42,9 +42,11 @@ const Self = class NudeElement extends HTMLElement {
 
 	static init () {
 		// Stuff that runs once per class
-		if (this[classInitialized]) {
+		if (Object.hasOwn(this, classInitialized)) {
 			return false;
 		}
+
+		this[classInitialized] = true;
 
 		// Every child class has to have the mounted mixin applied,
 		// but we don't want to share specific child class mixins with all other classes
@@ -80,7 +82,7 @@ const Self = class NudeElement extends HTMLElement {
 
 		this.hooks.run("setup", this);
 
-		return (this[classInitialized] = true);
+		return true;
 	}
 };
 
