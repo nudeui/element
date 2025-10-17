@@ -2,10 +2,16 @@
  * Mixin for adding shadow DOM styles
  */
 import { adoptCSS, fetchCSS, getSupers } from "./util.js";
+import mounted from "../mounted.js";
 
-export default {
-	setup () {
-		if (!this.styles) {
+export const shadowStylesFetched = Symbol("shadow styles fetched");
+
+export class ShadowStylesMixin extends HTMLElement {
+	static mixins = [mounted];
+
+	/** Automatically runs once per class the first time an instance is connected */
+	static mounted () {
+		if (!this.styles || Object.hasOwn(this, shadowStylesFetched)) {
 			return;
 		}
 
@@ -23,8 +29,11 @@ export default {
 				}
 			}
 		}
-	},
-	async init () {
+
+		this[shadowStylesFetched] = true;
+	}
+
+	async mounted () {
 		if (!this.shadowRoot) {
 			return;
 		}
@@ -33,7 +42,7 @@ export default {
 		let supers = getSupers(Self);
 
 		for (let Class of supers) {
-			if (Class.fetchedStyles) {
+			if (Object.hasOwn(Class, "fetchedStyles")) {
 				for (let css of Class.fetchedStyles) {
 					if (css instanceof Promise) {
 						css = await css;
@@ -43,5 +52,7 @@ export default {
 				}
 			}
 		}
-	},
-};
+	}
+}
+
+export default ShadowStylesMixin;
