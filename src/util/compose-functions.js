@@ -16,8 +16,7 @@ export function composeFunctions (fn1, fn2) {
 
 	if (isComposed) {
 		// A composed function was provided instead of the constituent
-		composedFn = isComposed;
-		if (!composedFn[functions]) debugger;
+		composedFn = fn1;
 		fn1 = composedFn[functions][0];
 	}
 	else {
@@ -41,7 +40,7 @@ export function composeFunctions (fn1, fn2) {
 		let prev = composedFn[functions].indexOf(fn2);
 
 		if (prev !== composedFn[functions].length - 1) {
-			if (prev < composedFn[functions].length - 1) {
+			if (prev !== -1 && prev < composedFn[functions].length - 1) {
 				// If already there, but not at the end, remove first
 				composedFn[functions].splice(prev, 1);
 			}
