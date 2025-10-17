@@ -11,7 +11,7 @@ export default {
 			return;
 		}
 
-		let supers = getSupers(this);
+		let supers = getSupers(this, HTMLElement);
 		let Super;
 
 		for (let Class of supers) {
