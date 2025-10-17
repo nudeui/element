@@ -4,11 +4,14 @@
 import { adoptCSS, fetchCSS, getSupers } from "./util.js";
 import mounted from "../mounted.js";
 
+export const shadowStylesFetched = Symbol("shadow styles fetched");
+
 export class ShadowStylesMixin extends HTMLElement {
 	static mixins = [mounted];
 
-	static setup () {
-		if (!this.styles) {
+	/** Automatically runs once per class the first time an instance is connected */
+	static mounted () {
+		if (!this.styles || Object.hasOwn(this, shadowStylesFetched)) {
 			return;
 		}
 
@@ -26,6 +29,8 @@ export class ShadowStylesMixin extends HTMLElement {
 				}
 			}
 		}
+
+		this[shadowStylesFetched] = true;
 	}
 
 	async mounted () {
