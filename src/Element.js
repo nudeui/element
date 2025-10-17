@@ -68,7 +68,7 @@ const Self = class NudeElement extends HTMLElement {
 
 		applyMixins(this);
 
-		this.hooks.run("setup", this);
+		this.setup?.();
 
 		return true;
 	}
