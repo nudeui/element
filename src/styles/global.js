@@ -2,15 +2,20 @@
  * Mixin for adding light DOM styles
  */
 import { adoptCSS, fetchCSS, getSupers } from "./util.js";
+import mounted from "../mounted.js";
 
-export default {
-	prepare () {
-		if (!this.globalStyles) {
+export const globalStylesFetched = Symbol("global styles fetched");
+
+export class GlobalStylesMixin extends HTMLElement {
+	static mixins = [mounted];
+
+	/** Automatically runs once per class the first time an instance is connected */
+	static mounted () {
+		if (!this.globalStyles || Object.hasOwn(this, globalStylesFetched)) {
 			return;
 		}
 
 		let supers = getSupers(this);
-		let Super;
 
 		for (let Class of supers) {
 			if (
@@ -28,9 +33,11 @@ export default {
 				}
 			}
 		}
-	},
 
-	async connected () {
+		this[globalStylesFetched] = true;
+	}
+
+	async mounted () {
 		let Self = this.constructor;
 
 		if (!Self.fetchedGlobalStyles?.length) {
@@ -60,5 +67,7 @@ export default {
 				}
 			} while (root && root.nodeType !== Node.DOCUMENT_NODE);
 		}
-	},
-};
+	}
+}
+
+export default GlobalStylesMixin;
