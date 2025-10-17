@@ -2,9 +2,12 @@
  * Mixin for adding shadow DOM styles
  */
 import { adoptCSS, fetchCSS, getSupers } from "./util.js";
+import mounted from "../mounted.js";
 
-export default {
-	setup () {
+export class ShadowStylesMixin extends HTMLElement {
+	static mixins = [mounted];
+
+	static setup () {
 		if (!this.styles) {
 			return;
 		}
@@ -23,8 +26,9 @@ export default {
 				}
 			}
 		}
-	},
-	async init () {
+	}
+
+	async mounted () {
 		if (!this.shadowRoot) {
 			return;
 		}
@@ -33,7 +37,7 @@ export default {
 		let supers = getSupers(Self, HTMLElement);
 
 		for (let Class of supers) {
-			if (Class.fetchedStyles) {
+			if (Object.hasOwn(Class, "fetchedStyles")) {
 				for (let css of Class.fetchedStyles) {
 					if (css instanceof Promise) {
 						css = await css;
@@ -43,5 +47,7 @@ export default {
 				}
 			}
 		}
-	},
-};
+	}
+}
+
+export default ShadowStylesMixin;
