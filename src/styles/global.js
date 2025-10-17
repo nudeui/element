@@ -6,16 +6,18 @@ import { adoptCSS } from "../util/adopt-css.js";
 import { fetchCSS } from "../util/fetch-css.js";
 import mounted from "../mounted.js";
 
+export const globalStylesFetched = Symbol("global styles fetched");
+
 export class GlobalStylesMixin extends HTMLElement {
 	static mixins = [mounted];
 
-	static setup () {
-		if (!this.globalStyles) {
+	/** Automatically runs once per class the first time an instance is connected */
+	static mounted () {
+		if (!this.globalStyles || Object.hasOwn(this, globalStylesFetched)) {
 			return;
 		}
 
 		let supers = getSupers(this, HTMLElement);
-		let Super;
 
 		for (let Class of supers) {
 			if (
@@ -33,6 +35,8 @@ export class GlobalStylesMixin extends HTMLElement {
 				}
 			}
 		}
+
+		this[globalStylesFetched] = true;
 	}
 
 	async mounted () {
