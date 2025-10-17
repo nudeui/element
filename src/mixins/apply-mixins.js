@@ -19,7 +19,7 @@ export function applyMixins (Class, mixins = Class.mixins) {
 }
 
 export function applyMixin (Class, mixin, config) {
-	if (!Class.mixinsApplied) {
+	if (!Object.hasOwn(Class, "mixinsApplied")) {
 		Class.mixinsApplied = [];
 	}
 
