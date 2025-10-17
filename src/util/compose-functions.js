@@ -1,14 +1,14 @@
 import { ReversibleMap } from "./reversible-map.js";
 
 export const composedFunctions = new ReversibleMap();
-export const functions = Symbol("Constitutent functions");
+export const functions = Symbol("Constituent functions");
 
 /**
  * Compose functions in a way that preserves the originals.
  * Will only ever produce one new function, even if called repeatedly
- * @param {function} fn1
- * @param {function} fn2
- * @returns {function}
+ * @param {Function} fn1
+ * @param {Function} fn2
+ * @returns {Function}
  */
 export function composeFunctions (fn1, fn2) {
 	let isComposed = composedFunctions.getKey(fn1);
@@ -32,10 +32,10 @@ export function composeFunctions (fn1, fn2) {
 				ret = fn.call(this, ...args) ?? ret;
 			}
 			return ret;
-		}
+		};
 
 		composedFn[functions] = [fn1, fn2];
-		composedFunctions.set(fn1, composedFn)
+		composedFunctions.set(fn1, composedFn);
 	}
 	else {
 		let prev = composedFn[functions].indexOf(fn2);

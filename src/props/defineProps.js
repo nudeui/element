@@ -27,7 +27,9 @@ export default function defineProps (Class, props = Class[propsSymbol] ?? Class.
 	// FIXME how to combine with existing observedAttributes?
 	if (!Object.hasOwn(Class, "observedAttributes")) {
 		Object.defineProperty(Class, "observedAttributes", {
-			get: () => this.props.observedAttributes,
+			get () {
+				return this.props.observedAttributes;
+			},
 			configurable: true,
 		});
 	}

@@ -1,24 +1,24 @@
 /**
  * Base class for all elements
  */
-import defineProps from "./props/defineProps.js";
-import defineEvents from "./events/defineEvents.js";
-import defineFormAssociated from "./form-associated.js";
-import defineMixin from "./mixins/define-mixin.js";
+import mounted from "./mounted.js";
+import props from "./props/defineProps.js";
+import formAssociated from "./form-associated.js";
+import events from "./events/defineEvents.js";
 
 import { shadowStyles, globalStyles } from "./styles/index.js";
 import Hooks from "./mixins/hooks.js";
+import { applyMixins } from "./mixins/apply-mixins.js";
 
-const instanceInitialized = Symbol("instanceInitialized");
+const mixins = {props, events, formAssociated, styles: shadowStyles, shadowStyles, globalStyles};
+
 const classInitialized = Symbol("classInitialized");
 
 const Self = class NudeElement extends HTMLElement {
 	constructor () {
 		super();
 
-		if (!this.constructor[classInitialized]) {
-			this.constructor.init();
-		}
+		this.constructor.init();
 
 		this.constructor.hooks.run("start", this);
 
@@ -31,13 +31,6 @@ const Self = class NudeElement extends HTMLElement {
 	}
 
 	connectedCallback () {
-		if (!this[instanceInitialized]) {
-			// Stuff that runs once per element
-			this.constructor.hooks.run("init", this);
-
-			this[instanceInitialized] = true;
-		}
-
 		this.constructor.hooks.run("connected", this);
 	}
 
@@ -45,41 +38,39 @@ const Self = class NudeElement extends HTMLElement {
 		this.constructor.hooks.run("disconnected", this);
 	}
 
+	static {
+		this.init();
+	}
+
 	static init () {
 		// Stuff that runs once per class
-		if (this[classInitialized]) {
+		if (Object.hasOwn(this, classInitialized)) {
 			return false;
 		}
 
+		this[classInitialized] = true;
+
+		// Every child class has to have the mounted mixin applied,
+		// but we don't want to share specific child class mixins with all other classes
+		this.mixins = [mounted];
+
 		this.hooks = new Hooks(this.hooks);
-
-		if (this.props) {
-			defineProps(this);
-		}
-
-		if (this.events) {
-			defineEvents(this);
-		}
-
-		if (this.formAssociated) {
-			defineFormAssociated(this);
-		}
-
-		if (this.styles) {
-			defineMixin(this, shadowStyles);
-		}
 
 		if (this.globalStyle) {
 			this.globalStyles ??= this.globalStyle;
 		}
 
-		if (this.globalStyles) {
-			defineMixin(this, globalStyles);
+		for (const [name, mixin] of Object.entries(mixins)) {
+			if (this[name]) {
+				this.mixins.push(mixin);
+			}
 		}
+
+		applyMixins(this);
 
 		this.hooks.run("setup", this);
 
-		return (this[classInitialized] = true);
+		return true;
 	}
 };
 
