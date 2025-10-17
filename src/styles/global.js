@@ -4,9 +4,12 @@
 import { getSupers } from "../util/get-supers.js";
 import { adoptCSS } from "../util/adopt-css.js";
 import { fetchCSS } from "../util/fetch-css.js";
+import mounted from "../mounted.js";
 
-export default {
-	prepare () {
+export class GlobalStylesMixin extends HTMLElement {
+	static mixins = [mounted];
+
+	static setup () {
 		if (!this.globalStyles) {
 			return;
 		}
@@ -30,9 +33,9 @@ export default {
 				}
 			}
 		}
-	},
+	}
 
-	async connected () {
+	async mounted () {
 		let Self = this.constructor;
 
 		if (!Self.fetchedGlobalStyles?.length) {
@@ -62,5 +65,7 @@ export default {
 				}
 			} while (root && root.nodeType !== Node.DOCUMENT_NODE);
 		}
-	},
-};
+	}
+}
+
+export default GlobalStylesMixin;
