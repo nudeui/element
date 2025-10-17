@@ -2,7 +2,7 @@
  * We store adopted stylesheets here to avoid adopting the same style multiple times
  * @type {WeakMap<Document | ShadowRoot, Map<string, CSSStyleSheet | HTMLStyleElement>>}
  */
-const adoptedStylesheets = new WeakMap();
+const adoptedStyleSheets = new WeakMap();
 
 /**
  * Adopt a CSS style to a document or shadow root
@@ -12,14 +12,14 @@ const adoptedStylesheets = new WeakMap();
  * @returns {CSSStyleSheet}
  */
 export function adoptCSS (style, root = globalThis.document) {
-	let rootAdoptedStyleSheets = adoptedStylesheets.get(root);
+	let rootAdoptedStyleSheets = adoptedStyleSheets.get(root);
 
 	if (!rootAdoptedStyleSheets) {
 		rootAdoptedStyleSheets = new Map();
-		adoptedStylesheets.set(root, rootAdoptedStyleSheets);
+		adoptedStyleSheets.set(root, rootAdoptedStyleSheets);
 	}
 
-	if (root.adoptedStylesheets) {
+	if (root.adoptedStyleSheets) {
 		let sheet = rootAdoptedStyleSheets.get(style);
 
 		if (!sheet && typeof style === "string") {
@@ -29,14 +29,14 @@ export function adoptCSS (style, root = globalThis.document) {
 			style = sheet;
 		}
 
-		if (!root.adoptedStylesheets.includes(sheet)) {
+		if (!root.adoptedStyleSheets.includes(sheet)) {
 			// Not already adopted, so we need to adopt it
-			if (Object.isFrozen(root.adoptedStylesheets)) {
+			if (Object.isFrozen(root.adoptedStyleSheets)) {
 				// Slightly older browsers
-				root.adoptedStylesheets = [...root.adoptedStylesheets, sheet];
+				root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
 			}
 			else {
-				root.adoptedStylesheets.push(sheet);
+				root.adoptedStyleSheets.push(sheet);
 			}
 		}
 
