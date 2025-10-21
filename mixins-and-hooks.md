@@ -7,3 +7,6 @@
 | defineProps | First `connectedCallback` |  |  |
 | defineEvents | 1) First `constructor` (once per class); 2) First `connectedCallback` |  | `defineProps` |
 | defineSlots | First `connectedCallback` |  |  |
+| `has-slotted` | First `connectedCallback` |  |  |
+| named-manual | First `connectedCallback` |  | |
+| states | First `connectedCallback` |  | `mounted` |
