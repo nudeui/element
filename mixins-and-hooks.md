@@ -9,4 +9,5 @@
 | defineSlots | First `connectedCallback` |  |  |
 | `has-slotted` | First `connectedCallback` |  |  |
 | named-manual | First `connectedCallback` |  | |
+| slots | 1) First `constructor` (once per class); 2) First `connectedCallback` |  | |
 | states | First `connectedCallback` |  | `mounted` |
