@@ -9,7 +9,7 @@ export default {
 			return;
 		}
 
-		let supers = getSupers(this);
+		let supers = getSupers(this, HTMLElement);
 
 		for (let Class of supers) {
 			if (Object.hasOwn(Class, "styles") && !Object.hasOwn(Class, "fetchedStyles")) {
@@ -30,7 +30,7 @@ export default {
 		}
 
 		let Self = this.constructor;
-		let supers = getSupers(Self);
+		let supers = getSupers(Self, HTMLElement);
 
 		for (let Class of supers) {
 			if (Class.fetchedStyles) {
