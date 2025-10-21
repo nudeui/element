@@ -1,8 +1,10 @@
 import { composeFunctions } from "./compose-functions.js";
+import { getSupers } from "./get-supers.js";
 
 /**
  * @typedef {object} CopyPropertiesOptions
- * @property {boolean | number} recursive - Whether to try and extend prototypes too. If number, defines max levels.
+ * @property {boolean} prototypes - Whether to try and extend .prototype too.
+ * @property {boolean} recursive - Whether to try and extend superclasses too. Automatically stops at the first shared superclass.
  * @property {boolean} overwrite - Whether to overwrite conflicts that can't be merged
  * @property {boolean} mergeFunctions - Whether to try to merge wherever possible
  */
@@ -14,36 +16,40 @@ import { composeFunctions } from "./compose-functions.js";
  * @param {CopyPropertiesOptions} [options={}]
  */
 export function copyProperties (target, source, options = {}) {
-	let sourceDescriptors = Object.getOwnPropertyDescriptors(source);
-	let sourceProto = Object.getPrototypeOf(source);
+	let sources = [source];
 
-	for (let key in sourceDescriptors) {
-		if (key !== "constructor") {
-			// TODO figure out whether it meaningfully defines a constructor
+	if (options.recursive) {
+		let sourceSupers = getSupers(source).reverse();
+		let targetSupers = getSupers(target).reverse();
+
+		// Find the first shared superclass
+		let index = sourceSupers.findIndex(sharedSuper => targetSupers.includes(sharedSuper));
+		if (index !== -1) {
+			sources.push(...sourceSupers.slice(index + 1));
+		}
+	}
+
+	function copyPropertiesFromSources (sources, target) {
+		let properties = sources.reduce((acc, source) => {
+			let properties = Object.getOwnPropertyNames(source);
+			for (let property of properties) {
+				acc.add(property);
+			}
+			return acc;
+		}, new Set());
+
+		properties.delete("constructor");
+
+		for (let key of properties) {
 			copyProperty(target, source, key, options);
 		}
 	}
 
-	if (options.recursive) {
-		if (target.prototype && source.prototype) {
-			copyProperties(target, source, options);
-		}
-		else {
-			let targetProto = Object.getPrototypeOf(target);
+	copyPropertiesFromSources(sources, target);
 
-			if (isMeaningfulProto(targetProto) && isMeaningfulProto(sourceProto)) {
-				if (typeof options.recursive === "number") {
-					options = { ...options, recursive: options.recursive - 1 };
-				}
-
-				copyProperties(targetProto, sourceProto, options);
-			}
-		}
+	if (options.prototypes) {
+		copyPropertiesFromSources(sources.map(source => source.prototype).filter(Boolean), target.prototype);
 	}
-}
-
-function isMeaningfulProto (proto) {
-	return proto !== Object.prototype && proto !== Function.prototype;
 }
 
 function copyProperty (target, source, key, options = {}) {

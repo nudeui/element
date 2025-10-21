@@ -1,5 +1,5 @@
 /**
- * Get the class hierarchy to the given class
+ * Get the class hierarchy to the given class, from superclass to subclass
  * @param {Function} Class
  * @param {Function} [FromClass] Optional class to stop at
  * @returns {Function[]}

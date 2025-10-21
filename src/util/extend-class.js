@@ -7,11 +7,5 @@ import { copyProperties } from "./copy-properties.js";
  * @param {import("./copy-properties.js").CopyPropertiesOptions} [options={}]
  */
 export function extendClass (Class, Mixin, options = {}) {
-	if (options.recursive) {
-		copyProperties(Class, Mixin, options);
-	}
-	else {
-		copyProperties(Class, Mixin, options);
-		copyProperties(Class.prototype, Mixin.prototype, options);
-	}
+	copyProperties(Class, Mixin, {...options, prototypes: true});
 }
