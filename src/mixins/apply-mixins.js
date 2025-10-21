@@ -19,16 +19,16 @@ export function applyMixins (Class, mixins = Class.mixins) {
 }
 
 export function applyMixin (Class, mixin, config) {
-	if (!Object.hasOwn(Class, "mixinsApplied")) {
-		Class.mixinsApplied = [];
+	if (!Object.hasOwn(Class, "mixinsActive")) {
+		Class.mixinsActive = [];
 	}
 
-	if (Class.mixinsApplied.includes(mixin)) {
+	if (Class.mixinsActive.includes(mixin)) {
 		// Don't apply the same mixin twice
 		return;
 	}
 
-	Class.mixinsApplied.push(mixin);
+	Class.mixinsActive.push(mixin);
 
 	if (typeof mixin === "function" && !isMixinClass(mixin)) {
 		mixin = mixin(Class, config);
@@ -43,6 +43,7 @@ export function applyMixin (Class, mixin, config) {
 		extendClass(Class, mixin);
 	}
 	else {
+		// Old mixin style
 		defineMixin(Class, mixin, config);
 	}
 }
