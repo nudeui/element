@@ -27,8 +27,8 @@ export function composeFunctions (keyFn, ...fns) {
 	let composedFn = composedFunctions.getKey(keyFn);
 
 	if (composedFn) {
-		// A composed function was provided instead of the constituent
-		keyFn = composedFn[functions][0];
+		// A composed function was provided instead of the constituent, so we need to swap them
+		[composedFn, keyFn] = [keyFn, composedFn];
 	}
 	else {
 		composedFn = composedFunctions.get(keyFn);
