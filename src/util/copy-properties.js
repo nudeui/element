@@ -3,10 +3,10 @@ import { getSupers } from "./get-supers.js";
 
 /**
  * @typedef {object} CopyPropertiesOptions
- * @property {boolean} prototypes - Whether to try and extend .prototype too.
- * @property {boolean} recursive - Whether to try and extend superclasses too. Automatically stops at the first shared superclass.
+ * @property {boolean} [prototypes=false] - Whether to try and extend .prototype too.
+ * @property {boolean} [recursive=false] - Whether to try and extend superclasses too. Automatically stops at the first shared superclass.
  * @property {boolean} overwrite - Whether to overwrite conflicts that can't be merged
- * @property {boolean} mergeFunctions - Whether to try to merge wherever possible
+ * @property {boolean} [mergeFunctions=true] - Whether to try to merge wherever possible
  */
 
 /**
