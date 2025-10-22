@@ -1,7 +1,9 @@
 /**
  * Mixin for adding shadow DOM styles
  */
-import { adoptCSS, fetchCSS, getSupers } from "./util.js";
+import { adoptCSS } from "../util/adopt-css.js";
+import { fetchCSS } from "../util/fetch-css.js";
+import { getSupers } from "../util/get-supers.js";
 import mounted from "../mounted.js";
 
 export const shadowStylesFetched = Symbol("shadow styles fetched");
