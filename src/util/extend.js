@@ -9,9 +9,9 @@ export const sideEffects = Symbol("Side effects");
 export const mutable = Symbol("Mutable");
 
 export function extend (body, ...sideEffects) {
-	let Mutable = body[sideEffects] ? body : body[mutable];
+	let mutableFn = body[sideEffects] ? body : body[mutable];
 
-	if (!Mutable) {
+	if (!mutableFn) {
 		// First time extending body
 		let name = body.name || "";
 
@@ -21,7 +21,7 @@ export function extend (body, ...sideEffects) {
 			[name] (...args) {
 				let ret = body.apply(this, args);
 
-				for (let sideEffect of Mutable[sideEffects]) {
+				for (let sideEffect of mutableFn[sideEffects]) {
 					sideEffect.apply(this, args);
 				}
 
@@ -29,21 +29,21 @@ export function extend (body, ...sideEffects) {
 			},
 		};
 
-		Mutable = body[mutable] = wrapper[name];
-		Mutable.body = body;
-		Mutable[sideEffects] = new Set();
+		mutableFn = body[mutable] = wrapper[name];
+		mutableFn.body = body;
+		mutableFn[sideEffects] = new Set();
 	}
 
-	body = Mutable.body;
+	body = mutableFn.body;
 
 	for (const sideEffect of sideEffects) {
-		if (body === Mutable.body) {
+		if (body === mutableFn.body) {
 			// The function cannot be a side effect of itself
 			continue;
 		}
 
-		Mutable[sideEffects].add(sideEffect);
+		mutableFn[sideEffects].add(sideEffect);
 	}
 
-	return Mutable;
+	return mutableFn;
 }

@@ -1,4 +1,4 @@
 export * from "../util/adopt-css.js";
 export * from "../util/fetch-css.js";
-export * as getSymbols from "../util/get-symbols.js";
+export { default as getSymbols } from "../util/get-symbols.js";
 export * from "../util/get-supers.js";
