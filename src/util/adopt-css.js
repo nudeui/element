@@ -20,9 +20,6 @@ export function adoptCSS (style, root = globalThis.document) {
 	/** @type {CSSStyleSheet | HTMLStyleElement} */
 	let styleObj = getSheet(style, root, { create: true });
 
-	let rootAdoptedStyleSheets = adoptedStyleSheets.get(root);
-	rootAdoptedStyleSheets.set(style, styleObj);
-
 	if (root.adoptedStyleSheets) {
 		// Newer browsers
 		if (Object.isFrozen(root.adoptedStyleSheets)) {
@@ -62,40 +59,28 @@ function getSheet (style, root, { create = false } = {}) {
 		adoptedStyleSheets.set(root, rootAdoptedStyleSheets);
 	}
 
+	let styleObj = rootAdoptedStyleSheets.get(style);
+
+	if (!styleObj && !create) {
+		return null;
+	}
+
+	// If we’re here, we have no existing object and create is true
 	if (root.adoptedStyleSheets) {
 		// Newer browsers
-		let sheet = rootAdoptedStyleSheets.get(style);
-
-		if (!sheet ) {
-			if (!create) {
-				return null;
-			}
-
-			if (typeof style === "string") {
-				sheet = new CSSStyleSheet();
-				sheet.replaceSync(style);
-				rootAdoptedStyleSheets.set(style, sheet);
-				style = sheet;
-			}
+		if (typeof style === "string") {
+			styleObj = new CSSStyleSheet();
+			styleObj.replaceSync(style);
 		}
-
-		return style;
 	}
 	else {
 		// Older browsers
-		let styleElement = rootAdoptedStyleSheets.get(style);
-
-		if (!styleElement) {
-			if (!create) {
-				return null;
-			}
-
-			styleElement = document.createElement("style");
-			styleElement.textContent = style;
-		}
-
-		return styleElement;
+		styleObj = document.createElement("style");
+		styleObj.textContent = style;
 	}
+
+	rootAdoptedStyleSheets.set(style, styleObj);
+	return styleObj;
 }
 
 /**
