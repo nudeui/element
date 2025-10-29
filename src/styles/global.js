@@ -76,3 +76,5 @@ export const Mixin = (Super = HTMLElement) => class GlobalStyles extends Super {
 };
 
 Mixin.appliesTo = appliesTo;
+
+export default Mixin();
