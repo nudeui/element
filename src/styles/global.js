@@ -1,10 +1,7 @@
 /**
  * Mixin for adding light DOM styles
  */
-import { getSupers } from "../util/get-supers.js";
-import { adoptCSSRecursive } from "../util/adopt-css.js";
-import { fetchCSS } from "../util/fetch-css.js";
-import getSymbols from "../util/get-symbols.js";
+import { adoptCSSRecursive, fetchCSS, getSupers, getSymbols } from "./util.js";
 
 const { fetchedGlobalStyles, globalStyles, roots, render, initialized } = getSymbols;
 
