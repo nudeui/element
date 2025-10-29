@@ -1,7 +1,7 @@
 import { copyProperties } from "../util/copy-properties.js";
 
 export function applyMixins (Class = this, mixins = Class.mixins) {
-	if (Object.hasOwn(Class, "mixinsActive") || this && !Object.hasOwn(this, "mixins")) {
+	if (Object.hasOwn(Class, "mixinsActive") || !mixins?.length) {
 		return;
 	}
 
