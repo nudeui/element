@@ -27,6 +27,7 @@ Try it and please report issues and provide feedback!
 ### No hassle, less control: the `NudeElement` class
 
 Defining your element as a subclass of `NudeElement` gives you the nicest, most declarative syntax.
+This includes all mixins automatically, though they are only activated when their relevant properties are used.
 
 ```js
 import NudeElement from "nude-element";

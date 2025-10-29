@@ -2,7 +2,7 @@
  * Mixin for adding light DOM styles
  */
 import { getSupers } from "../util/get-supers.js";
-import { adoptCSS } from "../util/adopt-css.js";
+import { adoptCSSRecursive } from "../util/adopt-css.js";
 import { fetchCSS } from "../util/fetch-css.js";
 
 export default {
@@ -50,17 +50,7 @@ export default {
 				continue;
 			}
 
-			// Recursively adopt style on all shadow roots all the way up to the document
-			let root = this;
-			do {
-				root = root.host ?? root;
-				root = root.getRootNode();
-
-				if (!Self.roots.has(root)) {
-					adoptCSS(css, root);
-					Self.roots.add(root);
-				}
-			} while (root && root.nodeType !== Node.DOCUMENT_NODE);
+			adoptCSSRecursive(css, this);
 		}
 	},
 };
