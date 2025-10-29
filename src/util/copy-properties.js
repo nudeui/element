@@ -1,4 +1,4 @@
-import { composeFunctions } from "./compose-functions.js";
+import { extend } from "./extend.js";
 import { getSupers } from "./get-supers.js";
 
 /**
@@ -66,7 +66,7 @@ function copyProperty (target, source, key, options = {}) {
 			typeof sourceDescriptor.value === "function"
 		) {
 			// Compatible, compose
-			targetDescriptor.value = composeFunctions(
+			targetDescriptor.value = extend(
 				targetDescriptor.value,
 				sourceDescriptor.value,
 			);

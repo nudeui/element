@@ -1,44 +1,39 @@
-import { resolveValue } from "./util/resolve-value.js";
-import mounted from "./mounted.js";
+export function appliesTo (Class) {
+	return "cssStates" in Class;
+}
 
-export default function (Class, { internalsProp = "_internals" } = Class.cssStates) {
-	// Stuff that runs once per mixin
-	if (HTMLElement.prototype.attachInternals === undefined) {
-		// Not supported
-		return;
-	}
 
-	let ret = class StatesMixin extends HTMLElement {
-		static mixins = [mounted];
+export function Mixin (Super = HTMLElement, {internalsProp = "_internals"} = {}) {
+	return class StatesMixin extends Super {
 
-		mounted () {
-			let internals = (this[internalsProp] ??= this.attachInternals());
+		// TODO do we also need addState() and removeState() or is toggleState() enough?
+		/**
+		 * Add or remove a CSS custom state on the element.
+		 * @param {string} state - The name of the state to add or remove.
+		 * @param {boolean} [force] - If omitted, the state will be toggled. If true, the state will be added. If false, the state will be removed.
+		 */
+		toggleState (state, force) {
+			let states = this[internalsProp].states;
 
-			if (internals) {
-				let source = resolveValue(like, [this, this]);
-				role ??= source?.computedRole;
+			if (!states) {
+				// TODO rewrite to attributes if states not supported? Possibly as a separate mixin
+				return;
+			}
 
-				if (role) {
-					internals.ariaRole = role ?? source?.computedRole;
-				}
+			force ??= !states.has(state);
 
-				internals.setFormValue(this[valueProp]);
-				(source || this).addEventListener(changeEvent, () =>
-					internals.setFormValue(this[valueProp]));
+			if (force) {
+				states.add(state);
+			}
+			else {
+				states.delete(state);
 			}
 		}
 
-		static formAssociated = true;
-	};
-
-	for (let prop of getters) {
-		Object.defineProperty(ret.prototype, prop, {
-			get () {
-				return this[internalsProp][prop];
-			},
-			enumerable: true,
-		});
+		static appliesTo = appliesTo;
 	}
+};
 
-	return ret;
-}
+Mixin.appliesTo = appliesTo;
+
+export default Mixin();

@@ -1,3 +1,4 @@
+// To be moved to mixin
 export default class Hooks {
 	constructor (hooks) {
 		if (hooks instanceof Hooks) {

@@ -1,76 +1,30 @@
 /**
- * Base class for all elements
+ * Base class with all mixins applied
  */
-import mounted from "./mounted.js";
+
+import NudeElement from "./nude-element.js";
+
 import props from "./props/defineProps.js";
 import formAssociated from "./form-associated.js";
 import events from "./events/defineEvents.js";
-
 import { shadowStyles, globalStyles } from "./styles/index.js";
-import Hooks from "./mixins/hooks.js";
-import { applyMixins } from "./mixins/apply-mixins.js";
 
-const mixins = {props, events, formAssociated, styles: shadowStyles, shadowStyles, globalStyles};
+const mixins = [props, events, formAssociated, shadowStyles, globalStyles];
 
-const classInitialized = Symbol("classInitialized");
-
-const Self = class NudeElement extends HTMLElement {
-	constructor () {
-		super();
-
-		this.constructor.init();
-
-		this.constructor.hooks.run("start", this);
-
-		if (this.propChangedCallback && this.constructor.props) {
-			this.addEventListener("propchange", this.propChangedCallback);
-		}
-
-		// We use a microtask so that this executes after the subclass constructor has run as well
-		Promise.resolve().then(this.constructor.hooks.run("constructed", this));
-	}
-
-	connectedCallback () {
-		this.constructor.hooks.run("connected", this);
-	}
-
-	disconnectedCallback () {
-		this.constructor.hooks.run("disconnected", this);
-	}
-
-	static {
-		this.init();
-	}
+const Self = class Element extends NudeElement {
+	static mixins = mixins;
 
 	static init () {
-		// Stuff that runs once per class
-		if (Object.hasOwn(this, classInitialized)) {
-			return false;
+		if (this.initialized) {
+			return;
 		}
 
-		this[classInitialized] = true;
-
-		// Every child class has to have the mounted mixin applied,
-		// but we don't want to share specific child class mixins with all other classes
-		this.mixins = [mounted];
-
-		this.hooks = new Hooks(this.hooks);
-
-		if (this.globalStyle) {
-			this.globalStyles ??= this.globalStyle;
+		// Ensure the class has its own, and is not using the superclass' mixins
+		if (this !== Self && Object.hasOwn(this, "mixins")) {
+			this.mixins = this.mixins.slice();
 		}
 
-		for (const [name, mixin] of Object.entries(mixins)) {
-			if (this[name]) {
-				this.mixins.push(mixin);
-			}
-		}
-
-		applyMixins(this);
-
-		this.hooks.run("setup", this);
-
-		return true;
+		return super.init();
 	}
 };
 

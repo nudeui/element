@@ -52,8 +52,8 @@ export function slotsChanged (records) {
 	}
 }
 
-export default function  (Class, options = {}) {
-	return {
+export function Mixin (Super = HTMLElement, options = {}) {
+	return class NamedManual extends Super {
 		init () {
 			if (this.shadowRoot?.slotAssignment !== "manual") {
 				// Nothing to do here
@@ -103,6 +103,8 @@ export default function  (Class, options = {}) {
 				});
 				slotObserver.observe(this);
 			}
-		},
+		}
 	};
 }
+
+export default Mixin();

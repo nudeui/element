@@ -11,7 +11,7 @@ function update (slot) {
 
 const SUPPORTS_HAS_SLOTTED = globalThis.CSS?.supports("selector(:has-slotted)");
 
-export default {
+export const Mixin = (Super = HTMLElement) => class HasSlotted extends Super {
 	init () {
 		// Get all slots
 		if (SUPPORTS_HAS_SLOTTED || !this.shadowRoot) {
@@ -34,5 +34,7 @@ export default {
 		});
 
 		slotObserver.observe(this);
-	},
+	}
 };
+
+export default Mixin();

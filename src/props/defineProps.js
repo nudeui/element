@@ -1,44 +1,13 @@
 import Props from "./Props.js";
-import defineMixin from "../mixins/define-mixin.js";
+import getSymbols from "../util/get-symbols.js";
+import { defineLazyProperties } from "../util/lazy.js";
+const { initialized, propsDef } = getSymbols;
 
-let propsSymbol = Symbol("propsSymbol");
+export const Mixin = (Super = HTMLElement) => class WithProps extends Super {
+	init () {
+		this.constructor.init();
 
-export default function defineProps (Class, props = Class[propsSymbol] ?? Class.props) {
-	if (props instanceof Props && props.Class === Class) {
-		// Already defined
-		return null;
-	}
-
-	if (Class.props instanceof Props) {
-		// Props already defined, add these props to it
-		Class.props.add(props);
-		return;
-	}
-
-	Class[propsSymbol] = Class.props;
-	props = Class.props = new Props(Class, props);
-
-	let _attributeChangedCallback = Class.prototype.attributeChangedCallback;
-	Class.prototype.attributeChangedCallback = function (name, oldValue, value) {
-		this.constructor.props.attributeChanged(this, name, oldValue, value);
-		_attributeChangedCallback?.call(this, name, oldValue, value);
-	};
-
-	// FIXME how to combine with existing observedAttributes?
-	if (!Object.hasOwn(Class, "observedAttributes")) {
-		Object.defineProperty(Class, "observedAttributes", {
-			get () {
-				return this.props.observedAttributes;
-			},
-			configurable: true,
-		});
-	}
-
-	return defineMixin(Class, {
-		init () {
-			this.constructor.props.initializeFor(this);
-		},
-		properties: {
+		defineLazyProperties(this, {
 			// Internal prop values
 			props () {
 				return {};
@@ -47,6 +16,61 @@ export default function defineProps (Class, props = Class[propsSymbol] ?? Class.
 			ignoredAttributes () {
 				return new Set();
 			},
-		},
-	});
-}
+		});
+
+		// Should this use Object.hasOwn()?
+		if (this.propChangedCallback) {
+			this.addEventListener("propchange", this.propChangedCallback);
+		}
+
+		this.constructor.props.initializeFor(this);
+	}
+
+	attributeChangedCallback (name, oldValue, value) {
+		super.attributeChangedCallback?.(name, oldValue, value);
+
+		this.constructor.props.attributeChanged(this, name, oldValue, value);
+	}
+
+	static get observedAttributes () {
+		return [
+			...(super.observedAttributes ?? []),
+			...(this.constructor.props.observedAttributes ?? []),
+		];
+	}
+
+	static init () {
+		if (this[initialized]) {
+			return;
+		}
+
+		this[initialized] = true;
+
+		if (this.props) {
+			this.defineProps();
+		}
+	}
+
+	static defineProps (props = this.props) {
+		if (props instanceof Props && props.Class === this) {
+			// Already defined
+			return null;
+		}
+
+		if (this.props instanceof Props) {
+			// Props already defined, add these props to it
+			this.props.add(props);
+			return;
+		}
+
+		// First time processing props for this class
+		this[propsDef] = this.props;
+		props = this.props = new Props(this, props);
+	}
+
+	static appliesTo (Class) {
+		return "props" in Class;
+	}
+};
+
+export default Mixin();

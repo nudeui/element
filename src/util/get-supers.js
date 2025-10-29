@@ -7,7 +7,7 @@
 export function getSupers (Class, FromClass) {
 	let classes = [];
 
-	while (Class && Class !== FromClass) {
+	while (Class && Class !== FromClass && Class !== Function.prototype) {
 		classes.unshift(Class);
 		Class = Object.getPrototypeOf(Class);
 	}

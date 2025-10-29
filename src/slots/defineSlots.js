@@ -1,41 +1,9 @@
-import defineMixin from "../mixins/define-mixin.js";
-
-function assignSlots () {
-	let children = this.childNodes;
-	let slotElements = Object.values(this._slots);
-	let assignments = new WeakMap();
-
-	// Assign to slots
-	for (let child of children) {
-		let assignedSlot;
-
-		if (child.slot) {
-			// Explicit slot assignment by name, this takes priority
-			assignedSlot = this._slots[child.slot];
-		}
-		else if (child.matches) {
-			// Does child match any slot selector?
-			assignedSlot = slotElements.find(slot => child.matches(slot.dataset.assign));
-		}
-
-		assignedSlot ??= this._slots.default;
-		let all = assignments.get(assignedSlot) ?? new Set();
-		all.add(child);
-		assignments.set(assignedSlot, all);
-	}
-
-	for (let slot of slotElements) {
-		let all = assignments.get(slot) ?? new Set();
-		slot.assign(...all);
-	}
-}
+import { assignToSlot } from "./util.js";
 
 let mutationObserver;
 
-export default function  (Class) {
-	// Class.prototype.assignSlots = assignSlots;
-
-	return defineMixin(Class, function init () {
+export const Mixin = (Super = HTMLElement) => class DefineSlots extends Super {
+	init () {
 		if (!this.shadowRoot) {
 			return;
 		}
@@ -53,10 +21,14 @@ export default function  (Class) {
 			// slotchange won’t fire in this case, so we need to do this the old-fashioned way
 			mutationObserver ??= new MutationObserver(mutations => {
 				for (let mutation of mutations) {
-					assignSlots.call(mutation.target);
+					let slot = mutation.target;
+					assignToSlot(slot);
+					// TODO what to do with affectedSlots?
 				}
 			});
 			mutationObserver.observe(this, { childList: true });
 		}
-	});
-}
+	}
+};
+
+export default Mixin();

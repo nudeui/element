@@ -6,21 +6,27 @@ export function applyMixins (Class = this, mixins = Class.mixins) {
 	}
 
 	Class.mixinsActive = [];
-	let methods = {static: {}, instance: {}};
 
 	for (let Mixin of mixins) {
-		if (Mixin.autoApply && !Mixin.autoApply(Class)) {
+		if (Mixin.appliesTo && !Mixin.appliesTo(Class)) {
 			// Not applicable to this class
 			continue;
 		}
 
-		if (Class.mixinsActive.includes(Mixin)) {
-			// Already applied
-			continue;
-		}
+		applyMixin(Mixin);
+	}
+}
 
-		copyProperties(Class, Mixin, {recursive: true, prototypes: true});
+export function applyMixin (Class, Mixin, force = false) {
+	let alreadyApplied = Class.mixinsActive.includes(Mixin);
+	if (alreadyApplied && !force) {
+		// Already applied
+		return;
+	}
 
+	copyProperties(Class, Mixin, {recursive: true, prototypes: true});
+
+	if (!alreadyApplied) {
 		Class.mixinsActive.push(Mixin);
 	}
 }
