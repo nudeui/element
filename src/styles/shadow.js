@@ -19,7 +19,7 @@ export const Mixin = (Super = HTMLElement) => class ShadowStyles extends Super {
 		this[render]();
 	}
 
-	[render] () {
+	async [render] () {
 		let Self = this.constructor;
 
 		let supers = getSupers(Self, HTMLElement);
