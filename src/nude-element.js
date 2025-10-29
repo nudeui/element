@@ -8,7 +8,7 @@
  * ```
  */
 import { applyMixins } from "./mixins/apply.js";
-import { getSymbols } from "./util/get-symbols.js";
+import getSymbols from "./util/get-symbols.js";
 
 const { initialized } = getSymbols;
 
