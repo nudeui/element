@@ -61,7 +61,11 @@ function getSheet (style, root, { create = false } = {}) {
 
 	let styleObj = rootAdoptedStyleSheets.get(style);
 
-	if (!styleObj && !create) {
+	if (styleObj) {
+		return styleObj;
+	}
+
+	if (!create) {
 		return null;
 	}
 
