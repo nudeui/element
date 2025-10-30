@@ -123,20 +123,20 @@ export const Mixin = (Super = HTMLElement) => class WithEvents extends Super {
 			// This used to be in a setup hook, do we not want it to just run here?
 			for (let eventName in propchange) {
 				let propName = propchange[eventName];
-				let prop = Class.props.get(propName);
+				let prop = this.props.get(propName);
 
 				if (prop) {
 					(prop.eventNames ??= []).push(eventName);
 				}
 				else {
-					throw new TypeError(`No prop named ${propName} in ${Class.name}`);
+					throw new TypeError(`No prop named ${propName} in ${this.name}`);
 				}
 			}
 		}
 
 		let eventProps = Object.keys(events)
 			// Is not a native event (e.g. input)
-			.filter(name => !("on" + name in Class.prototype))
+			.filter(name => !("on" + name in this.prototype))
 			.map(name => [
 				"on" + name,
 				{
