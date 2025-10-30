@@ -1,5 +1,5 @@
 import SlotController from "./slot-controller.js";
-import { getSymbols } from "../util/get-symbols.js";
+import getSymbols from "../util/get-symbols.js";
 
 const defaultOptions = {
 	slotsProperty: "_slots",
