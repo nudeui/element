@@ -18,7 +18,7 @@ export function appliesTo (Class) {
 	return instanceHooks.some(hook => Class.prototype[hook]) || staticHooks.some(hook => Class[hook]);
 }
 
-export const Mixin = (Super = HTMLElement) => class MountedMixin extends Super {
+export const Mixin = (Super = HTMLElement) => class WithLifecycle extends Super {
 	constructor () {
 		super();
 

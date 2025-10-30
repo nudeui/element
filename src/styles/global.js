@@ -10,6 +10,11 @@ export function appliesTo (Class) {
 }
 
 export const Mixin = (Super = HTMLElement) => class GlobalStyles extends Super {
+	constructor () {
+		super();
+		this.init();
+	}
+
 	async [render] () {
 		let Self = this.constructor;
 

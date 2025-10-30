@@ -4,6 +4,11 @@ import { defineLazyProperties } from "../util/lazy.js";
 const { initialized, propsDef } = getSymbols;
 
 export const Mixin = (Super = HTMLElement) => class WithProps extends Super {
+	constructor () {
+		super();
+		this.init();
+	}
+
 	init () {
 		this.constructor.init();
 

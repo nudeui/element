@@ -13,6 +13,11 @@ export function Mixin (Super = HTMLElement, options = {}) {
 	let { slotsProperty, dynamicSlots } = options;
 
 	return class HasSlots extends Super {
+		constructor () {
+			super();
+			this.init();
+		}
+
 		init () {
 			super.init?.();
 			this[slotsProperty] = new SlotController(this, {dynamic: dynamicSlots});

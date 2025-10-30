@@ -95,6 +95,42 @@ class MySlider extends Element {
 }
 ```
 
+### A little hassle, a little more control: The `NudeElement` class
+
+`Element` inherits from `NudeElement`, which is nearly identical with one exception:
+Instead of including all commonly used mixins automatically,
+it includes no mixins at all.
+To add mixins, you extend it and add a `mixins` static property.
+
+This can be useful when you’re trying to keep bundle size to a minimum, since even if mixins are only activated when your subclass uses them,
+they will won't be tree-shaken away, since bundlers don’t understand how this works.
+
+```js
+import { NudeElement, Props, Events, FormAssociated } from "nude-element";
+
+class MySlider extends NudeElement {
+	static mixins = [Props, Events, FormAssociated];
+
+	// ...
+}
+```
+
+### More hassle, more control: Subclass factories
+
+To reduce bundle size even further, you can import individual mixins as subclass factories and apply them to your element subclass yourself.
+
+
+```js
+
+import { Props, Events, FormAssociated } from "nude-element";
+
+class MySlider extends HTMLElement {
+	static mixins = [Props, Events, FormAssociated];
+
+	// ...
+}
+```
+
 ### More hassle, more control: Composable mixins
 
 If Nude Element taking over your parent class seems too intrusive,

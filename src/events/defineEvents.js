@@ -52,10 +52,14 @@ function retargetEvent (name, from) {
 	};
 }
 
-
-
 export const Mixin = (Super = HTMLElement) => class WithEvents extends Super {
+	// FIXME these won't apply if we're not using NudeElement somewhere in the inheritance chain
 	static mixins = [PropsMixin(Super)];
+
+	constructor () {
+		super();
+		this.init();
+	}
 
 	init () {
 		this.constructor.init();

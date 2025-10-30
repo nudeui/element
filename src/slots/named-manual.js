@@ -54,6 +54,11 @@ export function slotsChanged (records) {
 
 export function Mixin (Super = HTMLElement, options = {}) {
 	return class NamedManual extends Super {
+		constructor () {
+			super();
+			this.init();
+		}
+
 		init () {
 			if (this.shadowRoot?.slotAssignment !== "manual") {
 				// Nothing to do here

@@ -12,6 +12,11 @@ function update (slot) {
 const SUPPORTS_HAS_SLOTTED = globalThis.CSS?.supports("selector(:has-slotted)");
 
 export const Mixin = (Super = HTMLElement) => class HasSlotted extends Super {
+	constructor () {
+		super();
+		this.init();
+	}
+
 	init () {
 		// Get all slots
 		if (SUPPORTS_HAS_SLOTTED || !this.shadowRoot) {
