@@ -8,7 +8,6 @@
  * - `anyConnected`: Called when any instance of the class is connected to the DOM (once per class)
  */
 import { getSymbols } from "./util/get-symbols.js";
-import { defer } from "./util/defer.js";
 
 const { hasConnected, initialized } = getSymbols;
 
@@ -30,7 +29,7 @@ export const Mixin = (Super = HTMLElement) => class MountedMixin extends Super {
 		}
 
 		this.init?.();
-		defer(() => this.constructed?.());
+		Promise.resolve().then(() => this.constructed?.());
 	}
 
 	connectedCallback () {
