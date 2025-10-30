@@ -7,11 +7,12 @@ for creating reactive web components that behave just like native HTML elements.
 
 </header>
 
-Elements can extend `NudeElement` to get the nicest, most declarative syntax,
-or import individual mixins as helper functions and use them with any `HTMLElement` subclass.
+Elements can extend `Element` to get the nicest, most declarative syntax,
+or import individual mixins and use them with any `HTMLElement` subclass.
 
-**Note:** This is a work in progress, developed in the open.
-Try it and please report issues and provide feedback!
+> [!NOTE]
+> This is a work in progress, developed in the open.
+> Try it and please report issues and provide feedback!
 
 ## Features
 
@@ -24,19 +25,20 @@ Try it and please report issues and provide feedback!
 
 ## Usage
 
-### No hassle, less control: the `NudeElement` class
+### No hassle, less control: the `Element` class
 
-Defining your element as a subclass of `NudeElement` gives you the nicest, most declarative syntax.
-This includes all mixins automatically, though they are only activated when their relevant properties are used.
+Defining your element as a subclass of `Element` gives you the nicest, most declarative syntax.
+This includes all commonly used mixins automatically, though they are only activated when their relevant properties are used in your element subclass.
 
 ```js
-import NudeElement from "nude-element";
+import Element from "nude-element";
 
-class MySlider extends NudeElement {
+class MySlider extends Element {
 	constructor () {
 		// ...
 	}
 
+	// Automatically activates the props mixin
 	static props = {
 		min: {
 			type: Number,
@@ -68,6 +70,7 @@ class MySlider extends NudeElement {
 		},
 	};
 
+	// Automatically activates the events mixin
 	static events = {
 		// Propagate event from shadow DOM element
 		change: {
@@ -82,6 +85,7 @@ class MySlider extends NudeElement {
 		},
 	};
 
+	// Automatically activates the formAssociated mixin
 	static formAssociated = {
 		like: el => el._el.slider,
 		role: "slider",

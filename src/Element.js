@@ -2,16 +2,10 @@
  * Base class with all mixins applied
  */
 
-import NudeElement from "./nude-element.js";
+import { Mixin as NudeElementMixin } from "./nude-element.js";
+import commonMixins from "./common-mixins.js";
 
-import props from "./props/defineProps.js";
-import formAssociated from "./form-associated.js";
-import events from "./events/defineEvents.js";
-import { shadowStyles, globalStyles } from "./styles/index.js";
-
-const mixins = [props, events, formAssociated, shadowStyles, globalStyles];
-
-const Self = class Element extends NudeElement {
+export const Mixin = (Super = HTMLElement, mixins = commonMixins) => class Element extends NudeElementMixin(Super) {
 	static mixins = mixins;
 
 	static init () {
@@ -20,7 +14,7 @@ const Self = class Element extends NudeElement {
 		}
 
 		// Ensure the class has its own, and is not using the superclass' mixins
-		if (this !== Self && Object.hasOwn(this, "mixins")) {
+		if (this !== Element && Object.hasOwn(this, "mixins")) {
 			this.mixins = this.mixins.slice();
 		}
 
@@ -28,4 +22,4 @@ const Self = class Element extends NudeElement {
 	}
 };
 
-export default Self;
+export default Mixin();
