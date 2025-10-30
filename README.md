@@ -115,142 +115,80 @@ class MySlider extends NudeElement {
 }
 ```
 
-### More hassle, more control: Subclass factories
+### With custom base class: Subclass factories
 
-To reduce bundle size even further, you can import individual mixins as subclass factories and apply them to your element subclass yourself.
-
+If you need to use a custom base class (e.g. `LitElement`), rather than `HTMLElement`, all Nude mixins are also available as subclass factories,
+include `Element` and `NudeElement`:
 
 ```js
+import { ElementMixin } from "nude-element";
+import { LitElement } from "lit";
 
-import { Props, Events, FormAssociated } from "nude-element";
-
-class MySlider extends HTMLElement {
-	static mixins = [Props, Events, FormAssociated];
-
+class MySlider extends ElementMixin(LitElement) {
 	// ...
+}
+```
+
+Individual mixins are also available as subclass factories:
+
+```js
+import { Props, Events, FormAssociated } from "nude-element/mixins";
+import { LitElement } from "lit";
+
+class MySlider extends Props(Events(FormAssociated(LitElement))) {
+	// ...
+}
+```
+
+Some mixins even have a second argument for parameters that you can customize.
+For example, by default they assume your `ElementInternals` instance (if you have one) is stored in a `_internals` property,
+but you can change that to whatever you want by passing a second argument to the mixin:
+
+```js
+import { FormAssociated } from "nude-element/mixins";
+
+const internals = Symbol("internals");
+class MySlider extends FormAssociated(LitElement, { internalsProp: internals }) {
+	constructor () {
+		super();
+
+		this[internals] = this.attachInternals?.();
+	}
 }
 ```
 
 ### More hassle, more control: Composable mixins
 
 If Nude Element taking over your parent class seems too intrusive,
-you can implement the same API via one-off composable helper functions aka mixins,
+you can pull in mixins and apply them to any base class you want in-place without affecting the inheritance chain,
 at the cost of handling some of the plumbing yourself.
 
-Each mixin modifies the base class in a certain way (e.g. adds properties & methods) and returns an init function,
-to be called once for each element,
-either at the end of its constructor or when it’s first connected.
-This is what the example above would look like:
+There are three parts:
+1. Apply `applyMixins` to your class to apply the mixins to it
+2. Make sure to call `this.init()` in your constructor, since `applyMixins` cannot modify your constructor, so that’s the only way to run initialization logic
 
 ```js
-import {
-	defineProps,
-	defineEvents,
-	defineFormAssociated,
-} from "nude-element";
+import { Props, Events, FormAssociated, applyMixins } from "nude-element";
 
 class MySlider extends HTMLElement {
 	constructor () {
-		// ...
-
-		eventHooks.init.call(this);
-		formAssociatedHooks.init.call(this);
-		propHooks.init.call(this);
-	}
-}
-
-let propHooks = defineProps(MySlider, {
-	min: {
-		type: Number,
-		default: 0,
-	},
-	max: {
-		type: Number,
-		default: 1,
-	},
-	step: {
-		type: Number,
-		default () {
-			return Math.abs((this.max - this.min) / 100);
-		},
-	},
-	defaultValue: {
-		type: Number,
-		default () {
-			return (this.min + this.max) / 2;
-		},
-		reflect: {
-			from: "value",
-		},
-	},
-	value: {
-		type: Number,
-		defaultProp: "defaultValue",
-		reflect: false,
-	},
-});
-
-let eventHooks = defineEvents(MySlider, {
-	// Propagate event from shadow DOM element
-	change: {
-		from () {
-			return this._el.slider;
-		}
-	},
-
-	// Fire event when specific prop changes (even programmatically)
-	valuechange: {
-		propchange: "value",
-	},
-});
-
-let formAssociatedHooks = defineFormAssociated(MySlider, {
-	like: el => el._el.slider,
-	role: "slider",
-	valueProp: "value",
-	changeEvent: "valuechange",
-});
-```
-
-Each mixin will also look for a static `hooks` property on the element class and add its lifecycle hooks to it if it exists,
-so you can make things a little easier by defining such a property:
-
-```js
-import { defineProps } from "nude-element";
-import Hooks from "nude-element/hooks";
-
-class MyElement extends HTMLElement {
-	// Caution: if MyElement has subclasses, this will be shared among them!
-	static hooks = new Hooks();
-
-	constructor () {
 		super();
 
-		// Then you can call the hooks at the appropriate times:
-		this.constructor.hooks.run("init", this);
+		// Your own init logic here...
+
+		this.init?.();
+	}
+
+	static {
+		applyMixins(this, [Props, Events, FormAssociated]);
 	}
 }
-
-defineProps(MyElement, {
-	// Props…
-});
 ```
 
-Read more:
+Individual mixin docs:
 - [Using Props](src/props/)
 - [Events](src/events/)
 - [Form-associated elements](src/formAssociated/)
 - [Mixins](src/mixins/)
 
 
-## Known Hooks
-
-These hooks are automatically managed when you use the `NudeElement` class.
-If you choose to import mixins directly, you need to manage when to call them yourself.
-
-- `prepare`: Runs once per class, as soon as a mixin is added
-- `setup`: Runs once per class, before any element is fully constructed
-- `start`: Runs on element constructor
-- `constructed`: Runs after element constructor (async)
-- `init`: Runs when element is connected for the first time
-- `disconnected`: Runs when element is disconnected
