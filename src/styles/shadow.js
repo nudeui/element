@@ -3,7 +3,7 @@
  */
 import { adoptCSS, fetchCSS, getSupers, getSymbols } from "./util.js";
 
-const { fetchedStyles, styles, initialized, render } = getSymbols;
+const { fetchedStyles, styles, initialized, render, init } = getSymbols;
 
 export function appliesTo (Class) {
 	return "shadowStyles" in Class;
@@ -39,7 +39,9 @@ export const Mixin = (Super = HTMLElement) => class ShadowStyles extends Super {
 		}
 	}
 
-	static init () {
+	static [init] () {
+		super[init]?.();
+
 		if (!this[styles] || Object.hasOwn(this, initialized)) {
 			return;
 		}
