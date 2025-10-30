@@ -4,12 +4,17 @@
 
 import { Mixin as NudeElementMixin } from "./nude-element.js";
 import commonMixins from "./common-mixins.js";
+import { initialized } from "./nude-element.js";
 
 export const Mixin = (Super = HTMLElement, mixins = commonMixins) => class Element extends NudeElementMixin(Super) {
 	static mixins = mixins;
 
+	connectedCallback () {
+		this.init?.();
+	}
+
 	static init () {
-		if (this.initialized) {
+		if (this[initialized]) {
 			return;
 		}
 

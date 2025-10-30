@@ -3,7 +3,7 @@
  */
 import { adoptCSS, fetchCSS, getSupers, getSymbols } from "./util.js";
 
-const { fetchedStyles, styles, initialized, render, init } = getSymbols;
+const { fetchedStyles, initialized, render, init } = getSymbols;
 
 export function appliesTo (Class) {
 	return "shadowStyles" in Class;
@@ -20,7 +20,7 @@ export const Mixin = (Super = HTMLElement) => class ShadowStyles extends Super {
 			return;
 		}
 
-		this.constructor.init();
+		this.constructor[init]();
 		this[render]();
 	}
 
@@ -47,7 +47,7 @@ export const Mixin = (Super = HTMLElement) => class ShadowStyles extends Super {
 	static [init] () {
 		super[init]?.();
 
-		if (!this[styles] || Object.hasOwn(this, initialized)) {
+		if (!this.shadowStyles || Object.hasOwn(this, initialized)) {
 			return;
 		}
 
@@ -56,11 +56,11 @@ export const Mixin = (Super = HTMLElement) => class ShadowStyles extends Super {
 		let supers = getSupers(this, HTMLElement);
 
 		for (let Class of supers) {
-			if (Object.hasOwn(Class, styles) && !Object.hasOwn(Class, fetchedStyles)) {
+			if (Object.hasOwn(Class, "shadowStyles") && !Object.hasOwn(Class, fetchedStyles)) {
 				// Initiate fetching when the first element is constructed
-				let styles = (Class[fetchedStyles] = Array.isArray(Class[styles])
-					? Class[styles].slice()
-					: [Class[styles]]);
+				let styles = (Class[fetchedStyles] = Array.isArray(Class["shadowStyles"])
+					? Class["shadowStyles"].slice()
+					: [Class["shadowStyles"]]);
 
 				for (let i = 0; i < styles.length; i++) {
 					styles[i] = fetchCSS(styles[i], Class.url);

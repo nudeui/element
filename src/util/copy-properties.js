@@ -35,6 +35,12 @@ export function copyProperties (target, source, options = {}) {
 			for (let property of properties) {
 				acc.add(property);
 			}
+
+			let symbolProperties = Object.getOwnPropertySymbols(source);
+			for (let property of symbolProperties) {
+				acc.add(property);
+			}
+
 			return acc;
 		}, new Set());
 
