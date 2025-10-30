@@ -37,7 +37,7 @@ export function extend (body, ...sideEffects) {
 	body = mutableFn.body;
 
 	for (const sideEffect of sideEffects) {
-		if (body === mutableFn.body) {
+		if (body === sideEffect) {
 			// The function cannot be a side effect of itself
 			continue;
 		}
