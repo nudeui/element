@@ -41,7 +41,9 @@ export function copyProperties (target, source, options = {}) {
 		properties.delete("constructor");
 
 		for (let key of properties) {
-			copyProperty(target, source, key, options);
+			for (let source of sources) {
+				copyProperty(target, source, key, options);
+			}
 		}
 	}
 
