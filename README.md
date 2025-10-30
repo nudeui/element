@@ -188,7 +188,5 @@ class MySlider extends HTMLElement {
 Individual mixin docs:
 - [Using Props](src/props/)
 - [Events](src/events/)
-- [Form-associated elements](src/formAssociated/)
-- [Mixins](src/mixins/)
-
+- [Slots](src/slots/)
 
