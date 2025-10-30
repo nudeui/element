@@ -103,8 +103,10 @@ export const Mixin = (Super = HTMLElement) => class WithEvents extends Super {
 			}
 		});
 
-		for (let fn of this[retargetedEvents]) {
-			fn.call(this);
+		if (this[retargetedEvents]) {
+			for (let fn of this[retargetedEvents]) {
+				fn.call(this);
+			}
 		}
 	}
 
