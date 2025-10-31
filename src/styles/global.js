@@ -1,7 +1,7 @@
 /**
  * Mixin for adding light DOM styles
  */
-import { adoptCSSRecursive, fetchCSS, getSupers, getSymbols } from "./util.js";
+import { adoptCSSRecursive, fetchCSS, getSuperclasses, getSymbols } from "./util.js";
 
 const { fetchedGlobalStyles, globalStyles, roots, render, initialized } = getSymbols;
 
@@ -54,7 +54,7 @@ export const Mixin = (Super = HTMLElement) => class GlobalStyles extends Super {
 
 		this[initialized] = true;
 
-		let supers = getSupers(this, HTMLElement);
+		let supers = getSuperclasses(this, HTMLElement);
 
 		for (let Class of supers) {
 			if (

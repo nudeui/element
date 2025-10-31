@@ -1,5 +1,5 @@
 import { extend } from "./extend.js";
-import { getSupers } from "./super.js";
+import { getSuperclasses } from "./super.js";
 
 /**
  * @typedef {object} CopyPropertiesOptions
@@ -19,8 +19,8 @@ export function copyProperties (target, source, options = {}) {
 	let sources = [source];
 
 	if (options.recursive) {
-		let sourceSupers = getSupers(source).reverse();
-		let targetSupers = getSupers(target).reverse();
+		let sourceSupers = getSuperclasses(source).reverse();
+		let targetSupers = getSuperclasses(target).reverse();
 
 		// Find the first shared superclass
 		let index = sourceSupers.findIndex(sharedSuper => targetSupers.includes(sharedSuper));
