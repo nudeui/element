@@ -136,7 +136,7 @@ export const Mixin = (Super = HTMLElement) => class WithEvents extends Super {
 			}
 		}
 
-		let eventProps = Object.keys(events)
+		let eventPropsDef = Object.keys(events)
 			// Is not a native event (e.g. input)
 			.filter(name => !("on" + name in this.prototype))
 			.map(name => [
@@ -152,9 +152,9 @@ export const Mixin = (Super = HTMLElement) => class WithEvents extends Super {
 				},
 			]);
 
-		if (eventProps.length > 0) {
-			eventProps = this[eventProps] = Object.fromEntries(eventProps);
-			this.defineProps(eventProps);
+		if (eventPropsDef.length > 0) {
+			eventPropsDef = this[eventProps] = Object.fromEntries(eventPropsDef);
+			this.defineProps(eventPropsDef);
 		}
 
 		this[retargetedEvents] = [];
