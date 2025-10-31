@@ -1,5 +1,5 @@
 import { extend } from "./extend.js";
-import { getSupers } from "./get-supers.js";
+import { getSupers } from "./super.js";
 
 /**
  * @typedef {object} CopyPropertiesOptions
