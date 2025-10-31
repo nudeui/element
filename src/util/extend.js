@@ -8,7 +8,7 @@
 export const sideEffects = Symbol("Side effects");
 export const mutable = Symbol("Mutable");
 
-export function extend (body, ...sideEffects) {
+export function extend (body, ...sideEffectFns) {
 	let mutableFn = body[sideEffects] ? body : body[mutable];
 
 	if (!mutableFn) {
@@ -36,7 +36,7 @@ export function extend (body, ...sideEffects) {
 
 	body = mutableFn.body;
 
-	for (const sideEffect of sideEffects) {
+	for (const sideEffect of sideEffectFns) {
 		if (body === sideEffect) {
 			// The function cannot be a side effect of itself
 			continue;
