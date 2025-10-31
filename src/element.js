@@ -9,10 +9,6 @@ import { initialized } from "./nude-element.js";
 export const Mixin = (Super = HTMLElement, mixins = commonMixins) => class Element extends NudeElementMixin(Super) {
 	static mixins = mixins;
 
-	connectedCallback () {
-		this.init?.();
-	}
-
 	static init () {
 		if (this[initialized]) {
 			return;
