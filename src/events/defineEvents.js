@@ -65,7 +65,7 @@ export const Mixin = (Super = HTMLElement) => class WithEvents extends Super {
 		this.constructor.init();
 
 		// Deal with existing values on the on* props
-		for (let name in this[eventProps]) {
+		for (let name in this.constructor[eventProps]) {
 			let value = this[name];
 			if (typeof value === "function") {
 				let eventName = name.slice(2);
@@ -74,21 +74,21 @@ export const Mixin = (Super = HTMLElement) => class WithEvents extends Super {
 		}
 
 		// Often propchange events have already fired by the time the event handlers are added
-		for (let eventName in this[propEvents]) {
-			let propName = this[propEvents][eventName];
+		for (let eventName in this.constructor[propEvents]) {
+			let propName = this.constructor[propEvents][eventName];
 			let value = this[propName];
 
 			if (value !== undefined) {
-				this.props.firePropChangeEvent(this, eventName, {
+				this.constructor.props.firePropChangeEvent(this, eventName, {
 					name: propName,
-					prop: this.props.get(propName),
+					prop: this.constructor.props.get(propName),
 				});
 			}
 		}
 
 		// Listen for changes
 		this.addEventListener("propchange", event => {
-			if (this[eventProps][event.name]) {
+			if (this.constructor[eventProps][event.name]) {
 				// Implement onEventName attributes/properties
 				let eventName = event.name.slice(2);
 				let change = event.detail;
@@ -103,10 +103,8 @@ export const Mixin = (Super = HTMLElement) => class WithEvents extends Super {
 			}
 		});
 
-		if (this[retargetedEvents]) {
-			for (let fn of this[retargetedEvents]) {
-				fn.call(this);
-			}
+		for (let fn of this.constructor[retargetedEvents]) {
+			fn.call(this);
 		}
 	}
 
