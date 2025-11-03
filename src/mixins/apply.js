@@ -14,7 +14,9 @@ export function applyMixins (Class = this, mixins = Class.mixins) {
 
 	Class.mixinsActive = [];
 
-	// Phase 1: create stubs for all prototype methods from all applicable mixins
+	// Phase 1: create stubs for all prototype methods from all applicable mixins,
+	// so that they can be used as the base function that mixins can extend.
+	// In that case, none of the mixins' functions is used as the base function to add side effects to.
 	for (const Mixin of applicable) {
 		for (const property of Object.getOwnPropertyNames(Mixin.prototype)) {
 			if (property === "constructor" || Object.hasOwn(Class.prototype, property)) {
