@@ -41,7 +41,7 @@ export const Mixin = (Super = HTMLElement, { internalsProp = "_internals", confi
 	}
 
 	init () {
-		this.constructor.init();
+		this.constructor[init]();
 
 		// Give any subclasses a chance to execute
 		Promise.resolve().then(() => this[constructed]());
