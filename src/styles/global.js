@@ -63,9 +63,9 @@ export const Mixin = (Super = HTMLElement) => class GlobalStyles extends Super {
 				!Object.hasOwn(Class, fetchedGlobalStyles)
 			) {
 				// Initiate fetching when the first element is constructed
-				let styles = (Class[fetchedGlobalStyles] = Array.isArray(Class["globalStyles"])
-					? Class["globalStyles"].slice()
-					: [Class["globalStyles"]]);
+				let styles = (Class[fetchedGlobalStyles] = Array.isArray(Class.globalStyles)
+					? Class.globalStyles.slice()
+					: [Class.globalStyles]);
 				Class[roots] ??= new WeakSet();
 
 				for (let i = 0; i < styles.length; i++) {
