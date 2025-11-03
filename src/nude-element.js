@@ -26,7 +26,7 @@ export const Mixin = (Super = HTMLElement) => class NudeElement extends Super {
 
 		// We repeat the logic because we want to be able to just call Class.init() before instances are constructed
 		// But also we need to guard against subclasses defining their own init method and forgetting to call super.init()
-		if (!Object.hasOwn(this, initialized)) {
+		if (!Object.hasOwn(this.constructor, initialized)) {
 			this.constructor.init();
 			this.constructor[initialized] = true;
 		}
