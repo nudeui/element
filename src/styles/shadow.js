@@ -60,9 +60,9 @@ export const Mixin = (Super = HTMLElement) => class ShadowStyles extends Super {
 		for (let Class of supers) {
 			if (Object.hasOwn(Class, "styles") && !Object.hasOwn(Class, fetchedStyles)) {
 				// Initiate fetching when the first element is constructed
-				let styles = (Class[fetchedStyles] = Array.isArray(Class["styles"])
-					? Class["styles"].slice()
-					: [Class["styles"]]);
+				let styles = (Class[fetchedStyles] = Array.isArray(Class.styles)
+					? Class.styles.slice()
+					: [Class.styles]);
 
 				for (let i = 0; i < styles.length; i++) {
 					styles[i] = fetchCSS(styles[i], Class.url);

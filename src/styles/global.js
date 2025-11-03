@@ -3,7 +3,7 @@
  */
 import { adoptCSSRecursive, fetchCSS, getSuperclasses, getSymbols } from "./util.js";
 
-const { fetchedGlobalStyles, globalStyles, roots, render, initialized } = getSymbols;
+const { fetchedGlobalStyles, roots, render, initialized } = getSymbols;
 
 export function appliesTo (Class) {
 	return "globalStyles" in Class;
@@ -59,13 +59,13 @@ export const Mixin = (Super = HTMLElement) => class GlobalStyles extends Super {
 
 		for (let Class of supers) {
 			if (
-				Object.hasOwn(Class, globalStyles) &&
+				Object.hasOwn(Class, "globalStyles") &&
 				!Object.hasOwn(Class, fetchedGlobalStyles)
 			) {
 				// Initiate fetching when the first element is constructed
-				let styles = (Class[fetchedGlobalStyles] = Array.isArray(Class[globalStyles])
-					? Class[globalStyles].slice()
-					: [Class[globalStyles]]);
+				let styles = (Class[fetchedGlobalStyles] = Array.isArray(Class.globalStyles)
+					? Class.globalStyles.slice()
+					: [Class.globalStyles]);
 				Class[roots] ??= new WeakSet();
 
 				for (let i = 0; i < styles.length; i++) {
