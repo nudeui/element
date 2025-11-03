@@ -55,6 +55,7 @@ export const Mixin = (Super = HTMLElement) => class GlobalStyles extends Super {
 		this[initialized] = true;
 
 		let supers = getSuperclasses(this, HTMLElement);
+		supers.push(this);
 
 		for (let Class of supers) {
 			if (

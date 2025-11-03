@@ -28,6 +28,7 @@ export const Mixin = (Super = HTMLElement) => class ShadowStyles extends Super {
 		let Self = this.constructor;
 
 		let supers = getSuperclasses(Self, HTMLElement);
+		supers.push(Self);
 
 		for (let Class of supers) {
 			if (Class[fetchedStyles]) {
