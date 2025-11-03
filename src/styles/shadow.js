@@ -10,11 +10,6 @@ export function appliesTo (Class) {
 }
 
 export const Mixin = (Super = HTMLElement) => class ShadowStyles extends Super {
-	constructor () {
-		super();
-		this.init();
-	}
-
 	init () {
 		if (!this.shadowRoot) {
 			return;

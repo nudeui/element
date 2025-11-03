@@ -35,11 +35,6 @@ export function appliesTo (Class) {
 }
 
 export const Mixin = (Super = HTMLElement, { internalsProp = "_internals", configProp = "formAssociated" } = {}) => class FormAssociated extends Super {
-	constructor () {
-		super();
-		this.init();
-	}
-
 	init () {
 		this.constructor[init]();
 
