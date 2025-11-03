@@ -6,14 +6,35 @@ export function applyMixins (Class = this, mixins = Class.mixins) {
 		return;
 	}
 
+	// Determine applicable mixins first
+	const applicable = mixins.filter(Mixin => Mixin.appliesTo?.(Class));
+	if (!applicable.length) {
+		return;
+	}
+
 	Class.mixinsActive = [];
 
-	for (let Mixin of mixins) {
-		if (Mixin.appliesTo && !Mixin.appliesTo(Class)) {
-			// Not applicable to this class
-			continue;
-		}
+	// Phase 1: create stubs for all prototype methods from all applicable mixins
+	for (const Mixin of applicable) {
+		for (const property of Object.getOwnPropertyNames(Mixin.prototype)) {
+			if (property === "constructor" || Object.hasOwn(Class.prototype, property)) {
+				continue;
+			}
 
+			const descriptor = Object.getOwnPropertyDescriptor(Mixin.prototype, property);
+			if (typeof descriptor.value !== "function") {
+				continue;
+			}
+
+			// Only create a stub if the class doesn't already have its own implementation
+			Class.prototype[property] = function (...args) {
+				getSuper(this, property)?.call(this, ...args);
+			};
+		}
+	}
+
+	// Phase 2: apply all mixins
+	for (let Mixin of applicable) {
 		applyMixin(Class, Mixin);
 	}
 }
@@ -25,17 +46,9 @@ export function applyMixin (Class, Mixin, force = false) {
 		return;
 	}
 
-	// If the class doesn't have an init() method, add a default one that calls super.init()
-	if (!Object.hasOwn(Class.prototype, "init")) {
-		Class.prototype.init = function init () {
-			getSuper(this, "init")?.call(this);
-		};
-	}
-
-	copyProperties(Class, Mixin, {recursive: true, prototypes: true});
+	copyProperties(Class, Mixin, { recursive: true, prototypes: true });
 
 	if (!alreadyApplied) {
 		Class.mixinsActive.push(Mixin);
 	}
 }
-
