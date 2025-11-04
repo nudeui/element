@@ -6,8 +6,8 @@ export function applyMixins (Class = this, mixins = Class.mixins) {
 		return;
 	}
 
-	// Determine applicable mixins first
-	const applicable = mixins.filter(Mixin => Mixin.appliesTo?.(Class));
+	// Determine applicable mixins first. Mixins without `appliesTo()` are always applicable.
+	const applicable = mixins.filter(Mixin => Mixin.appliesTo?.(Class) ?? true);
 	if (!applicable.length) {
 		return;
 	}
