@@ -7,15 +7,7 @@ export function appliesTo (Class) {
 export const Mixin = (Super = HTMLElement) => class WithHooks extends Super {
 	static hooks = new Hooks(super.hooks || {});
 
-	constructor () {
-		super();
-
-		this.init?.();
-	}
-
 	init () {
-		super.init?.();
-
 		const Self = this.constructor;
 
 		if (Self.hooks && !(Self.hooks instanceof Hooks)) {

@@ -3,11 +3,6 @@ import { assignToSlot } from "./util.js";
 let mutationObserver;
 
 export const Mixin = (Super = HTMLElement) => class DefineSlots extends Super {
-	constructor () {
-		super();
-		this.init();
-	}
-
 	init () {
 		if (!this.shadowRoot) {
 			return;
