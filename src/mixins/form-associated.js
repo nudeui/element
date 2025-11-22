@@ -56,10 +56,9 @@ export const Mixin = (Super = HTMLElement) => class FormAssociated extends Super
 
 		// Set the element's default role
 		let source = resolveValue(like, [this, this]);
-		role ??= source?.computedRole;
 
 		if (role) {
-			this[internals].ariaRole = role;
+			this[internals].role = role;
 		}
 
 		// Set current form value and update on change
