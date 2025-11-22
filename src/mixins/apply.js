@@ -23,19 +23,24 @@ export function satisfies (Class, requirement) {
 	return false;
 }
 
+/**
+ * Apply a bunch of mixins to a class iff it satisfies their protocols
+ * @param { FunctionConstructor } Class
+ * @param { Iterable<FunctionConstructor> } [mixins = Class.mixins]
+ * @void
+ */
 export function applyMixins (Class = this, mixins = Class.mixins) {
-	if (Object.hasOwn(Class, "mixinsActive") || !mixins?.length) {
+	if (!mixins?.length) {
 		return;
 	}
 
-	Class.mixinsActive = [];
+	if (!Object.hasOwn(Class, "mixinsActive")) {
+		Class.mixinsActive = [...(Object.getPrototypeOf(Class).mixinsActive || [])];
+	}
 
-	for (let Mixin of mixins) {
-		if (satisfies(Class, Mixin[satisfiedBy])) {
-			// Not applicable to this class
-			continue;
-		}
+	const mixinsToApply = mixins.filter(Mixin => satisfies(Class, Mixin[satisfiedBy]));
 
+	for (let Mixin of mixinsToApply) {
 		applyMixin(Class, Mixin);
 	}
 }
