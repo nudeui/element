@@ -65,10 +65,14 @@ export class ConflictPolicy {
  */
 export function extendObject (target, source, options = {}) {
 	let conflictPolicy = new ConflictPolicy(options.conflictPolicy);
-
+	let skippedProperties = new Set(options.skippedProperties || []);
 	let sourceDescriptors = Object.getOwnPropertyDescriptors(source);
 
 	for (let prop in sourceDescriptors) {
+		if (skippedProperties.has(prop)) {
+			continue;
+		}
+
 		let sourceDescriptor = sourceDescriptors[prop];
 		let targetDescriptor = Object.getOwnPropertyDescriptor(target, prop);
 
