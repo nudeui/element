@@ -10,6 +10,7 @@ import { resolveValue } from "./util/resolve-value.js";
 import { delegate } from "./util/delegate.js";
 import { getOptions } from "./util/get-options.js";
 import { newSymbols, satisfiedBy, internals } from "./util/symbols.js";
+import { attachInternals } from "./util/attach-internals.js";
 
 const defaultOptions = {
 	like: undefined,
@@ -43,7 +44,7 @@ export const Mixin = (Super = HTMLElement) => class FormAssociated extends Super
 	}
 
 	attachInternals () {
-		return this[internals] ??= super.attachInternals?.();
+		return attachInternals(this);
 	}
 
 	[constructed] () {

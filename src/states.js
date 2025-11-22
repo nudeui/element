@@ -1,4 +1,5 @@
 import { satisfiedBy, internals } from "./util/symbols.js";
+import { attachInternals } from "./util/attach-internals.js";
 
 export const Mixin = (Super = HTMLElement) => class StatesMixin extends Super {
 	// TODO do we also need addState() and removeState() or is toggleState() enough?
@@ -26,7 +27,7 @@ export const Mixin = (Super = HTMLElement) => class StatesMixin extends Super {
 	}
 
 	attachInternals () {
-		return this[internals] ??= super.attachInternals?.();
+		return attachInternals(this);
 	}
 
 	static [satisfiedBy] = "cssStates";
