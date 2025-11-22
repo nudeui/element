@@ -4,9 +4,9 @@ import { Mixin as PropsMixin } from "../props/defineProps.js";
 // import PropChangeEvent from "../props/PropChangeEvent.js";
 import { resolveValue } from "../util.js";
 import { pick } from "../util/pick.js";
-import { getSymbols, satisfiedBy } from "../util/get-symbols.js";
+import { newSymbols, satisfiedBy } from "../util/symbols.js";
 
-const { initialized, eventProps, propEvents, retargetedEvents } = getSymbols;
+const { initialized, eventProps, propEvents, retargetedEvents } = newSymbols;
 
 /**
  *

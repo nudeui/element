@@ -9,5 +9,5 @@ export * from "./util/reversible-map.js";
 export * from "./util/pick.js";
 export * from "./util/adopt-css.js";
 export * from "./util/fetch-css.js";
-export * from "./util/get-symbols.js";
+export * from "./util/symbols.js";
 export * from "./util/super.js";

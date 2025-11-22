@@ -8,9 +8,9 @@
  * ```
  */
 import { applyMixins } from "./mixins/apply.js";
-import getSymbols from "./util/get-symbols.js";
+import newSymbols from "./util/symbols.js";
 
-export const { initialized } = getSymbols;
+export const { initialized } = newSymbols;
 
 export const Mixin = (Super = HTMLElement) => class NudeElement extends Super {
 	constructor () {

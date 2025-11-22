@@ -1,4 +1,4 @@
-const getSymbols = new Proxy({}, {
+const newSymbols = new Proxy({}, {
 	get (target, prop) {
 		if (typeof prop === "string") {
 			return Symbol(prop);
@@ -8,9 +8,9 @@ const getSymbols = new Proxy({}, {
 	},
 });
 
-export { getSymbols };
-export default getSymbols;
+export { newSymbols };
+export default newSymbols;
 
 // Known symbols
-export const { satisfiedBy, internals, mixinsApplied } = getSymbols;
+export const { satisfiedBy, internals, mixinsApplied } = newSymbols;
 export const KNOWN_SYMBOLS = { satisfiedBy, internals, mixinsApplied };

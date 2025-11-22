@@ -1,12 +1,12 @@
 import SlotController from "./slot-controller.js";
-import getSymbols from "../util/get-symbols.js";
+import newSymbols from "../util/symbols.js";
 
 const defaultOptions = {
 	slotsProperty: "_slots",
 	dynamicSlots: false,
 };
 
-const { hasConnected } = getSymbols;
+const { hasConnected } = newSymbols;
 
 export function Mixin (Super = HTMLElement, options = {}) {
 	options = { ...defaultOptions, ...options };

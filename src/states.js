@@ -1,4 +1,4 @@
-import { satisfiedBy, internals } from "./util/get-symbols.js";
+import { satisfiedBy, internals } from "./util/symbols.js";
 
 export const Mixin = (Super = HTMLElement) => class StatesMixin extends Super {
 	// TODO do we also need addState() and removeState() or is toggleState() enough?

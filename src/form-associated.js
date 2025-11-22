@@ -9,7 +9,7 @@
 import { resolveValue } from "./util/resolve-value.js";
 import { delegate } from "./util/delegate.js";
 import { getOptions } from "./util/get-options.js";
-import { getSymbols, satisfiedBy, internals } from "./util/get-symbols.js";
+import { newSymbols, satisfiedBy, internals } from "./util/symbols.js";
 
 const defaultOptions = {
 	like: undefined,
@@ -27,7 +27,7 @@ const defaultOptions = {
 	],
 };
 
-export const { constructed, initialized, init, formAssociated } = getSymbols;
+export const { constructed, initialized, init, formAssociated } = newSymbols;
 
 export const Mixin = (Super = HTMLElement) => class FormAssociated extends Super {
 	constructor () {

@@ -2,9 +2,9 @@
  * Mixin for adding shadow DOM styles
  */
 import { adoptCSS, fetchCSS, getSuperclasses } from "./util.js";
-import { getSymbols, satisfiedBy } from "../util/get-symbols.js";
+import { newSymbols, satisfiedBy } from "../util/symbols.js";
 
-const { fetchedStyles, initialized, render, init } = getSymbols;
+const { fetchedStyles, initialized, render, init } = newSymbols;
 
 export const Mixin = (Super = HTMLElement) => class ShadowStyles extends Super {
 	constructor () {
