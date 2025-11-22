@@ -12,12 +12,20 @@ export function satisfies (Class, requirement) {
 			return requirement(Class);
 		case "string":
 		case "symbol":
-			return Class[requirement];
+			return Class[requirement] !== undefined;
 	}
 
 	if (Array.isArray(requirement)) {
 		// Array of potential fields (OR)
 		return requirement.some(req => satisfies(Class, req));
+	}
+
+	if (requirement.prototype) {
+		return satisfies(Class.prototype, requirement.or);
+	}
+
+	if (requirement.and) {
+		return requirement.and.every(req => satisfies(Class, req));
 	}
 
 	return false;

@@ -10,9 +10,7 @@
 import { applyMixins } from "./mixins/apply.js";
 import getSymbols from "./util/get-symbols.js";
 
-const { initialized } = getSymbols;
-
-export { initialized };
+export const { initialized } = getSymbols;
 
 export const Mixin = (Super = HTMLElement) => class NudeElement extends Super {
 	constructor () {
@@ -30,12 +28,6 @@ export const Mixin = (Super = HTMLElement) => class NudeElement extends Super {
 			this.constructor.init();
 			this.constructor[initialized] = true;
 		}
-	}
-
-	// Used to call super methods
-	// Do we actually need this?
-	super (name, ...args) {
-		return super[name]?.(...args);
 	}
 
 	// To be overridden by subclasses

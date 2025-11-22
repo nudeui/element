@@ -46,9 +46,7 @@ export const Mixin = (Super = HTMLElement) => class WithLifecycle extends Super 
 		this[hasConnected] = true;
 	}
 
-	static [satisfiedBy] (Class) {
-		return instanceHooks.some(hook => Class.prototype[hook]) || staticHooks.some(hook => Class[hook]);
-	}
+	static [satisfiedBy] = [{prototype: instanceHooks}, staticHooks];
 };
 
 export default Mixin();
