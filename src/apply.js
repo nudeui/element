@@ -1,5 +1,5 @@
 import { extendClass } from "./util/extend-class.js";
-import { satisfiedBy, mixinsApplied } from "./util/symbols.js";
+import { satisfiedBy, mixinsApplied, onApply } from "./util/symbols.js";
 
 export function satisfies (Class, requirement) {
 	if (!requirement) {
@@ -55,6 +55,10 @@ export function applyMixins (Class = this, mixins = Class.mixins) {
 	for (const Mixin of mixinsToApply) {
 		extendClass(Class, Mixin, {skippedProperties: [satisfiedBy]});
 		Class[mixinsApplied].push(Mixin);
+
+		if (Mixin[onApply]) {
+			Mixin[onApply](Class);
+		}
 	}
 
 	return true;

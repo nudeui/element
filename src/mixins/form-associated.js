@@ -9,7 +9,7 @@
 import { resolveValue } from "../util/resolve-value.js";
 import { delegate } from "../util/delegate.js";
 import { getOptions } from "../util/get-options.js";
-import { newSymbols, satisfiedBy, internals } from "../util/symbols.js";
+import { newSymbols, satisfiedBy, internals, onApply } from "../util/symbols.js";
 import { attachInternals } from "../util/attach-internals.js";
 
 const defaultOptions = {
@@ -37,8 +37,6 @@ export const Mixin = (Super = HTMLElement) => class FormAssociated extends Super
 	}
 
 	init () {
-		this.constructor[init]();
-
 		// Give any subclasses a chance to execute
 		Promise.resolve().then(() => this[constructed]());
 	}
@@ -52,45 +50,38 @@ export const Mixin = (Super = HTMLElement) => class FormAssociated extends Super
 		let { like, role, valueProp, changeEvent } = config;
 		let internals = this[internals] || this.attachInternals();
 
-		if (internals) {
-			// Set the element's default role
-			let source = resolveValue(like, [this, this]);
-			role ??= source?.computedRole;
-
-			if (role) {
-				internals.ariaRole = role;
-			}
-
-			// Set current form value and update on change
-			internals.setFormValue(this[valueProp]);
-			let eventTarget = source || this;
-			eventTarget.addEventListener(changeEvent, () =>
-				internals.setFormValue(this[valueProp]));
+		if (!this[internals]) {
+			return;
 		}
+
+		// Set the element's default role
+		let source = resolveValue(like, [this, this]);
+		role ??= source?.computedRole;
+
+		if (role) {
+			this[internals].ariaRole = role;
+		}
+
+		// Set current form value and update on change
+		this[internals].setFormValue(this[valueProp]);
+		let eventTarget = source || this;
+		eventTarget.addEventListener(changeEvent, () =>
+			this[internals].setFormValue(this[valueProp]));
 	}
 
 	static formAssociated = true;
 
-	static [init] () {
-		if (this[initialized]) {
-			return;
-		}
-
-		this[initialized] = true;
-
+	static [onApply] () {
 		let config = this[formAssociated] || this.formAssociated;
-		if (!config || typeof config !== "object") {
-			config = {};
-		}
+		config = !config || typeof config !== "object" ? {} : config;
 
 		this[formAssociated] = getOptions(defaultOptions, config);
 
-		delegate(this.prototype, {
-			source () {
-				return this[internals];
-			},
+		delegate({
 			properties: this[formAssociated].properties,
-			enumerable: true,
+			from: this.prototype,
+			to: internals,
+			descriptors: Object.getOwnPropertyDescriptors(ElementInternals.prototype),
 		});
 	}
 

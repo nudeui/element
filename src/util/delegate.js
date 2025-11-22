@@ -1,19 +1,28 @@
-export function delegate (target, {source, properties, enumerable = true, writable = false, configurable = true}) {
+/**
+ * Generate a bunch of accessors to proxy properties through a certain subobject
+ * @param {Object} options
+ * @param {Object} options.from - The object to define the delegated properties on
+ * @param {string} options.to - The name of the subobject property to proxy through
+ * @param {string[]} options.properties - Array of property names to delegate
+ * @param {Object<string, PropertyDescriptor>} options.descriptors - Property descriptors for each property
+ */
+export function delegate ({from, to, properties, descriptors}) {
 	for (let prop of properties) {
+		let sourceDescriptor = descriptors[prop];
 		let descriptor = {
 			get () {
-				let sourceObj = typeof source === "function" ? source.call(this) : source;
-				return sourceObj[prop];
+				return this[to][prop];
 			},
-			enumerable,
-			configurable,
+			...sourceDescriptor,
+			configurable: true,
 		};
-		if (writable) {
+
+		if (sourceDescriptor.writable || sourceDescriptor.set) {
 			descriptor.set = function (value) {
-				let sourceObj = typeof source === "function" ? source.call(this) : source;
-				sourceObj[prop] = value;
+				this[to][prop] = value;
 			};
 		}
-		Object.defineProperty(target, prop, descriptor);
+
+		Object.defineProperty(from, prop, descriptor);
 	}
 }
