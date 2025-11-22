@@ -1,4 +1,4 @@
-import { copyProperties } from "../util/copy-properties.js";
+import { extendClass } from "../util/extend-class.js";
 import { satisfiedBy } from "../util/get-symbols.js";
 
 export function satisfies (Class, requirement) {
@@ -47,7 +47,7 @@ export function applyMixin (Class, Mixin, force = false) {
 		return;
 	}
 
-	copyProperties(Class, Mixin, {recursive: true, prototypes: true});
+	extendClass(Class, Mixin, {skippedProperties: [satisfiedBy]});
 
 	if (!alreadyApplied) {
 		Class.mixinsActive.push(Mixin);

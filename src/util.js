@@ -3,7 +3,7 @@ export * from "./util/is-class.js";
 export * from "./util/is-subclass-of.js";
 export * from "./util/lazy.js";
 export * from "./util/extend-class.js";
-export * from "./util/copy-properties.js";
+export * from "./util/extend-object.js";
 export * from "./util/extend.js";
 export * from "./util/reversible-map.js";
 export * from "./util/pick.js";
