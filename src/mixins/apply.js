@@ -26,7 +26,7 @@ export function satisfies (Class, requirement) {
 /**
  * Apply a bunch of mixins to a class iff it satisfies their protocols
  * @param { FunctionConstructor } Class
- * @param { Iterable<FunctionConstructor> } [mixins = Class.mixins]
+ * @param { Array<FunctionConstructor> } [mixins = Class.mixins]
  * @void
  */
 export function applyMixins (Class = this, mixins = Class.mixins) {
@@ -38,24 +38,21 @@ export function applyMixins (Class = this, mixins = Class.mixins) {
 		Class.mixinsActive = [...(Object.getPrototypeOf(Class).mixinsActive || [])];
 	}
 
-	const mixinsToApply = mixins.filter(Mixin => satisfies(Class, Mixin[satisfiedBy]));
+	const mixinsToApply = mixins.filter(Mixin => !Class.mixinsActive.includes(Mixin) && satisfies(Class, Mixin[satisfiedBy]));
 
-	for (let Mixin of mixinsToApply) {
-		applyMixin(Class, Mixin);
-	}
-}
-
-export function applyMixin (Class, Mixin, force = false) {
-	let alreadyApplied = Class.mixinsActive.includes(Mixin);
-	if (alreadyApplied && !force) {
-		// Already applied
-		return;
+	if (mixinsToApply.length === 0) {
+		return false;
 	}
 
-	extendClass(Class, Mixin, {skippedProperties: [satisfiedBy]});
-
-	if (!alreadyApplied) {
+	for (const Mixin of mixinsToApply) {
+		extendClass(Class, Mixin, {skippedProperties: [satisfiedBy]});
 		Class.mixinsActive.push(Mixin);
 	}
+
+	return true;
+}
+
+export function applyMixin (Class, Mixin) {
+	return applyMixins(Class, [Mixin]);
 }
 
