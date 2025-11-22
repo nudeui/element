@@ -9,14 +9,13 @@
 import { resolveValue } from "./util/resolve-value.js";
 import { delegate } from "./util/delegate.js";
 import { getOptions } from "./util/get-options.js";
-import getSymbols from "./util/get-symbols.js";
+import { getSymbols, satisfiedBy, internals } from "./util/get-symbols.js";
 
 const defaultOptions = {
 	like: undefined,
 	role: undefined,
 	valueProp: "value",
 	changeEvent: "input",
-	internalsProp: "_internals",
 	properties: [
 		"labels",
 		"form",
@@ -28,13 +27,9 @@ const defaultOptions = {
 	],
 };
 
-const { constructed, initialized, init } = getSymbols;
+export const { constructed, initialized, init, formAssociated } = getSymbols;
 
-export function appliesTo (Class) {
-	return "formAssociated" in Class;
-}
-
-export const Mixin = (Super = HTMLElement, { internalsProp = "_internals", configProp = "formAssociated" } = {}) => class FormAssociated extends Super {
+export const Mixin = (Super = HTMLElement) => class FormAssociated extends Super {
 	constructor () {
 		super();
 		this.init();
@@ -47,9 +42,14 @@ export const Mixin = (Super = HTMLElement, { internalsProp = "_internals", confi
 		Promise.resolve().then(() => this[constructed]());
 	}
 
+	attachInternals () {
+		return this[internals] ??= super.attachInternals?.();
+	}
+
 	[constructed] () {
-		let { like, role, valueProp, changeEvent } = this.constructor[configProp];
-		let internals = (this[internalsProp] ??= this.attachInternals?.());
+		let config = this.constructor[formAssociated] ?? this.constructor.formAssociated;
+		let { like, role, valueProp, changeEvent } = config;
+		let internals = this[internals] || this.attachInternals();
 
 		if (internals) {
 			// Set the element's default role
@@ -77,22 +77,23 @@ export const Mixin = (Super = HTMLElement, { internalsProp = "_internals", confi
 
 		this[initialized] = true;
 
-		this[configProp] = getOptions(defaultOptions, this[configProp]);
+		let config = this[formAssociated] || this.formAssociated;
+		if (!config || typeof config !== "object") {
+			config = {};
+		}
+
+		this[formAssociated] = getOptions(defaultOptions, config);
 
 		delegate(this.prototype, {
 			source () {
-				return this[internalsProp];
+				return this[internals];
 			},
-			properties: this[configProp].properties,
+			properties: this[formAssociated].properties,
 			enumerable: true,
 		});
 	}
 
-	static appliesTo = function (Class) {
-		return configProp in Class;
-	};
+	static [satisfiedBy] = [formAssociated, "formAssociated"];
 };
-
-Mixin.appliesTo = appliesTo;
 
 export default Mixin();

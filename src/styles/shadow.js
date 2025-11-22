@@ -1,13 +1,10 @@
 /**
  * Mixin for adding shadow DOM styles
  */
-import { adoptCSS, fetchCSS, getSuperclasses, getSymbols } from "./util.js";
+import { adoptCSS, fetchCSS, getSuperclasses } from "./util.js";
+import { getSymbols, satisfiedBy } from "../util/get-symbols.js";
 
 const { fetchedStyles, initialized, render, init } = getSymbols;
-
-export function appliesTo (Class) {
-	return "styles" in Class;
-}
 
 export const Mixin = (Super = HTMLElement) => class ShadowStyles extends Super {
 	constructor () {
@@ -71,9 +68,7 @@ export const Mixin = (Super = HTMLElement) => class ShadowStyles extends Super {
 		}
 	}
 
-	static appliesTo = appliesTo;
+	static [satisfiedBy] = "styles";
 };
-
-Mixin.appliesTo = appliesTo;
 
 export default Mixin();

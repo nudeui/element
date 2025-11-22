@@ -1,8 +1,5 @@
 import Hooks from "./hooks.js";
-
-export function appliesTo (Class) {
-	return "hooks" in Class;
-}
+import { satisfiedBy } from "../util/get-symbols.js";
 
 export const Mixin = (Super = HTMLElement) => class WithHooks extends Super {
 	static hooks = new Hooks(super.hooks || {});
@@ -23,8 +20,7 @@ export const Mixin = (Super = HTMLElement) => class WithHooks extends Super {
 		}
 	}
 
-	static appliesTo = appliesTo;
+	static [satisfiedBy] = "hooks";
 };
 
-Mixin.appliesTo = appliesTo;
 export default Mixin();

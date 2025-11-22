@@ -30,7 +30,7 @@ export function copyProperties (target, source, options = {}) {
 	}
 
 	function copyPropertiesFromSources (sources, target) {
-		let properties = sources.reduce((acc, source) => {
+		let properties = /* @type Array<string | Symbol> */ sources.reduce((acc, source) => {
 			let properties = Object.getOwnPropertyNames(source);
 			for (let property of properties) {
 				acc.add(property);

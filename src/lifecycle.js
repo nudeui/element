@@ -7,16 +7,12 @@
  * - `init`: Called when the first instance of the class is created
  * - `anyConnected`: Called when any instance of the class is connected to the DOM (once per class)
  */
-import getSymbols from "./util/get-symbols.js";
+import { getSymbols, satisfiedBy } from "./util/get-symbols.js";
 
 const { hasConnected, initialized } = getSymbols;
 
 const instanceHooks = ["firstConnected", "constructed", "init"];
 const staticHooks = ["anyConnected", "init"];
-
-export function appliesTo (Class) {
-	return instanceHooks.some(hook => Class.prototype[hook]) || staticHooks.some(hook => Class[hook]);
-}
 
 export const Mixin = (Super = HTMLElement) => class WithLifecycle extends Super {
 	constructor () {
@@ -50,9 +46,10 @@ export const Mixin = (Super = HTMLElement) => class WithLifecycle extends Super 
 		this[hasConnected] = true;
 	}
 
-	static appliesTo = appliesTo;
+	static [satisfiedBy] (Class) {
+		return instanceHooks.some(hook => Class.prototype[hook]) || staticHooks.some(hook => Class[hook]);
+	}
 };
 
-Mixin.appliesTo = appliesTo;
 export default Mixin();
 

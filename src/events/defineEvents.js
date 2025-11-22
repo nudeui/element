@@ -4,7 +4,7 @@ import { Mixin as PropsMixin } from "../props/defineProps.js";
 // import PropChangeEvent from "../props/PropChangeEvent.js";
 import { resolveValue } from "../util.js";
 import { pick } from "../util/pick.js";
-import getSymbols from "../util/get-symbols.js";
+import { getSymbols, satisfiedBy } from "../util/get-symbols.js";
 
 const { initialized, eventProps, propEvents, retargetedEvents } = getSymbols;
 
@@ -177,9 +177,7 @@ export const Mixin = (Super = HTMLElement) => class WithEvents extends Super {
 		}
 	}
 
-	static appliesTo (Class) {
-		return "events" in Class;
-	}
-}
+	static [satisfiedBy] = "events";
+};
 
 export default Mixin();

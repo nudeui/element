@@ -1,4 +1,27 @@
 import { copyProperties } from "../util/copy-properties.js";
+import { satisfiedBy } from "../util/get-symbols.js";
+
+export function satisfies (Class, requirement) {
+	if (!requirement) {
+		// No reqs
+		return true;
+	}
+
+	switch (typeof requirement === "function") {
+		case "function":
+			return requirement(Class);
+		case "string":
+		case "symbol":
+			return Class[requirement];
+	}
+
+	if (Array.isArray(requirement)) {
+		// Array of potential fields (OR)
+		return requirement.some(req => satisfies(Class, req));
+	}
+
+	return false;
+}
 
 export function applyMixins (Class = this, mixins = Class.mixins) {
 	if (Object.hasOwn(Class, "mixinsActive") || !mixins?.length) {
@@ -8,7 +31,7 @@ export function applyMixins (Class = this, mixins = Class.mixins) {
 	Class.mixinsActive = [];
 
 	for (let Mixin of mixins) {
-		if (Mixin.appliesTo && !Mixin.appliesTo(Class)) {
+		if (satisfies(Class, Mixin[satisfiedBy])) {
 			// Not applicable to this class
 			continue;
 		}

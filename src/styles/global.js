@@ -1,13 +1,10 @@
 /**
  * Mixin for adding light DOM styles
  */
-import { adoptCSSRecursive, fetchCSS, getSuperclasses, getSymbols } from "./util.js";
+import { adoptCSSRecursive, fetchCSS, getSuperclasses } from "./util.js";
+import { getSymbols, satisfiedBy } from "../util/get-symbols.js";
 
 const { fetchedGlobalStyles, roots, render, initialized } = getSymbols;
-
-export function appliesTo (Class) {
-	return "globalStyles" in Class;
-}
 
 export const Mixin = (Super = HTMLElement) => class GlobalStyles extends Super {
 	constructor () {
@@ -75,9 +72,7 @@ export const Mixin = (Super = HTMLElement) => class GlobalStyles extends Super {
 		}
 	}
 
-	static appliesTo = appliesTo;
+	static [satisfiedBy] = "globalStyles";
 };
-
-Mixin.appliesTo = appliesTo;
 
 export default Mixin();

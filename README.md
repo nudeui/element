@@ -140,23 +140,6 @@ class MySlider extends Props(Events(FormAssociated(LitElement))) {
 }
 ```
 
-Some mixins even have a second argument for parameters that you can customize.
-For example, by default they assume your `ElementInternals` instance (if you have one) is stored in a `_internals` property,
-but you can change that to whatever you want by passing a second argument to the mixin:
-
-```js
-import { FormAssociated } from "nude-element/mixins";
-
-const internals = Symbol("internals");
-class MySlider extends FormAssociated(LitElement, { internalsProp: internals }) {
-	constructor () {
-		super();
-
-		this[internals] = this.attachInternals?.();
-	}
-}
-```
-
 ### More hassle, more control: Composable mixins
 
 If Nude Element taking over your parent class seems too intrusive,
