@@ -1,8 +1,10 @@
 /**
  * Mixin for adding shadow DOM styles
  */
-import { adoptCSS, fetchCSS, getSuperclasses } from "./util.js";
-import { newSymbols, satisfiedBy } from "../util/symbols.js";
+import { adoptCSS } from "../../util/adopt-css.js";
+import { fetchCSS } from "../../util/fetch-css.js";
+import { getSuperclasses } from "../../util/super.js";
+import { newSymbols, satisfiedBy } from "../../util/symbols.js";
 
 const { fetchedStyles, initialized, render, init } = newSymbols;
 

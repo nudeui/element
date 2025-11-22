@@ -63,8 +63,8 @@ export const Mixin = (Super = HTMLElement) => class FormAssociated extends Super
 
 		// Set current form value and update on change
 		this[internals].setFormValue(this[valueProp]);
-		let eventTarget = source || this;
-		eventTarget.addEventListener(changeEvent, () =>
+		let changeEventTarget = source || this;
+		changeEventTarget.addEventListener(changeEvent, () =>
 			this[internals].setFormValue(this[valueProp]));
 	}
 

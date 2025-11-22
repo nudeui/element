@@ -1,8 +1,10 @@
 /**
  * Mixin for adding light DOM styles
  */
-import { adoptCSSRecursive, fetchCSS, getSuperclasses } from "./util.js";
-import { newSymbols, satisfiedBy } from "../util/symbols.js";
+import { adoptCSSRecursive } from "../../util/adopt-css.js";
+import { fetchCSS } from "../../util/fetch-css.js";
+import { getSuperclasses } from "../../util/super.js";
+import { newSymbols, satisfiedBy } from "../../util/symbols.js";
 
 const { fetchedGlobalStyles, roots, render, initialized } = newSymbols;
 
