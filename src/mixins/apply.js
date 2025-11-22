@@ -1,5 +1,5 @@
 import { extendClass } from "../util/extend-class.js";
-import { satisfiedBy } from "../util/get-symbols.js";
+import { satisfiedBy, mixinsApplied } from "../util/get-symbols.js";
 
 export function satisfies (Class, requirement) {
 	if (!requirement) {
@@ -34,11 +34,11 @@ export function applyMixins (Class = this, mixins = Class.mixins) {
 		return;
 	}
 
-	if (!Object.hasOwn(Class, "mixinsApplied")) {
-		Class.mixinsApplied = [...(Object.getPrototypeOf(Class).mixinsApplied || [])];
+	if (!Object.hasOwn(Class, mixinsApplied)) {
+		Class[mixinsApplied] = [...(Object.getPrototypeOf(Class)[mixinsApplied] || [])];
 	}
 
-	const mixinsToApply = mixins.filter(Mixin => !Class.mixinsApplied.includes(Mixin) && satisfies(Class, Mixin[satisfiedBy]));
+	const mixinsToApply = mixins.filter(Mixin => !Class[mixinsApplied].includes(Mixin) && satisfies(Class, Mixin[satisfiedBy]));
 
 	if (mixinsToApply.length === 0) {
 		return false;
@@ -46,7 +46,7 @@ export function applyMixins (Class = this, mixins = Class.mixins) {
 
 	for (const Mixin of mixinsToApply) {
 		extendClass(Class, Mixin, {skippedProperties: [satisfiedBy]});
-		Class.mixinsApplied.push(Mixin);
+		Class[mixinsApplied].push(Mixin);
 	}
 
 	return true;

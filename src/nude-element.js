@@ -40,14 +40,9 @@ export const Mixin = (Super = HTMLElement) => class NudeElement extends Super {
 
 	// To be overridden by subclasses
 	mixins = Object.freeze([]);
-	mixinsApplied = Object.freeze([]);
 
 	static applyMixins (mixins = this.mixins) {
-		if (Object.hasOwn(this, "mixinsApplied") || !mixins || mixins.length === 0) {
-			return;
-		}
-
-		applyMixins(this, mixins);
+		return applyMixins(this, mixins);
 	}
 
 	static init () {

@@ -12,5 +12,5 @@ export { getSymbols };
 export default getSymbols;
 
 // Known symbols
-export const { satisfiedBy, internals } = getSymbols;
-export const KNOWN_SYMBOLS = { satisfiedBy, internals };
+export const { satisfiedBy, internals, mixinsApplied } = getSymbols;
+export const KNOWN_SYMBOLS = { satisfiedBy, internals, mixinsApplied };
