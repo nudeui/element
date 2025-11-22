@@ -1,5 +1,5 @@
-import { extendClass } from "../util/extend-class.js";
-import { satisfiedBy, mixinsApplied } from "../util/symbols.js";
+import { extendClass } from "./util/extend-class.js";
+import { satisfiedBy, mixinsApplied } from "./util/symbols.js";
 
 export function satisfies (Class, requirement) {
 	if (!requirement) {

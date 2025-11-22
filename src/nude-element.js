@@ -7,7 +7,7 @@
  * }
  * ```
  */
-import { applyMixins } from "./mixins/apply.js";
+import { applyMixins } from "./apply.js";
 import newSymbols from "./util/symbols.js";
 
 export const { initialized } = newSymbols;

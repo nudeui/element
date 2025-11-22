@@ -7,7 +7,7 @@
  * - `init`: Called when the first instance of the class is created
  * - `anyConnected`: Called when any instance of the class is connected to the DOM (once per class)
  */
-import { newSymbols, satisfiedBy } from "./util/symbols.js";
+import { newSymbols, satisfiedBy } from "../util/symbols.js";
 
 const { hasConnected, initialized } = newSymbols;
 

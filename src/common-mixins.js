@@ -2,7 +2,7 @@
  * All mixins
  */
 
-import Props from "./props/defineProps.js";
+import Props from "./mixins/props/defineProps.js";
 import FormAssociated from "./form-associated.js";
 import Events from "./events/defineEvents.js";
 import ShadowStyles from "./styles/shadow.js";

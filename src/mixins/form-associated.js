@@ -6,11 +6,11 @@
  * - Proxying an internal form control for all of the above
  */
 
-import { resolveValue } from "./util/resolve-value.js";
-import { delegate } from "./util/delegate.js";
-import { getOptions } from "./util/get-options.js";
-import { newSymbols, satisfiedBy, internals } from "./util/symbols.js";
-import { attachInternals } from "./util/attach-internals.js";
+import { resolveValue } from "../util/resolve-value.js";
+import { delegate } from "../util/delegate.js";
+import { getOptions } from "../util/get-options.js";
+import { newSymbols, satisfiedBy, internals } from "../util/symbols.js";
+import { attachInternals } from "../util/attach-internals.js";
 
 const defaultOptions = {
 	like: undefined,

@@ -1,6 +1,6 @@
 import Props from "./Props.js";
-import { newSymbols, satisfiedBy } from "../util/symbols.js";
-import { defineLazyProperties } from "../util/lazy.js";
+import { newSymbols, satisfiedBy } from "../../util/symbols.js";
+import { defineLazyProperties } from "../../util/lazy.js";
 const { initialized, propsDef } = newSymbols;
 
 export const Mixin = (Super = HTMLElement) => class WithProps extends Super {

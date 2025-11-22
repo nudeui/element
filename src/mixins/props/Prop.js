@@ -1,4 +1,4 @@
-import { resolveValue } from "../util.js";
+import { resolveValue } from "../../util.js";
 import { inferDependencies } from "./util.js";
 
 import * as types from "./types.js";
