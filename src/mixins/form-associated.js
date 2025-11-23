@@ -48,7 +48,7 @@ export const Mixin = (Super = HTMLElement) => class FormAssociated extends Super
 	[constructed] () {
 		let config = this.constructor[formAssociated] ?? this.constructor.formAssociated;
 		let { like, role, valueProp, changeEvent } = config;
-		let internals = this[internals] || this.attachInternals();
+		this[internals] ??= this.attachInternals();
 
 		if (!this[internals]) {
 			return;
@@ -70,14 +70,14 @@ export const Mixin = (Super = HTMLElement) => class FormAssociated extends Super
 
 	static formAssociated = true;
 
-	static [onApply] () {
-		let config = this[formAssociated] || this.formAssociated;
+	static [onApply] (Class) {
+		let config = Class[formAssociated] || Class.formAssociated;
 		config = !config || typeof config !== "object" ? {} : config;
 
-		this[formAssociated] = getOptions(defaultOptions, config);
+		Class[formAssociated] = getOptions(defaultOptions, config);
 
-		delegate({
-			properties: this[formAssociated].properties,
+		delegate.call(Class, {
+			properties: Class[formAssociated].properties,
 			from: this.prototype,
 			to: internals,
 			descriptors: Object.getOwnPropertyDescriptors(ElementInternals.prototype),

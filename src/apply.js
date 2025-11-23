@@ -7,7 +7,7 @@ export function satisfies (Class, requirement) {
 		return true;
 	}
 
-	switch (typeof requirement === "function") {
+	switch (typeof requirement) {
 		case "function":
 			return requirement(Class);
 		case "string":

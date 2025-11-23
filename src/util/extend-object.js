@@ -20,7 +20,7 @@ export class ConflictPolicy {
 			return conflictPolicy;
 		}
 
-		this.def = conflictPolicy;
+		this.def = conflictPolicy ?? {};
 
 		if (!conflictPolicy || typeof conflictPolicy === "string") {
 			this.default = conflictPolicy || "overwrite";
@@ -68,7 +68,10 @@ export function extendObject (target, source, options = {}) {
 	let skippedProperties = new Set(options.skippedProperties || []);
 	let sourceDescriptors = Object.getOwnPropertyDescriptors(source);
 
-	for (let prop in sourceDescriptors) {
+	for (let prop of [
+		...Object.keys(sourceDescriptors),
+		...Object.getOwnPropertySymbols(sourceDescriptors),
+	]) {
 		if (skippedProperties.has(prop)) {
 			continue;
 		}
@@ -86,11 +89,11 @@ export function extendObject (target, source, options = {}) {
 			if (propConflictPolicy === "throw") {
 				throw new Error(`Property ${prop} already exists on target`);
 			}
-
-			// TODO merge
-			let descriptor = conflictPolicy.canMerge(prop) ? getMergeDescriptor(targetDescriptor, sourceDescriptor) : sourceDescriptor;
-			Object.defineProperty(target, prop, descriptor);
 		}
+
+		// TODO merge
+		let descriptor = conflictPolicy.canMerge(prop) ? getMergeDescriptor(targetDescriptor, sourceDescriptor) : sourceDescriptor;
+		Object.defineProperty(target, prop, descriptor);
 	}
 }
 
@@ -100,7 +103,7 @@ function canMerge (targetDescriptor, sourceDescriptor) {
 }
 
 function getMergeDescriptor (targetDescriptor, sourceDescriptor) {
-	if (!canMerge(targetDescriptor, sourceDescriptor)) {
+	if (!targetDescriptor || !canMerge(targetDescriptor, sourceDescriptor)) {
 		return sourceDescriptor;
 	}
 

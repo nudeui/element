@@ -19,7 +19,7 @@ export const Mixin = (Super = HTMLElement) => class GlobalStyles extends Super {
 	async [render] () {
 		let Self = this.constructor;
 
-		if (!Self.globalStyles?.length) {
+		if (!Self[resolvedStyles]?.length) {
 			return;
 		}
 
@@ -61,7 +61,7 @@ export const Mixin = (Super = HTMLElement) => class GlobalStyles extends Super {
 
 		let Super = Object.getPrototypeOf(this);
 
-		if (Super[self]) {
+		if (!Super[self]) {
 			// If self is not defined, it means we've gone past the subclass that included this
 			this.init.call(Super);
 		}
