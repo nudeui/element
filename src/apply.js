@@ -57,7 +57,7 @@ export function applyMixins (Class = this, mixins = Class.mixins) {
 		Class[mixinsApplied].push(Mixin);
 
 		if (Mixin[onApply]) {
-			Mixin[onApply](Class);
+			Mixin[onApply].call(Class);
 		}
 	}
 
