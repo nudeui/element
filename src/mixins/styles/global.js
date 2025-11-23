@@ -3,25 +3,29 @@
  */
 import { adoptCSSRecursive } from "../../util/adopt-css.js";
 import { fetchCSS } from "../../util/fetch-css.js";
-import { getSuperclasses } from "../../util/super.js";
 import { newSymbols, satisfiedBy } from "../../util/symbols.js";
 
-const { fetchedGlobalStyles, roots, render, initialized } = newSymbols;
+export const { resolvedStyles, render, initialized, self } = newSymbols;
 
 export const Mixin = (Super = HTMLElement) => class GlobalStyles extends Super {
 	constructor () {
 		super();
-		this.init();
+
+		// Initiate fetching when the first element is constructed
+		// if nothing has called it yet
+		this.constructor.init();
 	}
 
 	async [render] () {
 		let Self = this.constructor;
 
-		if (!Self[fetchedGlobalStyles]?.length) {
+		if (!Self.globalStyles?.length) {
 			return;
 		}
 
-		for (let css of Self[fetchedGlobalStyles]) {
+		let styles = Self[resolvedStyles].map(style => fetchCSS(style, Self.url));
+
+		for (let css of styles) {
 			if (css instanceof Promise) {
 				// Why not just await css anyway?
 				// Because this way if this is already fetched, we don’t need to wait for a microtask
@@ -44,6 +48,8 @@ export const Mixin = (Super = HTMLElement) => class GlobalStyles extends Super {
 		this[render]();
 	}
 
+	static [self] = self;
+
 	static init () {
 		super.init?.();
 
@@ -53,23 +59,22 @@ export const Mixin = (Super = HTMLElement) => class GlobalStyles extends Super {
 
 		this[initialized] = true;
 
-		let supers = getSuperclasses(this, HTMLElement);
-		supers.push(this);
+		let Super = Object.getPrototypeOf(this);
 
-		for (let Class of supers) {
-			if (
-				Object.hasOwn(Class, "globalStyles") &&
-				!Object.hasOwn(Class, fetchedGlobalStyles)
-			) {
-				// Initiate fetching when the first element is constructed
-				let styles = (Class[fetchedGlobalStyles] = Array.isArray(Class.globalStyles)
-					? Class.globalStyles.slice()
-					: [Class.globalStyles]);
-				Class[roots] ??= new WeakSet();
+		if (Super[self]) {
+			// If self is not defined, it means we've gone past the subclass that included this
+			this.init.call(Super);
+		}
 
-				for (let i = 0; i < styles.length; i++) {
-					styles[i] = fetchCSS(styles[i], Class.url);
-				}
+		if (Object.hasOwn(this, "globalStyles")) {
+			if (!Array.isArray(this.globalStyles)) {
+				this.globalStyles = [this.globalStyles];
+			}
+
+			this[resolvedStyles] = this.globalStyles.slice();
+
+			if (Super[resolvedStyles]) {
+				this[resolvedStyles].unshift(...Super[resolvedStyles]);
 			}
 		}
 	}

@@ -19,8 +19,13 @@ export function fetchCSS (style, baseUrl = defaultBaseURL) {
 	if (style instanceof Promise) {
 		return style;
 	}
-	else if (style?.css) {
+
+	if (style?.css) {
 		// The component provides a CSS string (either as a promise or a string)
+		if (style.css instanceof Promise) {
+			style.css.then(css => style.css = css);
+		}
+
 		return style.css;
 	}
 
@@ -32,8 +37,8 @@ export function fetchCSS (style, baseUrl = defaultBaseURL) {
 
 		if (!css) {
 			// Haven't fetched yet
-			css = fetchedStyles[fullUrl] = fetch(fullUrl).then(response => response.text());
-			css.then(css => (fetchedStyles[fullUrl] = css));
+			css = fetchedStyles[fullUrl] = fetch(fullUrl).then(response => response.ok ? response.text() : Promise.reject(response));
+			css.then(css => fetchedStyles[fullUrl] = css, error => fetchedStyles[fullUrl] = "");
 		}
 	}
 
