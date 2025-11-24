@@ -32,18 +32,10 @@ export function getSuperclass (Class) {
  * Get a property from the superclass
  * Similar to calling `super` in a method, but dynamically bound
  * @param {object} instance
- * @param {string | Symbol} [property] The property to get from super, if any.
- * @returns {any} If no property is provided, the superclass prototype is returned.
- * If a property is provided, the value of the property is returned.
- * E.g. to emulate `super.foo(arg1, arg2)` in a method, use `getSuper(this, "foo").call(this, arg1, arg2)`
+ * @returns {FunctionConstructor | null} The superclass prototype is returned, or null if no superclass exists.
+ * E.g. to emulate `super.foo(arg1, arg2)` in a method, use `getSuper(this).foo.call(this, arg1, arg2)`
  */
-export function getSuper (instance, property) {
+export function getSuper (instance) {
 	let Class = instance.constructor;
-	let superProto = getSuperclass(Class)?.prototype;
-
-	if (!superProto || !property) {
-		return superProto;
-	}
-
-	return superProto[property];
+	return getSuperclass(Class)?.prototype ?? null;
 }
