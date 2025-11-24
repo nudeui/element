@@ -32,12 +32,12 @@ export function extendClass (Class, Mixin, options = {}) {
 		}
 	}
 
-	let { conflictPolicy } = options;
+	let { conflictPolicy, conflictPolicyStatic = conflictPolicy } = options;
 	let skippedProperties = ["constructor"].concat(options.skippedProperties || []);
 	let skippedPropertiesStatic = ["prototype"].concat(options.skippedPropertiesStatic || []);
 
 	for (let source of sources) {
 		extendObject(Class.prototype, source.prototype, {conflictPolicy, skippedProperties});
-		extendObject(Class, source, {conflictPolicy, skippedProperties: skippedPropertiesStatic});
+		extendObject(Class, source, {conflictPolicy: conflictPolicyStatic, skippedProperties: skippedPropertiesStatic});
 	}
 }

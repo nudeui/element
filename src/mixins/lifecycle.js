@@ -8,11 +8,19 @@
  * - `anyConnected`: Called when any instance of the class is connected to the DOM (once per class)
  */
 import { newSymbols, satisfiedBy } from "../util/symbols.js";
+import lifecycleHooks, { staticLifecycleHooks } from "../lifecycle.js";
 
 const { hasConnected, initialized } = newSymbols;
 
 const instanceHooks = ["firstConnected", "constructed", "init"];
 const staticHooks = ["anyConnected", "init"];
+
+for (let hook of instanceHooks) {
+	lifecycleHooks.add(hook);
+}
+for (let hook of staticHooks) {
+	staticLifecycleHooks.add(hook);
+}
 
 export const Mixin = (Super = HTMLElement) => class WithLifecycle extends Super {
 	constructor () {

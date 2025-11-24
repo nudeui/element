@@ -3,6 +3,9 @@ import { newSymbols, satisfiedBy } from "../../util/symbols.js";
 import { defineLazyProperties } from "../../util/lazy.js";
 const { initialized, propsDef } = newSymbols;
 
+import lifecycleHooks from "../../lifecycle.js";
+lifecycleHooks.add("propChangedCallback");
+
 export const Mixin = (Super = HTMLElement) => class WithProps extends Super {
 	constructor () {
 		super();

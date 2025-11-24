@@ -1,5 +1,7 @@
 import { extendClass } from "./util/extend-class.js";
-import { satisfiedBy, mixinsApplied, onApply } from "./util/symbols.js";
+import { satisfiedBy, mixinsApplied, onApply, conflictPolicy } from "./util/symbols.js";
+import lifecycleHooks, { staticLifecycleHooks } from "./lifecycle.js";
+import { ConflictPolicy } from "./util/conflict-policy.js";
 
 export function satisfies (Class, requirement) {
 	if (!requirement) {
@@ -31,6 +33,16 @@ export function satisfies (Class, requirement) {
 	return false;
 }
 
+const defaultConflictPolicy = new ConflictPolicy({
+	throw: true,
+	merge: lifecycleHooks,
+});
+
+const defaultStaticConflictPolicy = new ConflictPolicy({
+	throw: true,
+	merge: staticLifecycleHooks,
+});
+
 /**
  * Apply a bunch of mixins to a class iff it satisfies their protocols
  * @param { FunctionConstructor } Class
@@ -53,7 +65,11 @@ export function applyMixins (Class = this, mixins = Class.mixins) {
 	}
 
 	for (const Mixin of mixinsToApply) {
-		extendClass(Class, Mixin, {skippedProperties: [satisfiedBy]});
+		extendClass(Class, Mixin, {
+			skippedProperties: [satisfiedBy, onApply],
+			conflictPolicy: ConflictPolicy.combine(defaultConflictPolicy, Mixin.prototype[conflictPolicy]),
+			conflictPolicyStatic: ConflictPolicy.combine(defaultStaticConflictPolicy, Mixin[conflictPolicy]),
+		});
 		Class[mixinsApplied].push(Mixin);
 
 		if (Mixin[onApply]) {
