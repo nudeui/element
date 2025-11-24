@@ -1,5 +1,5 @@
-import { composeFunction } from "./compose-function.js";
 import { ConflictPolicy } from "./conflict-policy.js";
+import { canMerge, mergeValues } from "./merge.js";
 
 /**
  * Copy properties, respecting descriptors
@@ -54,18 +54,23 @@ function descriptorEquals (targetDescriptor, sourceDescriptor) {
 	});
 }
 
-function canMerge (targetDescriptor, sourceDescriptor) {
-	// TODO merge objects and arrays
-	return typeof targetDescriptor.value === "function" && typeof sourceDescriptor.value === "function";
+function canMergeDescriptors (targetDescriptor, sourceDescriptor) {
+	if (targetDescriptor.get || targetDescriptor.set || sourceDescriptor.get || sourceDescriptor.set) {
+		// Only merge value properties for now
+		return false;
+	}
+
+	return canMerge(targetDescriptor.value, sourceDescriptor.value);
 }
 
 function getMergeDescriptor (targetDescriptor, sourceDescriptor) {
-	if (!canMerge(targetDescriptor, sourceDescriptor)) {
+	if (!canMergeDescriptors(targetDescriptor, sourceDescriptor)) {
 		return sourceDescriptor;
 	}
 
+	// TODO merge accessors
 	return {
-		value: composeFunction(targetDescriptor.value, sourceDescriptor.value),
+		value: mergeValues(targetDescriptor.value, sourceDescriptor.value),
 		writable: targetDescriptor.writable || sourceDescriptor.writable,
 		configurable: targetDescriptor.configurable || sourceDescriptor.configurable,
 		enumerable: targetDescriptor.enumerable || sourceDescriptor.enumerable,
