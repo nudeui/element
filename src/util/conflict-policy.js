@@ -53,7 +53,7 @@ export class ConflictPolicy {
 		return this.def.merge === true || this.def.merge?.includes?.(property) || false;
 	}
 
-	static merge (...policies) {
+	static combine (...policies) {
 		return new this({
 			default: policies.at(-1).default ?? "overwrite",
 			exceptions: policies.filter(Boolean).map(p => new this(p)).reduce((exceptions, policy) => {
