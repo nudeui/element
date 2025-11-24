@@ -80,7 +80,7 @@ export function extendObject (target, source, options = {}) {
 		if (targetDescriptor) {
 			let propConflictPolicy = conflictPolicy.resolve(prop);
 
-			if (propConflictPolicy === "skip") {
+			if (propConflictPolicy === "skip" || descriptorEquals(targetDescriptor, sourceDescriptor)) {
 				continue;
 			}
 
@@ -95,6 +95,12 @@ export function extendObject (target, source, options = {}) {
 
 		Object.defineProperty(target, prop, descriptor ?? sourceDescriptor);
 	}
+}
+
+function descriptorEquals (targetDescriptor, sourceDescriptor) {
+	return ["value", "get", "set"].every(key => {
+		return targetDescriptor[key] === sourceDescriptor[key];
+	});
 }
 
 function canMerge (targetDescriptor, sourceDescriptor) {
