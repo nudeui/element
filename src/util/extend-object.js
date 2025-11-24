@@ -47,6 +47,8 @@ export function extendObject (target, source, options = {}) {
 }
 
 function descriptorEquals (targetDescriptor, sourceDescriptor) {
+	// Note that this only takes value properties into account and will return true even if
+	// one has different enumerable, writable, configurable, etc.
 	return ["value", "get", "set"].every(key => {
 		return targetDescriptor[key] === sourceDescriptor[key];
 	});
