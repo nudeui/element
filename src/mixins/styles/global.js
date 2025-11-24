@@ -19,7 +19,7 @@ export const Mixin = (Super = HTMLElement) => class GlobalStyles extends Super {
 	async [render] () {
 		let Self = this.constructor;
 
-		if (!Self.globalStyles?.length) {
+		if (!Self[resolvedStyles]?.length) {
 			return;
 		}
 
