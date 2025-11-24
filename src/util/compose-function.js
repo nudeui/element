@@ -8,7 +8,7 @@
 export const sideEffects = Symbol("Side effects");
 export const mutable = Symbol("Mutable");
 
-export function extend (body, ...sideEffectFns) {
+export function composeFunction (body, ...sideEffectFns) {
 	let mutableFn = body[sideEffects] ? body : body[mutable];
 
 	if (!mutableFn) {

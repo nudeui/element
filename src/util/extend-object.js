@@ -1,4 +1,4 @@
-import { extend } from "./extend.js";
+import { composeFunction } from "./compose-function.js";
 import { ConflictPolicy } from "./conflict-policy.js";
 
 /**
@@ -65,7 +65,7 @@ function getMergeDescriptor (targetDescriptor, sourceDescriptor) {
 	}
 
 	return {
-		value: extend(targetDescriptor.value, sourceDescriptor.value),
+		value: composeFunction(targetDescriptor.value, sourceDescriptor.value),
 		writable: targetDescriptor.writable || sourceDescriptor.writable,
 		configurable: targetDescriptor.configurable || sourceDescriptor.configurable,
 		enumerable: targetDescriptor.enumerable || sourceDescriptor.enumerable,
