@@ -1,5 +1,6 @@
 import { extendObject } from "./extend-object.js";
 import { getSuperclasses } from "./super.js";
+import { ConflictPolicy } from "./conflict-policy.js";
 
 /**
  * @import { ConflictPolicySource, ConflictPolicy } from "./conflict-policy.js";
@@ -11,6 +12,7 @@ import { getSuperclasses } from "./super.js";
  * @property { Iterable<PropertyKey> } [skippedProperties = []] - Instance properties to ignore
  * @property { Iterable<PropertyKey> } [skippedPropertiesStatic = []] - Static properties to ignore
  * @property { ConflictPolicySource | ConflictPolicy } [conflictPolicy="overwrite"]
+ * @property { ConflictPolicySource | ConflictPolicy } [conflictPolicyStatic="overwrite"]
  *
  * Use a class as a mixin on another class
  * @param {Function} Class
@@ -32,7 +34,10 @@ export function extendClass (Class, Mixin, options = {}) {
 		}
 	}
 
-	let { conflictPolicy, conflictPolicyStatic = conflictPolicy } = options;
+	let { conflictPolicy, conflictPolicyStatic } = options;
+	conflictPolicy = new ConflictPolicy(conflictPolicy);
+	conflictPolicyStatic = new ConflictPolicy(conflictPolicyStatic);
+
 	let skippedProperties = ["constructor"].concat(options.skippedProperties || []);
 	let skippedPropertiesStatic = ["prototype"].concat(options.skippedPropertiesStatic || []);
 

@@ -54,11 +54,15 @@ export class ConflictPolicy {
 			this.default = ["overwrite", "skip", "throw"].find(p => conflictPolicy[p] === true);
 		}
 
-		// Object
-		for (let type of ["merge", "overwrite", "skip", "throw"]) {
-			if (Array.isArray(conflictPolicy[type])) {
-				for (let property of conflictPolicy[type]) {
-					this.exceptions[property] = type;
+		if (conflictPolicy.exceptions) {
+			this.exceptions = Object.assign(this.exceptions, conflictPolicy.exceptions);
+		}
+		else {
+			for (let type of ["merge", "overwrite", "skip", "throw"]) {
+				if (Array.isArray(conflictPolicy[type])) {
+					for (let property of conflictPolicy[type]) {
+						this.exceptions[property] = type;
+					}
 				}
 			}
 		}
