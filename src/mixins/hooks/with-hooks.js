@@ -1,5 +1,5 @@
 import Hooks from "./hooks.js";
-import { satisfiedBy } from "../util/symbols.js";
+import { satisfiedBy } from "../../util/symbols.js";
 
 export const Mixin = (Super = HTMLElement) => class WithHooks extends Super {
 	static hooks = new Hooks(super.hooks || {});
