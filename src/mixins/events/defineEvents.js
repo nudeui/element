@@ -1,10 +1,10 @@
 // To be split into three mixins: A base events mixin, a retargeting mixin, and a propchange event mixin
 
-import { Mixin as PropsMixin } from "../mixins/props/defineProps.js";
+import { Mixin as PropsMixin } from "../props/defineProps.js";
 // import PropChangeEvent from "../props/PropChangeEvent.js";
-import { resolveValue } from "../util.js";
-import { pick } from "../util/pick.js";
-import { newSymbols, satisfiedBy } from "../util/symbols.js";
+import { resolveValue } from "../../util/resolve-value.js";
+import { pick } from "../../util/pick.js";
+import { newSymbols, satisfiedBy } from "../../util/symbols.js";
 
 const { initialized, eventProps, propEvents, retargetedEvents } = newSymbols;
 
