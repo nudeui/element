@@ -7,7 +7,7 @@ export function satisfies (Class, requirement) {
 		return true;
 	}
 
-	switch (typeof requirement === "function") {
+	switch (typeof requirement) {
 		case "function":
 			return requirement(Class);
 		case "string":
@@ -57,7 +57,7 @@ export function applyMixins (Class = this, mixins = Class.mixins) {
 		Class[mixinsApplied].push(Mixin);
 
 		if (Mixin[onApply]) {
-			Mixin[onApply](Class);
+			Mixin[onApply].call(Class);
 		}
 	}
 

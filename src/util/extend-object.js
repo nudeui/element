@@ -20,7 +20,7 @@ export class ConflictPolicy {
 			return conflictPolicy;
 		}
 
-		this.def = conflictPolicy;
+		this.def = conflictPolicy ?? {};
 
 		if (!conflictPolicy || typeof conflictPolicy === "string") {
 			this.default = conflictPolicy || "overwrite";
@@ -68,15 +68,16 @@ export function extendObject (target, source, options = {}) {
 	let skippedProperties = new Set(options.skippedProperties || []);
 	let sourceDescriptors = Object.getOwnPropertyDescriptors(source);
 
-	for (let prop in sourceDescriptors) {
+	for (let prop of Reflect.ownKeys(sourceDescriptors)) {
 		if (skippedProperties.has(prop)) {
 			continue;
 		}
 
 		let sourceDescriptor = sourceDescriptors[prop];
 		let targetDescriptor = Object.getOwnPropertyDescriptor(target, prop);
+		let descriptor;
 
-		if (prop in target) {
+		if (targetDescriptor) {
 			let propConflictPolicy = conflictPolicy.resolve(prop);
 
 			if (propConflictPolicy === "skip") {
@@ -87,10 +88,12 @@ export function extendObject (target, source, options = {}) {
 				throw new Error(`Property ${prop} already exists on target`);
 			}
 
-			// TODO merge
-			let descriptor = conflictPolicy.canMerge(prop) ? getMergeDescriptor(targetDescriptor, sourceDescriptor) : sourceDescriptor;
-			Object.defineProperty(target, prop, descriptor);
+			if (conflictPolicy.canMerge(prop)) {
+				descriptor = getMergeDescriptor(targetDescriptor, sourceDescriptor);
+			}
 		}
+
+		Object.defineProperty(target, prop, descriptor ?? sourceDescriptor);
 	}
 }
 

@@ -20,7 +20,6 @@ const defaultOptions = {
 	properties: [
 		"labels",
 		"form",
-		"type",
 		"name",
 		"validity",
 		"validationMessage",

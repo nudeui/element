@@ -3,10 +3,10 @@
  */
 
 import Props from "./mixins/props/defineProps.js";
-import FormAssociated from "./form-associated.js";
+import FormAssociated from "./mixins/form-associated.js";
 import Events from "./events/defineEvents.js";
-import ShadowStyles from "./styles/shadow.js";
-import GlobalStyles from "./styles/global.js";
+import ShadowStyles from "./mixins/styles/shadow.js";
+import GlobalStyles from "./mixins/styles/global.js";
 
 export { Props, FormAssociated, Events, ShadowStyles, GlobalStyles };
 
