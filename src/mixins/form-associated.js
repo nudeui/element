@@ -67,13 +67,15 @@ export const Mixin = (Super = HTMLElement) => class FormAssociated extends Super
 			this[internals].setFormValue(this[valueProp]));
 	}
 
-	static formAssociated = true;
-
 	static [onApply] () {
 		let config = this[formAssociated] || this.formAssociated;
 		config = !config || typeof config !== "object" ? {} : config;
 
 		this[formAssociated] = getOptions(defaultOptions, config);
+
+		if (!this.formAssociated) {
+			this.formAssociated = true;
+		}
 
 		delegate({
 			properties: this[formAssociated].properties,
