@@ -2,6 +2,7 @@ import { extendClass } from "./util/extend-class.js";
 import { satisfiedBy, mixinsApplied, onApply, conflictPolicy } from "./util/symbols.js";
 import lifecycleHooks, { staticLifecycleHooks } from "./lifecycle.js";
 import { ConflictPolicy } from "./util/conflict-policy.js";
+import { getSuper } from "./util/super.js";
 
 export function satisfies (Class, requirement) {
 	if (!requirement) {
@@ -62,6 +63,24 @@ export function applyMixins (Class = this, mixins = Class.mixins) {
 
 	if (mixinsToApply.length === 0) {
 		return false;
+	}
+
+	// Make sure any lifecycle hooks are actually applied
+	// Otherwise we'd be extending the mixin hooks, what a mess!
+	for (let lifecycleHook of lifecycleHooks) {
+		if (
+			// Doesn't exist on any mixin
+			!mixinsToApply.some(Mixin => Mixin.prototype[lifecycleHook])
+
+			// Or already exists on the class
+		    || Class.prototype[lifecycleHook]
+		) {
+			continue;
+		}
+
+		Class.prototype[lifecycleHook] = function (...args) {
+			getSuper(this)?.[lifecycleHook]?.call(this, ...args);
+		}
 	}
 
 	for (const Mixin of mixinsToApply) {
