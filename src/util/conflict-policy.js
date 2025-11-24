@@ -1,18 +1,34 @@
 /**
- * @typedef { "overwrite" | "merge" | "skip" | "throw" } ConflictPolicyStrategy
+ * @typedef { "overwrite" | "skip" | "throw" } ConflictPolicyStrategy
  */
 
 /**
  * @typedef { object } ConflictPolicySource
- * @property {boolean} [merge] - Allow merge whenever possible?
+ * @property {boolean | Iterable<PropertyKey>} [merge] - Allow merge whenever possible?
  * @property {true | Iterable<PropertyKey} [overwrite] - Properties to overwrite
  * @property {true | Iterable<PropertyKey} [skip] - Properties to skip
  * @property {true | Iterable<PropertyKey} [throw] - Properties to throw on
  */
 
 export class ConflictPolicy {
-	default;
+	/**
+	 * Default strategy
+	 * @type { ConflictPolicyStrategy }
+	 */
+	default = "overwrite";
+
+	/**
+	 * Special handling for certain properties
+	 * @type { Record<PropertyKey, ConflictPolicyStrategy> }
+	 */
 	exceptions = {};
+
+	/**
+	 * Whether to allow merge whenever possible
+	 * Exceptions can still be provided as an array even if merge is false
+	 * @type { boolean }
+	 */
+	merge = false;
 
 	/**
 	 * @param { ConflictPolicySource | ConflictPolicyStrategy | ConflictPolicy } [conflictPolicy="overwrite"]
@@ -29,14 +45,21 @@ export class ConflictPolicy {
 			return;
 		}
 
+		this.merge = conflictPolicy.merge === true;
+
+		if (conflictPolicy.default) {
+			this.default = conflictPolicy.default;
+		}
+		else {
+			this.default = ["overwrite", "skip", "throw"].find(p => conflictPolicy[p] === true);
+		}
+
 		// Object
-		for (let prop in conflictPolicy) {
-			let value = conflictPolicy[prop];
-			if (value === true) {
-				this.default = value;
-			}
-			else {
-				this.exceptions[prop] = Array.isArray(value) ? value : [value];
+		for (let type of ["merge", "overwrite", "skip", "throw"]) {
+			if (Array.isArray(conflictPolicy[type])) {
+				for (let property of conflictPolicy[type]) {
+					this.exceptions[property] = type;
+				}
 			}
 		}
 	}
@@ -50,24 +73,16 @@ export class ConflictPolicy {
 	}
 
 	canMerge (property) {
-		return this.def.merge === true || this.def.merge?.includes?.(property) || false;
+		return this.merge === true || this.exceptions[property] === "merge";
 	}
 
 	static combine (...policies) {
 		return new this({
 			default: policies.at(-1).default ?? "overwrite",
 			exceptions: policies.filter(Boolean).map(p => new this(p)).reduce((exceptions, policy) => {
-				for (let prop in policy.exceptions) {
-					if (exceptions[prop]) {
-						// Merge exceptions
-						exceptions[prop] = [...new Set(exceptions[prop].concat(policy.exceptions[prop]))];
-					}
-					else {
-						exceptions[prop] = policy.exceptions[prop];
-					}
-				}
-				return exceptions;
-			}),
+				return Object.assign(exceptions, policy.exceptions);
+			}, {}),
+			merge: policies.at(-1).merge ?? false,
 		});
 	}
 }
