@@ -2,7 +2,7 @@ import { extendObject } from "./extend-object.js";
 import { getSuperclasses } from "./super.js";
 
 /**
- * @import { ConflictPolicySource, ConflictPolicy } from "./extend-object.js";
+ * @import { ConflictPolicySource, ConflictPolicy } from "./conflict-policy.js";
  */
 
 /**
