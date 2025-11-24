@@ -13,31 +13,31 @@ import { getSuperclasses } from "./super.js";
  * @property { ConflictPolicySource | ConflictPolicy } [conflictPolicy="overwrite"]
  *
  * Use a class as a mixin on another class
- * @param {Function} target
- * @param {Function} source
+ * @param {Function} Class
+ * @param {Function} Mixin
  * @param {ExtendClassOptions} [options={}]
  *
  */
-export function extendClass (target, source, options = {}) {
-	let sources = [source];
+export function extendClass (Class, Mixin, options = {}) {
+	let sources = [Mixin];
 
 	if (options.recursive !== false) {
-		let sourceSupers = getSuperclasses(source).reverse();
-		let targetSupers = getSuperclasses(target).reverse();
+		let classSupers = getSuperclasses(Class).reverse();
+		let mixinSupers = getSuperclasses(Mixin).reverse();
 
 		// Find the first shared superclass
-		let index = sourceSupers.findIndex(sharedSuper => targetSupers.includes(sharedSuper));
+		let index = mixinSupers.findIndex(sharedSuper => classSupers.includes(sharedSuper));
 		if (index !== -1) {
-			sources.push(...sourceSupers.slice(index + 1));
+			sources.push(...mixinSupers.slice(index + 1));
 		}
 	}
 
-	let {conflictPolicy} = options;
+	let { conflictPolicy } = options;
 	let skippedProperties = ["constructor"].concat(options.skippedProperties || []);
 	let skippedPropertiesStatic = ["prototype"].concat(options.skippedPropertiesStatic || []);
 
 	for (let source of sources) {
-		extendObject(target.prototype, source.prototype, {conflictPolicy, skippedProperties});
-		extendObject(target, source, {conflictPolicy, skippedProperties: skippedPropertiesStatic});
+		extendObject(Class.prototype, source.prototype, {conflictPolicy, skippedProperties});
+		extendObject(Class, source, {conflictPolicy, skippedProperties: skippedPropertiesStatic});
 	}
 }
