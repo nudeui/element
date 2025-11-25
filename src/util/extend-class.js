@@ -1,20 +1,48 @@
-import { copyProperties } from "./copy-properties.js";
+import { extendObject } from "./extend-object.js";
+import { getSuperclasses } from "./super.js";
+import { ConflictPolicy } from "./conflict-policy.js";
 
 /**
+ * @import { ConflictPolicySource, ConflictPolicy } from "./conflict-policy.js";
+ */
+
+/**
+ * @typedef { object } ExtendClassOptions
+ * @property { boolean } [recursive=true] - Whether to try and extend superclasses too. Automatically stops at the first shared superclass.
+ * @property { Iterable<PropertyKey> } [skippedProperties = []] - Instance properties to ignore
+ * @property { Iterable<PropertyKey> } [skippedPropertiesStatic = []] - Static properties to ignore
+ * @property { ConflictPolicySource | ConflictPolicy } [conflictPolicy="overwrite"]
+ * @property { ConflictPolicySource | ConflictPolicy } [conflictPolicyStatic="overwrite"]
+ *
  * Use a class as a mixin on another class
- * @param Class {Function}
- * @param Mixin {Function}
- * @param options {CopyPropertiesOptions}
+ * @param {Function} Class
+ * @param {Function} Mixin
+ * @param {ExtendClassOptions} [options={}]
+ *
  */
 export function extendClass (Class, Mixin, options = {}) {
-	if (options.recursive) {
-		copyProperties(Class, Mixin, options);
+	let sources = [Mixin];
+
+	if (options.recursive !== false) {
+		let classSupers = getSuperclasses(Class).reverse();
+		let mixinSupers = getSuperclasses(Mixin).reverse();
+
+		// Find the first shared superclass
+		let index = mixinSupers.findIndex(sharedSuper => classSupers.includes(sharedSuper));
+		if (index !== -1) {
+			sources.push(...mixinSupers.slice(index + 1));
+		}
 	}
-	else {
-		copyProperties(Class, Mixin, options);
-		copyProperties(Class.prototype, Mixin.prototype, options);
+
+	let { conflictPolicy, conflictPolicyStatic } = options;
+	conflictPolicy = new ConflictPolicy(conflictPolicy);
+	conflictPolicyStatic = new ConflictPolicy(conflictPolicyStatic);
+
+	let skippedProperties = ["constructor"].concat(options.skippedProperties || []);
+	let skippedPropertiesStatic = ["prototype"].concat(options.skippedPropertiesStatic || []);
+
+	for (let source of sources) {
+		extendObject(Class.prototype, source.prototype, {conflictPolicy, skippedProperties});
+		extendObject(Class, source, {conflictPolicy: conflictPolicyStatic, skippedProperties: skippedPropertiesStatic});
 	}
 }
-
-
-
