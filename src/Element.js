@@ -7,6 +7,7 @@ import defineFormAssociated from "./form-associated.js";
 import defineMixin from "./mixins/define-mixin.js";
 
 import { shadowStyles, globalStyles } from "./styles/index.js";
+import { defineLazyProperty } from "./util/lazy.js";
 import Hooks from "./mixins/hooks.js";
 
 const instanceInitialized = Symbol("instanceInitialized");
@@ -45,13 +46,23 @@ const Self = class NudeElement extends HTMLElement {
 		this.constructor.hooks.run("disconnected", this);
 	}
 
+	static hooks = new Hooks();
+	static {
+		defineLazyProperty(this, "hooks", {
+			value: this.hooks,
+			get (hooks) {
+				return new Hooks(hooks);
+			},
+			configurable: true,
+			writable: true,
+		});
+	}
+
 	static init () {
 		// Stuff that runs once per class
 		if (this[classInitialized]) {
 			return false;
 		}
-
-		this.hooks = new Hooks(this.hooks);
 
 		if (this.props) {
 			defineProps(this);

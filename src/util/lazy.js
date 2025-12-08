@@ -4,6 +4,8 @@
  * @param {string} name
  * @param {object | function} options - If function, then it provides the `get` option.
  * @param {Function} options.get - The getter function
+ * @param {any} [options.value] - If present, the accessor is never overwritten on the object provided.
+ * This can be useful for static properties, so that each class instance has its own value.
  * @param {boolean} [options.writable=true] - Whether the property is writable
  * @param {boolean} [options.configurable=true] - Whether the property is configurable
  * @param {boolean} [options.enumerable=false] - Whether the property is enumerable
@@ -14,21 +16,32 @@ export function defineLazyProperty (object, name, options) {
 		options = { get: options };
 	}
 
-	let { get, writable = true, configurable = true, enumerable = false } = options;
+	let { get, value, writable = true, configurable = true, enumerable = false } = options;
+	let hasValue = "value" in options;
+	let existingBaseValue = Object.getOwnPropertyDescriptor(object, name)?.value;
 
-	let setter = function (value) {
-		Object.defineProperty(this, name, { value, writable, configurable, enumerable });
-	};
 	Object.defineProperty(object, name, {
 		get () {
-			let value = get.call(this);
-			setter.call(this, value);
-			return value;
+			let isSameObject = this === object;
+			if (hasValue && isSameObject) {
+				return value;
+			}
+
+			let existingValue = isSameObject ? existingBaseValue : Object.getOwnPropertyDescriptor(this, name)?.value;
+			let v = get.call(this, existingValue);
+			Object.defineProperty(this, name, { value: v, writable, configurable, enumerable });
+			return v;
 		},
-		set (value) {
+		set (v) {
+			if (hasValue && this === object) {
+				value = v;
+				return;
+			}
+
 			// Blind set
-			setter.call(this, value);
+			Object.defineProperty(this, name, { value: v, writable, configurable, enumerable });
 		},
+		enumerable,
 		configurable: true,
 	});
 }
