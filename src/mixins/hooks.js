@@ -52,6 +52,14 @@ export default class Hooks {
 	run (name, env) {
 		name = Hooks.getCanonicalName(name);
 		this.hooks[name]?.run(env);
+
+		if (name.startsWith("first_")) {
+			this.hooks[name]?.runOnce(env);
+		}
+		else {
+			this.run("first_" + name, env);
+			this.hooks[name]?.run(env);
+		}
 	}
 
 	// Allow either camelCase, underscore_case or kebab-case for hook names
@@ -61,12 +69,35 @@ export default class Hooks {
 }
 
 export class Hook extends Set {
+	/**
+	 * Track which contexts the hook has been run on so far
+	 * @type {WeakSet<object>}
+	 */
+	contexts = new WeakSet();
 
 	run (env) {
 		for (let callback of this) {
 			let context = env?.context ?? env;
 			callback.call(context, env);
+			this.contexts.add(context);
 		}
 	}
 
+	/**
+	 * Like run(), but only executes the callback once per context
+	 * @param {*} env
+	 */
+	runOnce (env) {
+		for (let callback of this) {
+			let context = env?.context ?? env;
+
+			if (this.contexts.has(context)) {
+				continue;
+			}
+
+			callback.call(context, env);
+			// TODO what about callbacks added after this?
+			this.contexts.add(context);
+		}
+	}
 }
