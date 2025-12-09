@@ -11,6 +11,7 @@ export default class Hooks {
 	/**
 	 * Schedule one or more callbacks to be executed on one or more hooks
 	 *
+	 * @overload
 	 * @param {string} name
 	 * @param {function} callback
 	 * @void
