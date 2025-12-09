@@ -52,7 +52,6 @@ export default class Hooks {
 	 */
 	run (name, env) {
 		name = Hooks.getCanonicalName(name);
-		this.hooks[name]?.run(env);
 
 		if (name.startsWith("first_")) {
 			this.hooks[name]?.runOnce(env);
