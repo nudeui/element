@@ -1,7 +1,7 @@
 /**
  * Mixin for adding shadow DOM styles
  */
-import { adoptCSS, fetchCSS, getSupers } from "./util.js";
+import { getSupers, adoptCSS, fetchCSS } from "./util.js";
 
 export default {
 	setup () {

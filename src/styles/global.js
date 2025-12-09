@@ -1,9 +1,7 @@
 /**
  * Mixin for adding light DOM styles
  */
-import { getSupers } from "../util/get-supers.js";
-import { adoptCSS } from "../util/adopt-css.js";
-import { fetchCSS } from "../util/fetch-css.js";
+import { getSupers, adoptCSS, fetchCSS } from "./util.js";
 
 export default {
 	prepare () {
