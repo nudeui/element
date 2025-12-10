@@ -61,7 +61,7 @@ export default function  (Class, options = {}) {
 			}
 
 			// slotchange won’t fire in this case, so we need to do this the old-fashioned way
-			mutationObserver ??= new MutationObserver(mutations => {
+			mutationObserver ??= new MutationObserver(records => {
 				let slots = {};
 
 				let nodesToAssign = records.flatMap(r =>
