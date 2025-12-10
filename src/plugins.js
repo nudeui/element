@@ -32,7 +32,7 @@ export function addPlugin (Class, plugin) {
 	}
 
 	if (plugin.members) {
-		extend(Class, plugin.members);
+		extend(Class.prototype, plugin.members);
 	}
 
 	if (plugin.membersStatic) {
