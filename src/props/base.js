@@ -21,7 +21,7 @@ function first_constructor_static () {
 	}
 
 	if (this.props) {
-		this.defineProps(this);
+		this.defineProps();
 	}
 }
 
