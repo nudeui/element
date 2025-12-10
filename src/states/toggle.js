@@ -1,5 +1,9 @@
 import { internals } from "../util/symbols.js";
 
+import internalsPlugin from "../internals/base.js";
+
+export const dependencies = [internalsPlugin];
+
 export const members = {
 	toggleState (state, force) {
 		if (!this[internals]) {
@@ -16,4 +20,4 @@ export const members = {
 	}
 };
 
-export default {members};
+export default {dependencies, members};

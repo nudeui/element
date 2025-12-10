@@ -4,6 +4,10 @@ import { newKnownSymbols } from "../util/symbols.js";
 import * as like from "./like.js";
 import * as delegate from "./delegate.js";
 
+import internalsPlugin from "../internals/base.js";
+
+export const dependencies = [internalsPlugin];
+
 const { formBehavior } = newKnownSymbols;
 
 export function setup () {
@@ -30,4 +34,4 @@ export const membersStatic = {
 	},
 };
 
-export default {setup, membersStatic};
+export default {dependencies, setup, membersStatic};

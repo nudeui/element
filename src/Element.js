@@ -10,7 +10,7 @@ import globalStyles from "./styles/global.js";
 
 import { defineLazyProperty } from "./util/lazy.js";
 import Hooks from "./mixins/hooks.js";
-import { internals, initialized, newKnownSymbols } from "./util/symbols.js";
+import { initialized, newKnownSymbols } from "./util/symbols.js";
 
 const { plugins } = newKnownSymbols;
 
@@ -45,35 +45,6 @@ const Self = class NudeElement extends HTMLElement {
 
 	disconnectedCallback () {
 		this.constructor.hooks.run("disconnected", this);
-	}
-
-	attachInternals () {
-		if (this[internals] !== undefined) {
-			return this[internals];
-		}
-
-		if (HTMLElement.prototype.attachInternals === undefined) {
-			// Not supported
-			return this[internals] = null;
-		}
-
-		try {
-			return this[internals] = super.attachInternals();
-		}
-		catch (error) {
-			return this[internals] = null;
-		}
-	}
-
-	static {
-		// Transparently call attachInternals() when the internals property is accessed
-		defineLazyProperty(this.prototype, internals, {
-			get () {
-				return this.attachInternals();
-			},
-			configurable: true,
-			writable: true,
-		});
 	}
 
 	static hooks = new Hooks();
