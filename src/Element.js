@@ -147,6 +147,8 @@ const Self = class NudeElement extends HTMLElement {
 			this.addPlugin(plugin);
 		}
 
+		this.hooks.run("setup", this);
+
 		this[initialized] = true;
 	}
 
