@@ -4,6 +4,7 @@
  */
 
 import symbols from "../util/symbols.js";
+
 const { propchange } = symbols.new;
 const { events } = symbols.known;
 

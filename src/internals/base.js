@@ -6,8 +6,7 @@ import symbols from "../util/symbols.js";
 import { defineLazyProperty } from "../util/lazy.js";
 
 const { internals } = symbols.known;
-
-const attachInternals = HTMLElement.prototype.attachInternals;
+const { attachInternals } = HTMLElement.prototype;
 
 export const members = {
 	attachInternals () {
