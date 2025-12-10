@@ -1,9 +1,10 @@
 /**
  * Base class for all elements
  */
+
 import * as defineProps from "./props/defineProps.js";
 import * as defineEvents from "./events/defineEvents.js";
-import defineFormAssociated from "./form-associated.js";
+import defineFormBehavior from "./form-behavior/index.js";
 
 import { shadowStyles, globalStyles } from "./styles/index.js";
 import { defineLazyProperty } from "./util/lazy.js";
@@ -77,8 +78,8 @@ const Self = class NudeElement extends HTMLElement {
 			defineEvents(this);
 		}
 
-		if (this.formAssociated) {
-			defineFormAssociated(this);
+		if (this.formAssociated || this.formBehavior) {
+			defineFormBehavior(this);
 		}
 
 		this.hooks.run("setup", this);
