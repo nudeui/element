@@ -6,9 +6,9 @@ import * as retarget from "./retarget.js";
 import { newKnownSymbols } from "../util/symbols.js";
 const { events } = newKnownSymbols;
 
-export function setup () {
-	this.addPlugin(defineProps);
+export const dependencies = [defineProps];
 
+export function setup () {
 	// TODO decouple these from core event functionality
 	this.addPlugin(propchange);
 	this.addPlugin(onprops);

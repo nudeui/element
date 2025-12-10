@@ -140,6 +140,12 @@ const Self = class NudeElement extends HTMLElement {
 			this[plugins] = new Set();
 		}
 
+		if (plugin.dependencies) {
+			for (let dependency of plugin.dependencies) {
+				this.addPlugin(dependency);
+			}
+		}
+
 		if (plugin.members) {
 			extend(this, plugin.members);
 		}
