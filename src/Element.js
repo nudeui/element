@@ -2,12 +2,6 @@
  * Base class for all elements
  */
 
-import defineProps from "./props/base.js";
-import defineEvents from "./events/base.js";
-import defineFormBehavior from "./form-behavior/index.js";
-import shadowStyles from "./styles/shadow.js";
-import globalStyles from "./styles/global.js";
-
 import { defineLazyProperty } from "./util/lazy.js";
 import Hooks from "./mixins/hooks.js";
 import { hasPlugin, addPlugin } from "./plugins.js";
@@ -15,7 +9,7 @@ import symbols from "./util/symbols.js";
 
 const { initialized } = symbols.new;
 
-const Self = class NudeElement extends HTMLElement {
+export default class NudeElement extends HTMLElement {
 	constructor () {
 		super();
 
@@ -72,13 +66,7 @@ const Self = class NudeElement extends HTMLElement {
 	}
 
 	/** Plugins to install */
-	static plugins = [
-		defineProps,
-		defineEvents,
-		defineFormBehavior,
-		shadowStyles,
-		globalStyles,
-	];
+	static plugins = [];
 
 	static hasPlugin (plugin) {
 		return hasPlugin(this, plugin);
@@ -108,11 +96,4 @@ const Self = class NudeElement extends HTMLElement {
 
 		this[initialized] = true;
 	}
-
-	static {
-		this.setup();
-	}
-};
-
-export default Self;
-
+}

@@ -1,11 +1,13 @@
-export { default as default } from "./Element.js";
+/**
+ * Main entry point.
+ * Use @link{index-fn} for tree-shaking and no side effects
+ * @modifies {Element}
+ */
 
-export { default as defineProps } from "./props/base.js";
-export { default as defineEvents } from "./events/base.js";
-export { default as defineSlots } from "./slots/base.js";
-export { default as defineFormBehavior } from "./form-behavior/base.js";
+import { Element, commonPlugins } from "./index-fn.js";
 
-export { default as defineMixin } from "./mixins/define-mixin.js";
-export { default as Hooks } from "./mixins/hooks.js";
+Element.plugins.push(...commonPlugins);
+Element.setup();
 
-export { default as symbols } from "./util/symbols.js";
+export * from "./index-fn.js";
+export default Element;

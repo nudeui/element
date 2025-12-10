@@ -16,8 +16,10 @@
   },
   "exports": {
     ".": "./src/index.js",
+    "./fn": "./src/index-fn.js",
     "./hooks": "./src/mixins/hooks.js"
   },
+	"sideEffects": ["./src/index.js"],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nudeui/element.git"
