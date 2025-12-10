@@ -18,6 +18,10 @@ export const KNOWN_SYMBOLS = { internals, initialized };
 export const newKnownSymbols = new Proxy({}, {
 	get (target, prop) {
 		if (typeof prop === "string") {
+			if (KNOWN_SYMBOLS[prop]) {
+				return KNOWN_SYMBOLS[prop];
+			}
+
 			let ret = Symbol(prop);
 			KNOWN_SYMBOLS[prop] = ret;
 			return ret;
