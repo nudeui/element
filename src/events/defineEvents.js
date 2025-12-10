@@ -3,8 +3,8 @@ import * as propchange from "./propchange.js";
 import * as onprops from "./onprops.js";
 import * as retarget from "./retarget.js";
 
-import getSymbols from "../util/symbols.js";
-const { events } = getSymbols;
+import { newKnownSymbols } from "../util/symbols.js";
+const { events } = newKnownSymbols;
 
 export function setup () {
 	this.addPlugin(defineProps);
