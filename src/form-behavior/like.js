@@ -27,3 +27,5 @@ export const hooks = {
 		source.addEventListener(changeEvent, () => this[internals].setFormValue(this[valueProp]));
 	},
 };
+
+export default {hooks};

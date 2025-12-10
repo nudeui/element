@@ -1,6 +1,6 @@
 
 
-import { internals, newKnownSymbols } from "../util/symbols.js";
+import { newKnownSymbols } from "../util/symbols.js";
 import * as like from "./like.js";
 import * as delegate from "./delegate.js";
 
@@ -29,3 +29,5 @@ export const membersStatic = {
 		Object.assign(this[formBehavior], env.formBehavior);
 	},
 };
+
+export default {setup, membersStatic};

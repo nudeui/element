@@ -83,3 +83,5 @@ export const membersStatic = {
 	// 	},
 	// }),
 };
+
+export default {hooks, members, membersStatic};

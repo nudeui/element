@@ -1,7 +1,7 @@
-import * as defineProps from "../props/defineProps.js";
-import * as propchange from "./propchange.js";
-import * as onprops from "./onprops.js";
-import * as retarget from "./retarget.js";
+import defineProps from "../props/defineProps.js";
+import propchange from "./propchange.js";
+import onprops from "./onprops.js";
+import retarget from "./retarget.js";
 
 import { newKnownSymbols } from "../util/symbols.js";
 const { events } = newKnownSymbols;
@@ -23,3 +23,5 @@ export const membersStatic = {
 		this.hooks.run("define-events", {context: this, events: def});
 	},
 };
+
+export default {dependencies, setup, membersStatic};

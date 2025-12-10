@@ -2,11 +2,11 @@
  * Base class for all elements
  */
 
-import * as defineProps from "./props/defineProps.js";
-import * as defineEvents from "./events/defineEvents.js";
-import * as defineFormBehavior from "./form-behavior/index.js";
-import * as shadowStyles from "./styles/shadow.js";
-import * as globalStyles from "./styles/global.js";
+import defineProps from "./props/defineProps.js";
+import defineEvents from "./events/defineEvents.js";
+import defineFormBehavior from "./form-behavior/index.js";
+import shadowStyles from "./styles/shadow.js";
+import globalStyles from "./styles/global.js";
 
 import { defineLazyProperty } from "./util/lazy.js";
 import Hooks from "./mixins/hooks.js";

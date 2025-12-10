@@ -1,6 +1,5 @@
 import { internals } from "../util/symbols.js";
 
-
 export const members = {
 	toggleState (state, force) {
 		if (!this[internals]) {
@@ -16,3 +15,5 @@ export const members = {
 		return force;
 	}
 };
+
+export default {members};
