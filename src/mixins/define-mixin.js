@@ -6,7 +6,7 @@ export default function defineMixin (Class, config) {
 		return config.map(f => defineMixin(Class, f));
 	}
 
-	config = typeof config === "function" ? { init: config } : config;
+	config = typeof config === "function" ? { firstConnected: config } : config;
 	let { properties, prepare, ...hooks } = config;
 
 	if (properties) {

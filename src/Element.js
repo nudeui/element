@@ -4,11 +4,13 @@
 import defineProps from "./props/defineProps.js";
 import defineEvents from "./events/defineEvents.js";
 import defineFormAssociated from "./form-associated.js";
-import defineMixin from "./mixins/define-mixin.js";
 
 import { shadowStyles, globalStyles } from "./styles/index.js";
 import { defineLazyProperty } from "./util/lazy.js";
 import Hooks from "./mixins/hooks.js";
+import { internals, initialized, newKnownSymbols } from "./symbols.js";
+
+const { plugins } = newKnownSymbols;
 
 const instanceInitialized = Symbol("instanceInitialized");
 const classInitialized = Symbol("classInitialized");
@@ -17,11 +19,8 @@ const Self = class NudeElement extends HTMLElement {
 	constructor () {
 		super();
 
-		if (!this.constructor[classInitialized]) {
-			this.constructor.init();
-		}
-
-		this.constructor.hooks.run("start", this);
+		this.constructor.hooks.run("constructor-static", this.constructor);
+		this.constructor.hooks.run("constructor", this);
 
 		if (this.propChangedCallback && this.constructor.props) {
 			this.addEventListener("propchange", this.propChangedCallback);
@@ -32,18 +31,20 @@ const Self = class NudeElement extends HTMLElement {
 	}
 
 	connectedCallback () {
-		if (!this[instanceInitialized]) {
-			// Stuff that runs once per element
-			this.constructor.hooks.run("init", this);
-
-			this[instanceInitialized] = true;
-		}
-
+		this.constructor.hooks.run("first_connected", this);
 		this.constructor.hooks.run("connected", this);
 	}
 
 	disconnectedCallback () {
 		this.constructor.hooks.run("disconnected", this);
+	}
+
+	attachInternals () {
+		if (this[internals]) {
+			return this[internals];
+		}
+
+		return this[internals] = super.attachInternals();
 	}
 
 	static hooks = new Hooks();
@@ -64,10 +65,6 @@ const Self = class NudeElement extends HTMLElement {
 			return false;
 		}
 
-		if (this.props) {
-			defineProps(this);
-		}
-
 		if (this.events) {
 			defineEvents(this);
 		}
@@ -76,22 +73,65 @@ const Self = class NudeElement extends HTMLElement {
 			defineFormAssociated(this);
 		}
 
-		if (this.styles) {
-			defineMixin(this, shadowStyles);
-		}
-
-		if (this.globalStyle) {
-			this.globalStyles ??= this.globalStyle;
-		}
-
-		if (this.globalStyles) {
-			defineMixin(this, globalStyles);
-		}
-
 		this.hooks.run("setup", this);
 
 		return (this[classInitialized] = true);
 	}
+
+	/**
+	 * Like super, but dynamic
+	 */
+	get super () {
+		return this.constructor.super?.prototype;
+	}
+
+	/**
+	 * Like super, but dynamic
+	 */
+	static get super () {
+		let Super = Object.getPrototypeOf(this);
+		return Super === Function.prototype ? null : Super;
+	}
+
+	static hasPlugin (plugin) {
+		if (!Object.hasOwn(this, plugins)) {
+			return false;
+		}
+
+		return this[plugins].has(plugin) || this.super?.hasPlugin?.(plugin);
+	}
+
+	static addPlugin (plugin) {
+		if (this.hasPlugin(plugin)) {
+			return;
+		}
+
+		if (!Object.hasOwn(this, plugins)) {
+			this[plugins] = new Set();
+		}
+
+		if (plugin.members) {
+			extend(this, plugin.members);
+		}
+
+		if (plugin.membersStatic) {
+			extend(this, plugin.membersStatic);
+		}
+
+		plugin.hooks.add(this.hooks);
+
+		plugin.setup?.call(this);
+	}
+
+	static {
+		this.addPlugin(defineProps);
+		this.addPlugin(shadowStyles);
+		this.addPlugin(globalStyles);
+	}
 };
 
 export default Self;
+
+function extend (base, plugin) {
+	Object.defineProperties(base, Object.getOwnPropertyDescriptors(plugin));
+}

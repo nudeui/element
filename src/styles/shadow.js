@@ -2,9 +2,12 @@
  * Mixin for adding shadow DOM styles
  */
 import { getSupers, adoptCSS, fetchCSS } from "./util.js";
+import getSymbols from "../util/symbols.js";
 
-export default {
-	setup () {
+const { fetchedStyles } = getSymbols;
+
+export const hooks = {
+	first_constructor_static () {
 		if (!this.styles) {
 			return;
 		}
@@ -12,9 +15,9 @@ export default {
 		let supers = getSupers(this, HTMLElement);
 
 		for (let Class of supers) {
-			if (Object.hasOwn(Class, "styles") && !Object.hasOwn(Class, "fetchedStyles")) {
+			if (Object.hasOwn(Class, "styles") && !Object.hasOwn(Class, fetchedStyles)) {
 				// Initiate fetching when the first element is constructed
-				let styles = (Class.fetchedStyles = Array.isArray(Class.styles)
+				let styles = (Class[fetchedStyles] = Array.isArray(Class.styles)
 					? Class.styles.slice()
 					: [Class.styles]);
 
@@ -24,7 +27,8 @@ export default {
 			}
 		}
 	},
-	async init () {
+
+	async first_connected () {
 		if (!this.shadowRoot) {
 			return;
 		}
@@ -33,8 +37,8 @@ export default {
 		let supers = getSupers(Self, HTMLElement);
 
 		for (let Class of supers) {
-			if (Class.fetchedStyles) {
-				for (let css of Class.fetchedStyles) {
+			if (Class[fetchedStyles]) {
+				for (let css of Class[fetchedStyles]) {
 					if (css instanceof Promise) {
 						css = await css;
 					}

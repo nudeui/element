@@ -2,9 +2,12 @@
  * Mixin for adding light DOM styles
  */
 import { getSupers, adoptCSS, fetchCSS } from "./util.js";
+import getSymbols from "../util/symbols.js";
 
-export default {
-	prepare () {
+const { fetchedGlobalStyles, roots } = getSymbols;
+
+export const hooks = {
+	first_constructor_static () {
 		if (!this.globalStyles) {
 			return;
 		}
@@ -15,13 +18,13 @@ export default {
 		for (let Class of supers) {
 			if (
 				Object.hasOwn(Class, "globalStyles") &&
-				!Object.hasOwn(Class, "fetchedGlobalStyles")
+				!Object.hasOwn(Class, fetchedGlobalStyles)
 			) {
 				// Initiate fetching when the first element is constructed
-				let styles = (Class.fetchedGlobalStyles = Array.isArray(Class.globalStyles)
+				let styles = (Class[fetchedGlobalStyles] = Array.isArray(Class.globalStyles)
 					? Class.globalStyles.slice()
 					: [Class.globalStyles]);
-				Class.roots = new WeakSet();
+				Class[roots] = new WeakSet();
 
 				for (let i = 0; i < styles.length; i++) {
 					styles[i] = fetchCSS(styles[i], Class.url);
@@ -33,11 +36,11 @@ export default {
 	async connected () {
 		let Self = this.constructor;
 
-		if (!Self.fetchedGlobalStyles?.length) {
+		if (!Self[fetchedGlobalStyles]?.length) {
 			return;
 		}
 
-		for (let css of Self.fetchedGlobalStyles) {
+		for (let css of Self[fetchedGlobalStyles]) {
 			if (css instanceof Promise) {
 				// Why not just await css anyway?
 				// Because this way if this is already fetched, we don’t need to wait for a microtask
@@ -54,9 +57,9 @@ export default {
 				root = root.host ?? root;
 				root = root.getRootNode();
 
-				if (!Self.roots.has(root)) {
+				if (!Self[roots].has(root)) {
 					adoptCSS(css, root);
-					Self.roots.add(root);
+					Self[roots].add(root);
 				}
 			} while (root && root.nodeType !== Node.DOCUMENT_NODE);
 		}

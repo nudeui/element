@@ -25,24 +25,31 @@ export default class Hooks {
 			return;
 		}
 
-		if (typeof name === "object") {
-			// Adding multiple hooks at once
-			let hooks = name;
+		if (Array.isArray(name)) {
+			// Same callbacks for multiple hooks
+			// Or multiple objects
+			name.map(name => this.add(name, callback));
+		}
+		else if (!callback) {
+			if (typeof name === "object") {
+				// Adding multiple hooks at once
+				let hooks = name;
 
-			for (let name in hooks) {
-				this.add(name, hooks[name]);
+				for (let name in hooks) {
+					this.add(name, hooks[name]);
+				}
 			}
-
-			return;
 		}
-
-		if (!callback) {
-			return;
+		else if (Array.isArray(callback)) {
+			// Multiple callbacks for a single hook
+			callback.map(callback => this.add(name, callback));
 		}
-
-		name = Hooks.getCanonicalName(name);
-		this.hooks[name] ??= new Hook();
-		this.hooks[name].add(callback);
+		else {
+			// Single hook, single callback
+			name = Hooks.getCanonicalName(name);
+			this.hooks[name] ??= new Hook();
+			this.hooks[name].add(callback);
+		}
 	}
 
 	/**
