@@ -30,7 +30,9 @@ export default class Hooks {
 		if (Array.isArray(name)) {
 			// Same callbacks for multiple hooks
 			// Or multiple objects
-			name.map(name => this.add(name, callback));
+			for (let hook of name) {
+				this.add(hook, callback);
+			}
 		}
 		else if (!callback) {
 			if (typeof name === "object") {
@@ -44,7 +46,9 @@ export default class Hooks {
 		}
 		else if (Array.isArray(callback)) {
 			// Multiple callbacks for a single hook
-			callback.map(callback => this.add(name, callback));
+			for (let cb of callback) {
+				this.add(name, cb);
+			}
 		}
 		else {
 			// Single hook, single callback

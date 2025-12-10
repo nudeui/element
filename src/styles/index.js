@@ -1,2 +1,2 @@
-export { default as shadowStyles } from "./shadow.js";
-export { default as globalStyles } from "./global.js";
+export * as shadowStyles from "./shadow.js";
+export * as globalStyles from "./global.js";

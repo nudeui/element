@@ -4,8 +4,8 @@
 
 import { resolveValue } from "../util.js";
 import { pick } from "../util/pick.js";
-import getSymbols from "../util/symbols.js";
-const { events } = getSymbols;
+import newSymbols from "../util/symbols.js";
+const { events } = newSymbols;
 
 export const hooks = {
 	first_connected () {
