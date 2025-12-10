@@ -23,10 +23,6 @@ const Self = class NudeElement extends HTMLElement {
 		this.constructor.hooks.run("constructor-static", this.constructor);
 		this.constructor.hooks.run("constructor", this);
 
-		if (this.propChangedCallback && this.constructor.props) {
-			this.addEventListener("propchange", this.propChangedCallback);
-		}
-
 		// We use a microtask so that this executes after the subclass constructor has run as well
 		Promise.resolve().then(() => {
 			if (!this.constructor.hooks.hasRun("constructed")) {
