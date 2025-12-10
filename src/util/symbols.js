@@ -12,8 +12,8 @@ export { newSymbols };
 export default newSymbols;
 
 // Known symbols
-export const { internals, initialized } = newSymbols;
-export const KNOWN_SYMBOLS = { internals, initialized };
+export const { initialized } = newSymbols;
+export const KNOWN_SYMBOLS = { initialized };
 
 export const newKnownSymbols = new Proxy({}, {
 	get (target, prop) {
