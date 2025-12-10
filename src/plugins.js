@@ -3,7 +3,9 @@ import symbols from "./util/symbols.js";
 const { plugins } = symbols.known;
 
 export function hasPlugin (Class, plugin) {
-	if (Class.super?.hasPlugin?.(plugin)) {
+	let Super = Object.getPrototypeOf(Class);
+
+	if (Super && hasPlugin(Super, plugin)) {
 		return true;
 	}
 
@@ -15,7 +17,7 @@ export function hasPlugin (Class, plugin) {
 }
 
 export function addPlugin (Class, plugin) {
-	if (Class.hasPlugin(plugin)) {
+	if (hasPlugin(Class, plugin)) {
 		return;
 	}
 
@@ -25,7 +27,7 @@ export function addPlugin (Class, plugin) {
 
 	if (plugin.dependencies) {
 		for (let dependency of plugin.dependencies) {
-			Class.addPlugin(dependency);
+			addPlugin(Class, dependency);
 		}
 	}
 
@@ -48,5 +50,6 @@ export function addPlugin (Class, plugin) {
  * @param {Object} plugin
  */
 function extend (base, plugin) {
-	Object.defineProperties(base, Object.getOwnPropertyDescriptors(plugin));
+	let descriptors = Object.getOwnPropertyDescriptors(plugin);
+	Object.defineProperties(base, descriptors);
 }
