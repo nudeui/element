@@ -10,9 +10,10 @@ import globalStyles from "./styles/global.js";
 
 import { defineLazyProperty } from "./util/lazy.js";
 import Hooks from "./mixins/hooks.js";
-import symbols, { initialized } from "./util/symbols.js";
+import { hasPlugin, addPlugin } from "./plugins.js";
+import symbols from "./util/symbols.js";
 
-const { plugins } = symbols.known;
+const { initialized } = symbols.new;
 
 const Self = class NudeElement extends HTMLElement {
 	constructor () {
@@ -83,51 +84,12 @@ const Self = class NudeElement extends HTMLElement {
 		globalStyles,
 	];
 
-	get allPlugins () {
-		return [
-			...(this.super?.allPlugins ?? []),
-			...(Object.hasOwn(this, "plugins") ? this.plugins : []),
-		];
-	}
-
 	static hasPlugin (plugin) {
-		if (this.super?.hasPlugin?.(plugin)) {
-			return true;
-		}
-
-		if (!Object.hasOwn(this, plugins)) {
-			return false;
-		}
-
-		return this[plugins].has(plugin);
+		return hasPlugin(this, plugin);
 	}
 
 	static addPlugin (plugin) {
-		if (this.hasPlugin(plugin)) {
-			return;
-		}
-
-		if (!Object.hasOwn(this, plugins)) {
-			this[plugins] = new Set();
-		}
-
-		if (plugin.dependencies) {
-			for (let dependency of plugin.dependencies) {
-				this.addPlugin(dependency);
-			}
-		}
-
-		if (plugin.members) {
-			extend(this, plugin.members);
-		}
-
-		if (plugin.membersStatic) {
-			extend(this, plugin.membersStatic);
-		}
-
-		this.hooks.add(plugin.hooks);
-
-		plugin.setup?.call(this);
+		addPlugin(this, plugin);
 	}
 
 	/**
@@ -158,6 +120,3 @@ const Self = class NudeElement extends HTMLElement {
 
 export default Self;
 
-function extend (base, plugin) {
-	Object.defineProperties(base, Object.getOwnPropertyDescriptors(plugin));
-}
