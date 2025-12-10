@@ -2,9 +2,9 @@
  * Expose form-related ElementInternals properties on the host element
  */
 import { delegate } from "../util/delegate.js";
-import { internals, newKnownSymbols } from "../util/symbols.js";
+import symbols from "../util/symbols.js";
 
-const { formBehavior } = newKnownSymbols;
+const { formBehavior, internals } = symbols.known;
 
 let objects = [ElementInternals, HTMLInputElement, HTMLSelectElement, HTMLTextAreaElement, HTMLButtonElement];
 let props = objects.map(o => new Set(Object.getOwnPropertyNames(o.prototype)));

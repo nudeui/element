@@ -1,8 +1,8 @@
-import { internals, newKnownSymbols } from "../util/symbols.js";
+import symbols from "../util/symbols.js";
 import { resolveValue } from "../util.js";
 import { getRole } from "./role.js";
 
-const { formBehavior } = newKnownSymbols;
+const { formBehavior, internals } = symbols.known;
 
 export const hooks = {
 	first_connected () {

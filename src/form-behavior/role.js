@@ -1,6 +1,7 @@
-import newSymbols, { internals } from "../util/symbols.js";
+import symbols from "../util/symbols.js";
 
-const defaultRole = newSymbols;
+const { defaultRole } = symbols.new;
+const { internals } = symbols.known;
 
 export const defaultRoles = {
 	textarea: "textbox",

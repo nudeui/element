@@ -2,9 +2,9 @@
  * Mixin for adding light DOM styles
  */
 import { getSupers, adoptCSS, fetchCSS } from "./util.js";
-import newSymbols from "../util/symbols.js";
+import symbols from "../util/symbols.js";
 
-const { fetchedGlobalStyles, roots } = newSymbols;
+const { fetchedGlobalStyles, roots } = symbols.new;
 
 export const hooks = {
 	first_constructor_static () {

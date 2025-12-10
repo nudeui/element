@@ -1,6 +1,6 @@
-import { newKnownSymbols } from "./symbols.js";
+import symbols from "./symbols.js";
 
-let { composed, constituents } = newKnownSymbols;
+let { composed, constituents } = symbols.known;
 
 export default function (value) {
 	if (!value || typeof value !== "object" && typeof value !== "function") {

@@ -10,9 +10,9 @@ import globalStyles from "./styles/global.js";
 
 import { defineLazyProperty } from "./util/lazy.js";
 import Hooks from "./mixins/hooks.js";
-import { initialized, newKnownSymbols } from "./util/symbols.js";
+import symbols, { initialized } from "./util/symbols.js";
 
-const { plugins } = newKnownSymbols;
+const { plugins } = symbols.known;
 
 const Self = class NudeElement extends HTMLElement {
 	constructor () {

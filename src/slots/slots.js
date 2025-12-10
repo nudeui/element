@@ -1,7 +1,7 @@
 import SlotController from "./slot-controller.js";
-import newSymbols from "../util/symbols.js";
+import symbols from "../util/symbols.js";
 
-const { slots } = newSymbols;
+const { slots } = symbols.new;
 
 export const hooks = {
 	constructor () {

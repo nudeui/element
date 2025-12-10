@@ -1,4 +1,4 @@
-const newSymbols = new Proxy({}, {
+export const newSymbols = new Proxy({}, {
 	get (target, prop) {
 		if (typeof prop === "string") {
 			return Symbol(prop);
@@ -7,9 +7,6 @@ const newSymbols = new Proxy({}, {
 		return target[prop];
 	},
 });
-
-export { newSymbols };
-export default newSymbols;
 
 // Known symbols
 export const { initialized } = newSymbols;
@@ -30,3 +27,8 @@ export const newKnownSymbols = new Proxy({}, {
 		return target[prop];
 	},
 });
+
+export default {
+	new: newSymbols,
+	known: newKnownSymbols,
+};

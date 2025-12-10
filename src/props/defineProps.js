@@ -1,8 +1,8 @@
 import Props from "./Props.js";
-import { newKnownSymbols } from "../util/symbols.js";
+import symbols from "../util/symbols.js";
 // import { composed } from "../util/composed.js";
 
-let { props } = newKnownSymbols;
+let { props } = symbols.known;
 
 function first_constructor_static () {
 	// TODO how does this work if attributeChangedCallback is inherited?

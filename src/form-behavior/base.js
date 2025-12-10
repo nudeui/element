@@ -1,6 +1,6 @@
 
 
-import { newKnownSymbols } from "../util/symbols.js";
+import symbols from "../util/symbols.js";
 import * as like from "./like.js";
 import * as delegate from "./delegate.js";
 
@@ -8,7 +8,7 @@ import internalsPlugin from "../internals/base.js";
 
 export const dependencies = [internalsPlugin];
 
-const { formBehavior } = newKnownSymbols;
+const { formBehavior } = symbols.known;
 
 export function setup () {
 	// TODO decouple these from core functionality

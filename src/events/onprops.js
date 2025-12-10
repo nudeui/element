@@ -3,8 +3,8 @@
  * Add on* props for UI events, just like native UI events
  */
 
-import newSymbols from "../util/symbols.js";
-const { eventProps } = newSymbols;
+import symbols from "../util/symbols.js";
+const { eventProps } = symbols.new;
 
 export const hooks = {
 	defineEvents (env) {
