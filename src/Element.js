@@ -1,14 +1,14 @@
 /**
  * Base class for all elements
  */
-import defineProps from "./props/defineProps.js";
-import defineEvents from "./events/defineEvents.js";
+import * as defineProps from "./props/defineProps.js";
+import * as defineEvents from "./events/defineEvents.js";
 import defineFormAssociated from "./form-associated.js";
 
 import { shadowStyles, globalStyles } from "./styles/index.js";
 import { defineLazyProperty } from "./util/lazy.js";
 import Hooks from "./mixins/hooks.js";
-import { internals, initialized, newKnownSymbols } from "./symbols.js";
+import { internals, initialized, newKnownSymbols } from "./util/symbols.js";
 
 const { plugins } = newKnownSymbols;
 
@@ -126,7 +126,7 @@ const Self = class NudeElement extends HTMLElement {
 			extend(this, plugin.membersStatic);
 		}
 
-		plugin.hooks.add(this.hooks);
+		this.hooks.add(plugin.hooks);
 
 		plugin.setup?.call(this);
 	}

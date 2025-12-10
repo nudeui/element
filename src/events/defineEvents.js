@@ -1,4 +1,4 @@
-import defineProps from "../props/defineProps.js";
+import * as defineProps from "../props/defineProps.js";
 import * as propchange from "./propchange.js";
 import * as onprops from "./onprops.js";
 import * as retarget from "./retarget.js";
