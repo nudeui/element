@@ -4,9 +4,10 @@
 
 import * as defineProps from "./props/defineProps.js";
 import * as defineEvents from "./events/defineEvents.js";
-import defineFormBehavior from "./form-behavior/index.js";
+import * as defineFormBehavior from "./form-behavior/index.js";
+import * as shadowStyles from "./styles/shadow.js";
+import * as globalStyles from "./styles/global.js";
 
-import { shadowStyles, globalStyles } from "./styles/index.js";
 import { defineLazyProperty } from "./util/lazy.js";
 import Hooks from "./mixins/hooks.js";
 import { internals, initialized, newKnownSymbols } from "./util/symbols.js";
