@@ -1,12 +1,9 @@
-import defineProps from "../props/defineProps.js";
 import propchange from "./propchange.js";
 import onprops from "./onprops.js";
 import retarget from "./retarget.js";
 
 import symbols from "../util/symbols.js";
 const { events } = symbols.known;
-
-export const dependencies = [defineProps];
 
 export function setup () {
 	// TODO decouple these from core event functionality
@@ -24,4 +21,4 @@ export const membersStatic = {
 	},
 };
 
-export default {dependencies, setup, membersStatic};
+export default { setup, membersStatic };

@@ -2,8 +2,8 @@
  * Base class for all elements
  */
 
-import defineProps from "./props/defineProps.js";
-import defineEvents from "./events/defineEvents.js";
+import defineProps from "./props/base.js";
+import defineEvents from "./events/base.js";
 import defineFormBehavior from "./form-behavior/index.js";
 import shadowStyles from "./styles/shadow.js";
 import globalStyles from "./styles/global.js";
