@@ -12,16 +12,6 @@ export function setup () {
 	this.addPlugin(delegate);
 }
 
-export const hooks = {
-	constructed () {
-		if (!this.constructor.formBehavior) {
-			return;
-		}
-
-		this[internals] ??= this.attachInternals();
-	},
-};
-
 export const membersStatic = {
 	defineFormBehavior (def = this[formBehavior] ?? this.formBehavior) {
 		if (!def) {

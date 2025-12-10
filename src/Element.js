@@ -65,6 +65,17 @@ const Self = class NudeElement extends HTMLElement {
 		}
 	}
 
+	static {
+		// Transparently call attachInternals() when the internals property is accessed
+		defineLazyProperty(this.prototype, internals, {
+			get () {
+				return this.attachInternals();
+			},
+			configurable: true,
+			writable: true,
+		});
+	}
+
 	static hooks = new Hooks();
 	static {
 		defineLazyProperty(this, "hooks", {
