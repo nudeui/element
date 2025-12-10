@@ -1,6 +1,6 @@
 export default class Hooks {
-	/** @type {Record<string, Hook>} */
-	hooks = {};
+	/** @type {Map<string, Hook>} */
+	hooks = new Map();
 
 	ran = new Set();
 
@@ -53,8 +53,10 @@ export default class Hooks {
 		else {
 			// Single hook, single callback
 			name = Hooks.getCanonicalName(name);
-			this.hooks[name] ??= new Hook();
-			this.hooks[name].add(callback);
+			if (!this.hooks.has(name)) {
+				this.hooks.set(name, new Hook());
+			}
+			this.hooks.get(name).add(callback);
 		}
 	}
 
@@ -68,11 +70,11 @@ export default class Hooks {
 		this.ran.add(name);
 
 		if (name.startsWith("first_")) {
-			this.hooks[name]?.runOnce(env);
+			this.hooks.get(name)?.runOnce(env);
 		}
 		else {
 			this.run("first_" + name, env);
-			this.hooks[name]?.run(env);
+			this.hooks.get(name)?.run(env);
 		}
 	}
 
