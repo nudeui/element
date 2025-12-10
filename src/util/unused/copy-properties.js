@@ -1,4 +1,4 @@
-import { composeFunctions } from "./unused/compose-functions.js";
+import { composeFunctions } from "./compose-functions.js";
 
 /**
  * @typedef CopyPropertiesOptions
