@@ -13,13 +13,11 @@ import { internals, initialized, newKnownSymbols } from "./util/symbols.js";
 
 const { plugins } = newKnownSymbols;
 
-const instanceInitialized = Symbol("instanceInitialized");
-const classInitialized = Symbol("classInitialized");
-
 const Self = class NudeElement extends HTMLElement {
 	constructor () {
 		super();
 
+		this.constructor.setup(); // Last resort
 		this.constructor.hooks.run("constructor-static", this.constructor);
 		this.constructor.hooks.run("constructor", this);
 
@@ -68,25 +66,6 @@ const Self = class NudeElement extends HTMLElement {
 		});
 	}
 
-	static init () {
-		// Stuff that runs once per class
-		if (this[classInitialized]) {
-			return false;
-		}
-
-		if (this.events) {
-			defineEvents(this);
-		}
-
-		if (this.formAssociated || this.formBehavior) {
-			defineFormBehavior(this);
-		}
-
-		this.hooks.run("setup", this);
-
-		return (this[classInitialized] = true);
-	}
-
 	/**
 	 * Like super, but dynamic
 	 */
@@ -102,12 +81,32 @@ const Self = class NudeElement extends HTMLElement {
 		return Super === Function.prototype ? null : Super;
 	}
 
+	/** Plugins to install */
+	static plugins = [
+		defineProps,
+		defineEvents,
+		defineFormBehavior,
+		shadowStyles,
+		globalStyles,
+	];
+
+	get allPlugins () {
+		return [
+			...(this.super?.allPlugins ?? []),
+			...(Object.hasOwn(this, "plugins") ? this.plugins : []),
+		];
+	}
+
 	static hasPlugin (plugin) {
+		if (this.super?.hasPlugin?.(plugin)) {
+			return true;
+		}
+
 		if (!Object.hasOwn(this, plugins)) {
 			return false;
 		}
 
-		return this[plugins].has(plugin) || this.super?.hasPlugin?.(plugin);
+		return this[plugins].has(plugin);
 	}
 
 	static addPlugin (plugin) {
@@ -132,10 +131,27 @@ const Self = class NudeElement extends HTMLElement {
 		plugin.setup?.call(this);
 	}
 
+	/**
+	 * Code initializing the class that needs to be called as soon as possible after class definition
+	 * And needs to be called separately per subclass
+	 * @returns {void}
+	 */
+	static setup () {
+		if (Object.hasOwn(this, initialized)) {
+			return;
+		}
+
+		this.super?.setup?.();
+
+		for (let plugin of this.plugins) {
+			this.addPlugin(plugin);
+		}
+
+		this[initialized] = true;
+	}
+
 	static {
-		this.addPlugin(defineProps);
-		this.addPlugin(shadowStyles);
-		this.addPlugin(globalStyles);
+		this.setup();
 	}
 };
 
