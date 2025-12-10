@@ -11,21 +11,16 @@ function update (slot) {
 
 const SUPPORTS_HAS_SLOTTED = globalThis.CSS?.supports("selector(:has-slotted)");
 
-export default {
-	init () {
+export const hooks = {
+	first_connected () {
 		// Get all slots
-		if (SUPPORTS_HAS_SLOTTED || !this.shadowRoot) {
+		if (SUPPORTS_HAS_SLOTTED) {
 			return;
 		}
 
-		if (this.shadowRoot.slotAssignment === "manual") {
-			// TODO maybe wrap assign()?
-		}
-		else {
-			this.addEventListener("slotchange", event => {
-				update(event.target);
-			});
-		}
+		this.addEventListener("slotchange", event => {
+			update(event.target);
+		});
 
 		let slotObserver = new SlotObserver(records => {
 			for (let r of records) {
@@ -36,3 +31,5 @@ export default {
 		slotObserver.observe(this);
 	},
 };
+
+export default { hooks };
