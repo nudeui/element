@@ -3,8 +3,9 @@
  * Events that fire when a specific prop changes
  */
 
-import getSymbols from "../util/symbols.js";
+import getSymbols, { newKnownSymbols } from "../util/symbols.js";
 const { propchange } = getSymbols;
+const { events } = newKnownSymbols;
 
 export const hooks = {
 	first_constructor_static () {
