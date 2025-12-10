@@ -2,6 +2,8 @@ export default class Hooks {
 	/** @type {Record<string, Hook>} */
 	hooks = {};
 
+	ran = new Set();
+
 	constructor (hooks) {
 		if (hooks) {
 			this.add(hooks);
@@ -59,6 +61,7 @@ export default class Hooks {
 	 */
 	run (name, env) {
 		name = Hooks.getCanonicalName(name);
+		this.ran.add(name);
 
 		if (name.startsWith("first_")) {
 			this.hooks[name]?.runOnce(env);
@@ -67,6 +70,11 @@ export default class Hooks {
 			this.run("first_" + name, env);
 			this.hooks[name]?.run(env);
 		}
+	}
+
+	hasRun (name) {
+		name = Hooks.getCanonicalName(name);
+		return this.ran.has(name);
 	}
 
 	// Allow either camelCase, underscore_case or kebab-case for hook names

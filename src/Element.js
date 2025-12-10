@@ -27,11 +27,19 @@ const Self = class NudeElement extends HTMLElement {
 		}
 
 		// We use a microtask so that this executes after the subclass constructor has run as well
-		Promise.resolve().then(this.constructor.hooks.run("constructed", this));
+		Promise.resolve().then(() => {
+			if (!this.constructor.hooks.hasRun("constructed")) {
+				this.constructor.hooks.run("constructed", this);
+			}
+		});
 	}
 
 	connectedCallback () {
-		this.constructor.hooks.run("first_connected", this);
+		if (!this.constructor.hooks.hasRun("constructed")) {
+			// If the element starts off connected, this will fire *before* the microtask
+			this.constructor.hooks.run("constructed", this);
+		}
+
 		this.constructor.hooks.run("connected", this);
 	}
 
