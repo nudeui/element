@@ -8,7 +8,7 @@ import defineFormAssociated from "./form-associated.js";
 import { shadowStyles, globalStyles } from "./styles/index.js";
 import { defineLazyProperty } from "./util/lazy.js";
 import Hooks from "./mixins/hooks.js";
-import { internals, initialized, newKnownSymbols } from "./symbols.js";
+import { internals, initialized, newKnownSymbols } from "./util/symbols.js";
 
 const { plugins } = newKnownSymbols;
 
@@ -118,7 +118,7 @@ const Self = class NudeElement extends HTMLElement {
 			extend(this, plugin.membersStatic);
 		}
 
-		plugin.hooks.add(this.hooks);
+		this.hooks.add(plugin.hooks);
 
 		plugin.setup?.call(this);
 	}
