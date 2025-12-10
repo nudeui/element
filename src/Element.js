@@ -48,11 +48,21 @@ const Self = class NudeElement extends HTMLElement {
 	}
 
 	attachInternals () {
-		if (this[internals]) {
+		if (this[internals] !== undefined) {
 			return this[internals];
 		}
 
-		return this[internals] = super.attachInternals();
+		if (HTMLElement.prototype.attachInternals === undefined) {
+			// Not supported
+			return this[internals] = null;
+		}
+
+		try {
+			return this[internals] = super.attachInternals();
+		}
+		catch (error) {
+			return this[internals] = null;
+		}
 	}
 
 	static hooks = new Hooks();
