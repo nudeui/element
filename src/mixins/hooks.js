@@ -92,15 +92,21 @@ export default class Hooks {
 export class Hook extends Set {
 	/**
 	 * Track which contexts the hook has been run on so far
-	 * @type {WeakSet<object>}
+	 * @type {WeakMap<object, WeakSet<Function>>}
 	 */
-	contexts = new WeakSet();
+	contexts = new WeakMap();
 
 	run (env) {
 		for (let callback of this) {
 			let context = env?.context ?? env;
 			callback.call(context, env);
-			this.contexts.add(context);
+
+			let callbacks = this.contexts.get(context);
+			if (!callbacks) {
+				callbacks = new WeakSet();
+				this.contexts.set(context, callbacks);
+			}
+			callbacks.add(callback);
 		}
 	}
 
@@ -112,13 +118,18 @@ export class Hook extends Set {
 		for (let callback of this) {
 			let context = env?.context ?? env;
 
-			if (this.contexts.has(context)) {
+			let callbacks = this.contexts.get(context);
+			if (callbacks && callbacks.has(callback)) {
 				continue;
 			}
 
 			callback.call(context, env);
 			// TODO what about callbacks added after this?
-			this.contexts.add(context);
+			if (!callbacks) {
+				callbacks = new WeakSet();
+				this.contexts.set(context, callbacks);
+			}
+			callbacks.add(callback);
 		}
 	}
 }
