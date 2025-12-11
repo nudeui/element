@@ -9,11 +9,11 @@ const { events } = symbols.known;
 
 export const hooks = {
 	first_connected () {
-		if (!this[events]) {
+		if (!this.constructor[events]) {
 			return;
 		}
 
-		for (let [name, options] of Object.entries(this[events])) {
+		for (let [name, options] of Object.entries(this.constructor[events])) {
 			let { from } = options;
 
 			if (!from) {

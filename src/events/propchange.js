@@ -34,14 +34,14 @@ export const hooks = {
 
 	first_connected () {
 		// Often propchange events have already fired by the time the event handlers are added
-		for (let eventName in this[propchange]) {
-			let propName = this[propchange][eventName];
+		for (let eventName in this.constructor[propchange]) {
+			let propName = this.constructor[propchange][eventName];
 			let value = this[propName];
 
 			if (value !== undefined) {
-				this.props.firePropChangeEvent(this, eventName, {
+				this.constructor.props.firePropChangeEvent(this, eventName, {
 					name: propName,
-					prop: this.props.get(propName),
+					prop: this.constructor.props.get(propName),
 				});
 			}
 		}

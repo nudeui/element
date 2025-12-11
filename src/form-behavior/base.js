@@ -42,4 +42,4 @@ export const membersStatic = {
 	},
 };
 
-export default {dependencies, setup, membersStatic};
+export default { dependencies, setup, hooks, membersStatic };

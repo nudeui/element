@@ -40,11 +40,11 @@ export const hooks = {
 
 	first_connected () {
 		// Deal with existing values
-		if (!this[eventProps]) {
+		if (!this.constructor[eventProps]) {
 			return;
 		}
 
-		for (let name in this[eventProps]) {
+		for (let name in this.constructor[eventProps]) {
 			let value = this[name];
 			if (typeof value === "function") {
 				let eventName = name.slice(2);
@@ -54,7 +54,7 @@ export const hooks = {
 
 		// Listen for changes
 		this.addEventListener("propchange", event => {
-			if (this[eventProps][event.name]) {
+			if (this.constructor[eventProps][event.name]) {
 				// Implement onEventName attributes/properties
 				let eventName = event.name.slice(2);
 				let change = event.detail;
