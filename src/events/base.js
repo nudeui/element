@@ -21,4 +21,4 @@ export const membersStatic = {
 	},
 };
 
-export default { setup, membersStatic };
+export default { setup, hooks, membersStatic };
