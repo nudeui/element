@@ -1,5 +1,6 @@
 import Props from "./Props.js";
 import symbols from "../util/symbols.js";
+import { defineLazyProperty } from "../util.js";
 // import { composed } from "../util/composed.js";
 
 let { props } = symbols.known;
@@ -40,21 +41,30 @@ export const hooks = {
 };
 
 export const members = {
-	// Internal prop values
-	props () {
-		return {};
-	},
-	// Ignore mutations on these attributes
-	ignoredAttributes () {
-		return new Set();
-	},
-
 	// ...composed({
 	// 	attributeChangedCallback (name, oldValue, value) {
 	// 		this.constructor.props.attributeChanged(this, name, oldValue, value);
 	// 	},
 	// }),
 };
+
+// Internal prop values
+defineLazyProperty(members, "props", {
+	get () {
+		return {};
+	},
+	configurable: true,
+	writable: true,
+});
+
+// Ignore mutations on these attributes
+defineLazyProperty(members, "ignoredAttributes", {
+	get () {
+		return new Set();
+	},
+	configurable: true,
+	writable: true,
+});
 
 export const membersStatic = {
 	defineProps (def = this[props] ?? this.props) {
