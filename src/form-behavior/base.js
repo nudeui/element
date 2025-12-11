@@ -16,6 +16,14 @@ export function setup () {
 	this.addPlugin(delegate);
 }
 
+export const hooks = {
+	firstConstructorStatic () {
+		if (this.formBehavior) {
+			this.defineFormBehavior();
+		}
+	},
+};
+
 export const membersStatic = {
 	defineFormBehavior (def = this[formBehavior] ?? this.formBehavior) {
 		if (!def) {
