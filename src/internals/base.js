@@ -6,7 +6,7 @@ import symbols from "../util/symbols.js";
 import { defineLazyProperty } from "../util/lazy.js";
 
 const { internals } = symbols.known;
-const { attachInternals } = HTMLElement.prototype;
+const _attachInternals = HTMLElement.prototype.attachInternals;
 
 export const members = {
 	attachInternals () {
@@ -14,13 +14,13 @@ export const members = {
 			return this[internals];
 		}
 
-		if (attachInternals === undefined) {
+		if (_attachInternals === undefined) {
 			// Not supported
 			return this[internals] = null;
 		}
 
 		try {
-			return this[internals] = attachInternals.call(this);
+			return this[internals] = _attachInternals.call(this);
 		}
 		catch (error) {
 			return this[internals] = null;
