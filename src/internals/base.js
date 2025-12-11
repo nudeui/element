@@ -11,7 +11,7 @@ const _attachInternals = HTMLElement.prototype.attachInternals;
 export const members = {
 	attachInternals () {
 		let descriptor = Object.getOwnPropertyDescriptor(this, internals);
-		if (descriptor.value) {
+		if (descriptor?.value) {
 			return descriptor.value;
 		}
 
