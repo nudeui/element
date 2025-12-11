@@ -30,8 +30,8 @@ export const membersStatic = {
 			return;
 		}
 
-		if (!this.formBehavior) {
-			this.formBehavior = true;
+		if (!this.formAssociated) {
+			this.formAssociated = true;
 		}
 
 		const env = {context: this, formBehavior: def};
