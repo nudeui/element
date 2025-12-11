@@ -12,6 +12,14 @@ export function setup () {
 	this.addPlugin(retarget);
 }
 
+export const hooks = {
+	first_constructor_static () {
+		if (this.events) {
+			this.defineEvents();
+		}
+	},
+};
+
 export const membersStatic = {
 	defineEvents (def = this[events] ?? this.events) {
 		this[events] ??= {};
