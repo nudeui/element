@@ -1,6 +1,7 @@
-import { internals } from "../util/symbols.js";
-
+import symbols from "../util/symbols.js";
 import internalsPlugin from "../internals/base.js";
+
+const { internals } = symbols.known;
 
 export const dependencies = [internalsPlugin];
 
@@ -14,10 +15,10 @@ export const members = {
 			force = !this[internals].states.has(state);
 		}
 
-		this[state] = force;
+		this[internals].states[force ? "add" : "delete"](state);
 
 		return force;
-	}
+	},
 };
 
-export default {dependencies, members};
+export default { dependencies, members };
