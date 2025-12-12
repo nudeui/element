@@ -3,7 +3,7 @@
  */
 
 import { defineLazyProperty } from "./util/lazy.js";
-import Hooks from "./mixins/hooks.js";
+import Hooks from "./hooks.js";
 import { hasPlugin, addPlugin } from "./plugins.js";
 import symbols from "./util/symbols.js";
 
