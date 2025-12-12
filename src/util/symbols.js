@@ -10,7 +10,7 @@ export const newSymbols = new Proxy({}, {
 	},
 });
 
-export function registry (knownSymbols) {
+export function registry (knownSymbols = []) {
 	return new Proxy({}, {
 		get (target, prop) {
 			if (typeof prop === "string") {
