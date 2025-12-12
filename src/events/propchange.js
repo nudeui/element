@@ -10,6 +10,10 @@ const { events } = symbols.known;
 
 export const hooks = {
 	first_constructor_static () {
+		if (!this[events]) {
+			return;
+		}
+
 		let propchangeEvents = Object.entries(this[events])
 			.filter(([name, options]) => options.propchange)
 			.map(([eventName, options]) => [eventName, options.propchange]);
