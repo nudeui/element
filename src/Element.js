@@ -38,6 +38,8 @@ export default class NudeElement extends HTMLElement {
 		this.constructor.hooks.run("disconnected", this);
 	}
 
+	static symbols = symbols.known;
+
 	static hooks = new Hooks();
 	static {
 		defineLazyProperty(this, "hooks", {

@@ -1,7 +1,3 @@
-import symbols from "./util/symbols.js";
-
-const { plugins } = symbols.known;
-
 export function hasPlugin (Class, plugin) {
 	let Super = Object.getPrototypeOf(Class);
 
@@ -9,7 +5,10 @@ export function hasPlugin (Class, plugin) {
 		return true;
 	}
 
+	let plugins = Class.symbols ? Class.symbols.plugins : "pluginsInstalled";
+
 	if (!Object.hasOwn(Class, plugins)) {
+		// No plugins installed
 		return false;
 	}
 
@@ -20,6 +19,8 @@ export function addPlugin (Class, plugin) {
 	if (hasPlugin(Class, plugin)) {
 		return;
 	}
+
+	let plugins = Class.symbols ? Class.symbols.plugins : "pluginsInstalled";
 
 	if (!Object.hasOwn(Class, plugins)) {
 		Class[plugins] = new Set();
