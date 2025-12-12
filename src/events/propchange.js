@@ -43,10 +43,17 @@ export const hooks = {
 			let value = this[propName];
 
 			if (value !== undefined) {
-				this.constructor.props.firePropChangeEvent(this, eventName, {
-					name: propName,
-					prop: this.constructor.props.get(propName),
-				});
+				// If the prop already has a value when the element connects,
+				// the prop-change event may have “logically” already occurred.
+				// Handlers are often added during connection; scheduling the event with rAF ensures
+				// it fires asynchronously after the current initialization completes,
+				// maintains stable ordering, and prevents the event
+				// from firing before listeners have a chance to attach.
+				requestAnimationFrame(() =>
+					this.constructor.props.firePropChangeEvent(this, eventName, {
+						name: propName,
+						prop: this.constructor.props.get(propName),
+					}));
 			}
 		}
 	},
