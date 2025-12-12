@@ -5,7 +5,7 @@ const { internals } = symbols.known;
 
 export const dependencies = [internalsPlugin];
 
-export const members = {
+export const provides = {
 	toggleState (state, force) {
 		if (!this[internals]) {
 			return;
@@ -21,4 +21,4 @@ export const members = {
 	},
 };
 
-export default { dependencies, members };
+export default { dependencies, provides };

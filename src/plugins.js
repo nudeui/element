@@ -31,12 +31,12 @@ export function addPlugin (Class, plugin) {
 		}
 	}
 
-	if (plugin.members) {
-		extend(Class.prototype, plugin.members);
+	if (plugin.provides) {
+		extend(Class.prototype, plugin.provides);
 	}
 
-	if (plugin.membersStatic) {
-		extend(Class, plugin.membersStatic);
+	if (plugin.providesStatic) {
+		extend(Class, plugin.providesStatic);
 	}
 
 	Class.hooks.add(plugin.hooks);

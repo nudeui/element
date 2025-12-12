@@ -8,7 +8,7 @@ import { defineLazyProperty } from "../util/lazy.js";
 const { internals } = symbols.known;
 const _attachInternals = HTMLElement.prototype.attachInternals;
 
-export const members = {
+export const provides = {
 	attachInternals () {
 		let descriptor = Object.getOwnPropertyDescriptor(this, internals);
 		if (descriptor?.value) {
@@ -29,7 +29,7 @@ export const members = {
 	},
 };
 
-defineLazyProperty(members, internals, {
+defineLazyProperty(provides, internals, {
 	get () {
 		return this.attachInternals();
 	},
@@ -37,4 +37,4 @@ defineLazyProperty(members, internals, {
 	writable: true,
 });
 
-export default {members};
+export default {provides};

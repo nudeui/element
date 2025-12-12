@@ -36,7 +36,7 @@ export const hooks = {
 	},
 };
 
-export const membersStatic = {
+export const providesStatic = {
 	defineElements (def = this[elements] ?? this.elements) {
 		if (!def) {
 			return;

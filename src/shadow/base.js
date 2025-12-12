@@ -8,7 +8,7 @@ import { defineLazyProperty } from "../util/lazy.js";
 const { shadowRoot, shadowRootOptions } = symbols.known;
 const { attachShadow } = HTMLElement.prototype;
 
-export const members = {
+export const provides = {
 	attachShadow (options = this.constructor[shadowRootOptions] ?? this.constructor.shadowRoot) {
 		if (this[shadowRoot] !== undefined) { // We want to include null
 			return this[shadowRoot];
@@ -33,7 +33,7 @@ export const members = {
 	},
 };
 
-defineLazyProperty(members, shadowRoot, {
+defineLazyProperty(provides, shadowRoot, {
 	get () {
 		return this.attachShadow();
 	},
@@ -41,4 +41,4 @@ defineLazyProperty(members, shadowRoot, {
 	writable: true,
 });
 
-export default {members};
+export default {provides};

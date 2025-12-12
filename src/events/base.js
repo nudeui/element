@@ -20,7 +20,7 @@ export const hooks = {
 	},
 };
 
-export const membersStatic = {
+export const providesStatic = {
 	defineEvents (def = this[events] ?? this.events) {
 		this[events] ??= {};
 		Object.assign(this[events], def);
@@ -29,4 +29,4 @@ export const membersStatic = {
 	},
 };
 
-export default { setup, hooks, membersStatic };
+export default { setup, hooks, providesStatic };

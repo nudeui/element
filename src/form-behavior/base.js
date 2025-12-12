@@ -24,7 +24,7 @@ export const hooks = {
 	},
 };
 
-export const membersStatic = {
+export const providesStatic = {
 	formAssociated: true,
 
 	defineFormBehavior (def = this[formBehavior] ?? this.formBehavior) {
@@ -40,4 +40,4 @@ export const membersStatic = {
 	},
 };
 
-export default { dependencies, setup, hooks, membersStatic };
+export default { dependencies, setup, hooks, providesStatic };

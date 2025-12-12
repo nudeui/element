@@ -40,7 +40,7 @@ export const hooks = {
 	},
 };
 
-export const members = {
+export const provides = {
 	// ...composed({
 	// 	attributeChangedCallback (name, oldValue, value) {
 	// 		this.constructor.props.attributeChanged(this, name, oldValue, value);
@@ -49,7 +49,7 @@ export const members = {
 };
 
 // Internal prop values
-defineLazyProperty(members, "props", {
+defineLazyProperty(provides, "props", {
 	get () {
 		return {};
 	},
@@ -58,7 +58,7 @@ defineLazyProperty(members, "props", {
 });
 
 // Ignore mutations on these attributes
-defineLazyProperty(members, "ignoredAttributes", {
+defineLazyProperty(provides, "ignoredAttributes", {
 	get () {
 		return new Set();
 	},
@@ -66,7 +66,7 @@ defineLazyProperty(members, "ignoredAttributes", {
 	writable: true,
 });
 
-export const membersStatic = {
+export const providesStatic = {
 	defineProps (def = this[props] ?? this.props) {
 		if (def instanceof Props && def.Class === this) {
 			// Already defined
@@ -94,4 +94,4 @@ export const membersStatic = {
 	// }),
 };
 
-export default {hooks, members, membersStatic};
+export default {hooks, provides, providesStatic};
