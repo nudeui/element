@@ -25,13 +25,11 @@ export const hooks = {
 };
 
 export const membersStatic = {
+	formAssociated: true,
+
 	defineFormBehavior (def = this[formBehavior] ?? this.formBehavior) {
 		if (!def) {
 			return;
-		}
-
-		if (!this.formAssociated) {
-			this.formAssociated = true;
 		}
 
 		const env = {context: this, formBehavior: def};
