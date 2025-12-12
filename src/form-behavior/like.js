@@ -6,6 +6,10 @@ const { formBehavior, internals } = symbols.known;
 
 export const hooks = {
 	first_connected () {
+		if (!this.constructor[formBehavior]) {
+			return;
+		}
+
 		let { like, role, valueProp = "value", changeEvent = "input" } = this.constructor[formBehavior];
 
 		if (!like) {
