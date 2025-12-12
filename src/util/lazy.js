@@ -45,3 +45,9 @@ export function defineLazyProperty (object, name, options) {
 		configurable: true,
 	});
 }
+
+export function defineLazyProperties (object, properties) {
+	for (let name in properties) {
+		defineLazyProperty(object, name, properties[name]);
+	}
+}
