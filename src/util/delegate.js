@@ -18,6 +18,9 @@ export function delegate ({from, to, properties, descriptors}) {
 		};
 
 		if (sourceDescriptor.writable || sourceDescriptor.set) {
+			delete descriptor.value;
+			delete descriptor.writable;
+
 			descriptor.set = function (value) {
 				this[to][prop] = value;
 			};
