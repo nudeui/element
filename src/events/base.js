@@ -7,8 +7,8 @@ const { events } = symbols.known;
 
 export function setup () {
 	// TODO decouple these from core event functionality
-	this.addPlugin(propchange);
 	this.addPlugin(onprops);
+	this.addPlugin(propchange);
 	this.addPlugin(retarget);
 }
 
