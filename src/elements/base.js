@@ -70,4 +70,6 @@ export const providesStatic = {
 			this[elements][name] = options;
 		}
 	},
-}
+};
+
+export default { dependencies, hooks, providesStatic };
