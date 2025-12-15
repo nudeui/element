@@ -45,7 +45,9 @@ export default class NudeElement extends HTMLElement {
 		defineLazyProperty(this, "hooks", {
 			value: this.hooks,
 			get (hooks) {
-				return new Hooks(hooks);
+				let ret = new Hooks(hooks);
+				ret.parent = this.super?.hooks;
+				return ret;
 			},
 			configurable: true,
 			writable: true,

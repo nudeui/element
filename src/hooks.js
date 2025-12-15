@@ -2,7 +2,15 @@ export default class Hooks {
 	/** @type {Map<string, Hook>} */
 	hooks = new Map();
 
+	/** @type {Set<string>} */
 	ran = new Set();
+
+	/**
+	 * A parent hooks object to inherit from, if any.
+	 * Any parent hooks will be executed before this object's hooks.
+	 * @type {Hooks | null}
+	 */
+	parent = null;
 
 	constructor (hooks) {
 		if (hooks) {
@@ -68,6 +76,12 @@ export default class Hooks {
 	run (name, env) {
 		name = Hooks.getCanonicalName(name);
 		this.ran.add(name);
+
+		this.parent?.run(name, env);
+
+		for (let hooks of this.parent?.hooks) {
+			hooks.run(name, env);
+		}
 
 		if (name.startsWith("first_")) {
 			this.hooks.get(name)?.runOnce(env);
