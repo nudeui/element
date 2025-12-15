@@ -6,15 +6,16 @@ import symbols from "../util/symbols.js";
 import { defineLazyProperty } from "../util/lazy.js";
 
 const { shadowRoot, shadowRootOptions } = symbols.known;
-const { attachShadow } = HTMLElement.prototype;
+const _attachShadow = HTMLElement.prototype.attachShadow;
 
 export const provides = {
 	attachShadow (options = this.constructor[shadowRootOptions] ?? this.constructor.shadowRoot) {
-		if (this[shadowRoot] !== undefined) { // We want to include null
-			return this[shadowRoot];
+		let descriptor = Object.getOwnPropertyDescriptor(this, shadowRoot);
+		if (descriptor?.value) {
+			return descriptor.value;
 		}
 
-		if (attachShadow === undefined) {
+		if (_attachShadow === undefined) {
 			// Not supported
 			return this[shadowRoot] = null;
 		}
@@ -22,7 +23,7 @@ export const provides = {
 		this[shadowRootOptions] ??= options;
 
 		try {
-			this[shadowRoot] = attachShadow.call(this, options);
+			this[shadowRoot] = _attachShadow.call(this, options);
 			this.hooks.run("shadow-attached", {context: this, shadowRoot});
 		}
 		catch (error) {
