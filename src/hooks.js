@@ -79,10 +79,6 @@ export default class Hooks {
 
 		this.parent?.run(name, env);
 
-		for (let hooks of this.parent?.hooks) {
-			hooks.run(name, env);
-		}
-
 		if (name.startsWith("first_")) {
 			this.hooks.get(name)?.runOnce(env);
 		}
