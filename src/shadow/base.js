@@ -24,7 +24,7 @@ export const provides = {
 
 		try {
 			this[shadowRoot] = _attachShadow.call(this, options);
-			this.hooks.run("shadow-attached", {context: this, shadowRoot});
+			this.constructor.hooks.run("shadow-attached", {context: this, shadowRoot});
 		}
 		catch (error) {
 			this[shadowRoot] = null;
