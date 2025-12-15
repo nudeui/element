@@ -1,62 +1,30 @@
-import defineMixin from "../mixins/define-mixin.js";
+import symbols from "../util/symbols.js";
+import Slots from "./slots.js";
+import SlotController from "./slot-controller.js";
 
-function assignSlots () {
-	let children = this.childNodes;
-	let slotElements = Object.values(this._slots);
-	let assignments = new WeakMap();
+export const { slots } = symbols.known;
 
-	// Assign to slots
-	for (let child of children) {
-		let assignedSlot;
+export const hooks = {
+	constructed () {
+		this[slots] = SlotController.create(this);
+	},
+};
 
-		if (child.slot) {
-			// Explicit slot assignment by name, this takes priority
-			assignedSlot = this._slots[child.slot];
+export const providesStatic = {
+	defineSlots (def = this[slots] ?? this.slots) {
+		if (!(this[slots] instanceof Slots)) {
+			this[slots] = new Slots(this, def);
 		}
-		else if (child.matches) {
-			// Does child match any slot selector?
-			assignedSlot = slotElements.find(slot => child.matches(slot.dataset.assign));
-		}
-
-		assignedSlot ??= this._slots.default;
-		let all = assignments.get(assignedSlot) ?? new Set();
-		all.add(child);
-		assignments.set(assignedSlot, all);
-	}
-
-	for (let slot of slotElements) {
-		let all = assignments.get(slot) ?? new Set();
-		slot.assign(...all);
-	}
-}
-
-let mutationObserver;
-
-export default function  (Class) {
-	// Class.prototype.assignSlots = assignSlots;
-
-	return defineMixin(Class, function init () {
-		if (!this.shadowRoot) {
+		else if (this[slots] === def) {
+			// Nothing to do here
 			return;
 		}
 
-		this._slots = {};
+		// New slots to add
+		this[slots].add(def);
 
-		for (let slot of this.shadowRoot.querySelectorAll("slot")) {
-			let name = slot.name ?? "default";
-			// This emulates how slots normally work: if there are duplicate names, the first one wins
-			// See https://codepen.io/leaverou/pen/KKLzBPJ
-			this._slots[name] ??= slot;
-		}
+		this.hooks.run("define-slots", {context: this, slots: def});
+	},
+};
 
-		if (this.shadowRoot.slotAssignment === "manual") {
-			// slotchange won’t fire in this case, so we need to do this the old-fashioned way
-			mutationObserver ??= new MutationObserver(mutations => {
-				for (let mutation of mutations) {
-					assignSlots.call(mutation.target);
-				}
-			});
-			mutationObserver.observe(this, { childList: true });
-		}
-	});
-}
+export default { hooks, providesStatic };

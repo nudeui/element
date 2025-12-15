@@ -5,104 +5,53 @@
  * - React to dynamic slot changes (added slots, removed slots, renamed slots)
  *
  */
-import SlotObserver from "./slot-observer.js";
 
-let mutationObserver;
+import base, { slots } from "./base.js";
 
-export function getSlot (host, child, slots) {
-	let slotName = child.slot;
+export const dependencies = [base];
 
-	if (slotName) {
-		slots[slotName] ??= host.shadowRoot.querySelector(`slot[name="${slotName}"]`);
-		return slots[slotName];
+export const slottedObserver = new MutationObserver(records => {
+	let host = records[0].target;
+	if (host.nodeType !== Node.ELEMENT_NODE) {
+		host = host.parentNode;
 	}
 
-	// Default slot
-	return slots[""];
-}
-
-export function assign (child, slots) {
-	let slot = getSlot(this, child, slots);
-	if (slot) {
-		let isAssigned = slot.assignedNodes().includes(child);
-
-		if (!isAssigned) {
-			slot.assign(child);
-			slot.dispatchEvent(new Event("slotchange"), { bubbles: true });
-		}
-	}
-}
-
-export function unassign (child, slots) {
-	let slot = getSlot(this, child, slots);
-	if (slot) {
-		const assignedNodes = slot.assignedNodes();
-		let isAssigned = assignedNodes.includes(child);
-
-		if (isAssigned) {
-			slot.assign(...assignedNodes.filter(node => node !== child));
-			slot.dispatchEvent(new Event("slotchange"), { bubbles: true });
-		}
-	}
-}
-
-export function slotsChanged (records) {
 	for (let r of records) {
-		// TODO
+		if (r.type === "attributes") {
+			host[slots].assign(r.target);
+		}
+		else {
+			for (let node of r.addedNodes) {
+				host[slots].assign(node);
+			}
+		}
 	}
-}
+});
 
-export default function  (Class, options = {}) {
-	return {
-		init () {
-			if (this.shadowRoot?.slotAssignment !== "manual") {
-				// Nothing to do here
-				return;
-			}
+export const hooks = {
+	connected () {
+		if (this[slots].shadowRoot?.slotAssignment !== "manual") {
+			// Nothing to do here
+			return;
+		}
 
-			// slotchange won’t fire in this case, so we need to do this the old-fashioned way
-			mutationObserver ??= new MutationObserver(records => {
-				let slots = {};
+		// Assign all children to their slots
+		for (let child of this.childNodes) {
+			this[slots].assign(child);
+		}
 
-				let nodesToAssign = records.flatMap(r =>
-					r.type === "attributes" ? [r.target] : r.addedNodes);
-				let nodesToUnassign = records.flatMap(r =>
-					r.type === "attributes" ? [] : r.removedNodes);
+		// Observe future changes
+		// Fire when either a slot attribute changes, or the children change
+		slottedObserver.observe(this, {
+			childList: true,
+			attributes: true,
+			attributeFilter: ["slot"],
+		});
+	},
 
-				for (let node of nodesToAssign) {
-					assign(node, slots);
-				}
+	disconnected () {
+		slottedObserver.disconnect();
+	},
+};
 
-				for (let node of nodesToUnassign) {
-					unassign(node, slots);
-				}
-			});
-
-			// Fire when either a slot attribute changes, or the children change
-			mutationObserver.observe(this, {
-				childList: true,
-				attributes: true,
-				attributeFilter: ["slot"],
-			});
-
-			if (options.dynamicSlots) {
-				let slotObserver = new SlotObserver(records => {
-					for (let r of records) {
-						let slot = r.target;
-						if (r.type === "renamed") {
-							// TODO unassign all children from the old slot (or assign to other slot with that name, if one exists)
-							// TODO assign any children with that slot name to the new slot
-						}
-						else if (r.type === "added") {
-							// TODO are there any elements with that slot name?
-						}
-						else if (r.type === "removed") {
-							// TODO Unassign all children from this slot
-						}
-					}
-				});
-				slotObserver.observe(this);
-			}
-		},
-	};
-}
+export default { dependencies, hooks };

@@ -1,112 +1,72 @@
 /**
- * Slots data structure
- * Gives element classes a this._slots data structure that allows easy access to named slots
+ * Slot controller
+ * Per-element data structure for accessing and manipulating slots
  */
+import symbols from "../util/symbols.js";
 
-import SlotObserver from "./slot-observer.js";
-
-function removeArrayItem (array, item) {
-	if (!array || array.length === 0) {
-		return -1;
-	}
-
-	let index = array.indexOf(item);
-	if (index !== -1) {
-		array.splice(index, 1);
-	}
-
-	return index;
-}
+export const { shadowRoot } = symbols.known;
 
 export default class SlotController {
-	#host;
-	#slotObserver;
-	#all = {};
-
-	static mutationObserver;
-
-	constructor (host, options = {}) {
-		this.#host = host;
-
-		// TODO this should be a slot property
-		// Unused for now
-		this.dynamic = options.dynamic;
+	constructor (host) {
+		this.host = host;
 	}
 
-	get host () {
-		return this.#host;
-	}
+	/**
+	 * Assign a child to a slot while preserving all other assigned nodes
+	 * Only for manual assignment
+	 * @param {string} slotName
+	 * @param {Node} child
+	 * @returns {HTMLSlotElement | null} The slot that was assigned to, or null if the slot is not found
+	 */
+	assign (child, slotName = child.slot) {
+		let slot = this[slotName];
 
-	init () {
-		let shadowRoot = this.#host.shadowRoot;
-
-		if (!shadowRoot) {
-			return null;
+		if (slot) {
+			slot.assign(...slot.assignedNodes(), child);
 		}
-
-		for (let slot of shadowRoot.querySelectorAll("slot")) {
-			let name = slot.name || "";
-
-			this.#all[name] ??= [];
-			this.#all[name].push(slot);
-
-			// This emulates how slots normally work: if there are duplicate names, the first one wins
-			// See https://codepen.io/leaverou/pen/KKLzBPJ
-			this[name] ??= slot;
-		}
-
-		if (this.dynamic) {
-			this.observe();
-		}
-	}
-
-	/** Observe slot mutations */
-	observe (options) {
-		this.#slotObserver ??= new SlotObserver(records => {
-			for (let r of records) {
-				this[r.type](r.target, r.oldName);
+		else {
+			// Slot with that name not found, but still unassign from any existing slot
+			if (child.assignedSlot) {
+				let assignedNodes = new Set(child.assignedSlot.assignedNodes());
+				assignedNodes.delete(child);
+				child.assignedSlot.assign(...assignedNodes);
 			}
+		}
+
+		return slot;
+	}
+
+	get $default () {
+		return this[""];
+	}
+
+	set $default (slot) {
+		this[""] = slot;
+	}
+
+	get shadowRoot () {
+		return this.host[shadowRoot] ?? this.host.shadowRoot;
+	}
+
+	update (slotName) {
+		if (slotName === "$default") {
+			slotName = "";
+		}
+
+		let selector = slotName ? `slot[name="${slotName}"]` : `slot:not([name])`;
+		this[slotName] = this.shadowRoot.querySelector(selector);
+		return this[slotName];
+	}
+
+	get (slotName) {
+		return this[slotName] ?? this.update(slotName);
+	}
+
+	static create (host) {
+		return new Proxy(new SlotController(host), {
+			get (target, slotName) {
+				return target.get(slotName);
+			},
 		});
-
-		this.#slotObserver.observe(this.#host, options);
-	}
-
-	/** Stop observing slot mutations */
-	unobserve () {
-		this.#slotObserver?.disconnect();
-	}
-
-	/** Slot added */
-	added (slot) {
-		let name = slot.name ?? "";
-		this.#all[name] ??= [];
-
-		// Insert, maintaining source order
-		let index = this.#all[name].findIndex(
-			s => slot.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_PRECEDING,
-		);
-		this.#all[name].splice(index + 1, 0, slot);
-		this[name] = this.#all[name][0];
-
-		if (!this[name]) {
-			delete this[name];
-		}
-	}
-
-	/** Slot removed */
-	removed (slot, name = slot.name ?? "") {
-		removeArrayItem(this.#all[name], slot);
-		this[name] = this.#all[name][0];
-
-		if (!this[name]) {
-			delete this[name];
-		}
-	}
-
-	/** Slot renamed */
-	renamed (slot, oldName) {
-		// ||= is important here, as slot.name is "" in the default slot
-		this.remove(slot, oldName);
-		this.add(slot);
 	}
 }

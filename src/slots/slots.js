@@ -1,35 +1,44 @@
-import SlotController from "./slot-controller.js";
-import symbols from "../util/symbols.js";
+import Hooks from "../hooks.js";
 
-const { slots } = symbols.new;
+export default class Slots {
+	hooks = new Hooks();
 
-export const hooks = {
-	constructor () {
-		if (!this.constructor[slots]) {
+	constructor (ElementClass, def) {
+		this.ElementClass = ElementClass;
+		this.def = def;
+		this.hooks.run("constructed", this);
+	}
+
+	defineSlot (name, def = {}) {
+		def = typeof def === "string" ? { name: def } : def;
+		let env = { name, definition: def, oldDefinition: this[name] };
+		this.ElementClass.hooks.run("define-slot", env);
+
+		if (env.definition) {
+			this[env.name] = env.definition;
+		}
+
+		return this[env.name];
+	}
+
+	/**
+	 * Add new slot definitions
+	 * @param {*} def
+	 */
+	define (def) {
+		if (!def) {
 			return;
 		}
 
-		this[slots] = new SlotController(this);
-	},
-	firstConnected () {
-		if (!this.constructor[slots]) {
-			return;
-		}
-
-		this[slots].init();
-	},
-};
-
-export const membersStatic = {
-	defineSlots (def = this[slots] ?? this.slots) {
 		if (Array.isArray(def)) {
-			// Just slot names, no options
-			def = Object.fromEntries(def.map(name => [name, {}]));
+			for (let slot of def) {
+				this.defineSlot(slot.name, slot);
+			}
 		}
-
-		this[slots] ??= {};
-		Object.assign(this[slots], def);
-
-		this.hooks.run("define-slots", {context: this, slots: def});
-	},
-};
+		else {
+			for (let name in def) {
+				this.defineSlot(name, def[name]);
+			}
+		}
+	}
+}
