@@ -1,16 +1,6 @@
-import propchange from "./propchange.js";
-import onprops from "./onprops.js";
-import retarget from "./retarget.js";
 
 import symbols from "../util/symbols.js";
-const { events } = symbols.known;
-
-export function setup () {
-	// TODO decouple these from core event functionality
-	this.addPlugin(onprops);
-	this.addPlugin(propchange);
-	this.addPlugin(retarget);
-}
+export const { events } = symbols.known;
 
 export const hooks = {
 	first_constructor_static () {
@@ -29,4 +19,4 @@ export const providesStatic = {
 	},
 };
 
-export default { setup, hooks, providesStatic };
+export default { hooks, providesStatic };

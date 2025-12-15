@@ -4,8 +4,10 @@
 
 import { resolveValue } from "../util.js";
 import { pick } from "../util/pick.js";
-import symbols from "../util/symbols.js";
-const { events } = symbols.known;
+
+import base, { events } from "./base.js";
+
+export const dependencies = [base];
 
 export const hooks = {
 	first_connected () {
@@ -58,4 +60,4 @@ export const hooks = {
 	},
 };
 
-export default {hooks};
+export default {dependencies, hooks};

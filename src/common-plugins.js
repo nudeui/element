@@ -1,5 +1,5 @@
 import props from "./props/base.js";
-import events from "./events/base.js";
+import events from "./events/index.js";
 import formBehavior from "./form-behavior/index.js";
 import shadowStyles from "./styles/shadow.js";
 import globalStyles from "./styles/global.js";

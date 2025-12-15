@@ -4,9 +4,11 @@
  */
 
 import symbols from "../util/symbols.js";
+import base, { events } from "./base.js";
 
 const { propchange } = symbols.new;
-const { events } = symbols.known;
+
+export const dependencies = [base];
 
 export const hooks = {
 	first_constructor_static () {
@@ -52,4 +54,4 @@ export const hooks = {
 	},
 };
 
-export default {hooks};
+export default {dependencies, hooks};
