@@ -1,8 +1,11 @@
 import symbols from "../util/symbols.js";
 import { resolveValue } from "../util.js";
 import { getRole } from "./role.js";
+import base, { formBehavior } from "./base.js";
 
-const { formBehavior, internals } = symbols.known;
+export const dependencies = [base];
+
+const { internals } = symbols.known;
 
 export const hooks = {
 	first_connected () {
@@ -32,4 +35,4 @@ export const hooks = {
 	},
 };
 
-export default {hooks};
+export default {dependencies, hooks};

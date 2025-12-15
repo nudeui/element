@@ -3,9 +3,13 @@
  */
 import { delegate } from "../util/delegate.js";
 import symbols from "../util/symbols.js";
+import base, { formBehavior } from "./base.js";
 
-const { formBehavior, internals } = symbols.known;
+const { internals } = symbols.known;
 
+export const dependencies = [base];
+
+// Find built-in properties to delegate
 let objects = [ElementInternals, HTMLInputElement, HTMLSelectElement, HTMLTextAreaElement, HTMLButtonElement];
 let props = objects.map(o => new Set(Object.getOwnPropertyNames(o.prototype)));
 const defaultProperties = props.reduce((acc, cur) => acc.intersection(cur));
@@ -28,4 +32,4 @@ export const hooks = {
 	}
 };
 
-export default {hooks};
+export default {dependencies, hooks};

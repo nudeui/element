@@ -1,20 +1,12 @@
 
 
 import symbols from "../util/symbols.js";
-import * as like from "./like.js";
-import * as delegate from "./delegate.js";
 
 import internalsPlugin from "../internals/base.js";
 
 export const dependencies = [internalsPlugin];
 
-const { formBehavior } = symbols.known;
-
-export function setup () {
-	// TODO decouple these from core functionality
-	this.addPlugin(like);
-	this.addPlugin(delegate);
-}
+export const { formBehavior } = symbols.known;
 
 export const hooks = {
 	firstConstructorStatic () {
@@ -40,4 +32,4 @@ export const providesStatic = {
 	},
 };
 
-export default { dependencies, setup, hooks, providesStatic };
+export default { dependencies, hooks, providesStatic };
