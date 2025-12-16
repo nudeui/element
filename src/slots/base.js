@@ -21,7 +21,7 @@ export const providesStatic = {
 		}
 
 		// New slots to add
-		this[slots].add(def);
+		this[slots].define(def);
 
 		this.hooks.run("define-slots", {context: this, slots: def});
 	},
