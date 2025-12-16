@@ -36,6 +36,10 @@ export default class IterableWeakMap extends Map {
 	}
 
 	delete (key) {
+		if (super.delete(key)) {
+			return true;
+		}
+
 		let ref = weakRefs.get(key);
 		return ref ? super.delete(ref) : false;
 	}
