@@ -24,7 +24,13 @@ function getElement (host, options) {
 }
 
 export const hooks = {
-	connected () {
+	first_constructor_static () {
+		if (this.elements) {
+			this.defineElements();
+		}
+	},
+
+	constructed () {
 		if (!this[elements]) {
 			return;
 		}
@@ -53,6 +59,8 @@ export const providesStatic = {
 							get () {
 								return getElement(this, this.constructor[elements][name]);
 							},
+							configurable: true,
+							enumerable: true,
 						});
 					}
 					return ret;
