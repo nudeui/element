@@ -86,9 +86,13 @@ export default class Hooks {
 			this.run("first_" + name, env);
 			this.hooks.get(name)?.run(env);
 		}
+
+		if (name !== "*") {
+			this.run("*", {hookName: name, ...env});
+		}
 	}
 
-	hasRun (name) {
+	hasRun (name = "*") {
 		name = Hooks.getCanonicalName(name);
 		return this.ran.has(name);
 	}
