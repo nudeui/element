@@ -54,7 +54,7 @@ export default class IterableWeakMap extends Map {
 			}
 			else {
 				// Garbage collected
-				deadRefs.add(key);
+				deadRefs.add(ref);
 			}
 		}
 
