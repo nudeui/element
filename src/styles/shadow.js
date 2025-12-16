@@ -13,6 +13,7 @@ export const hooks = {
 		}
 
 		let supers = getSupers(this, HTMLElement);
+		supers.push(this);
 
 		for (let Class of supers) {
 			if (Object.hasOwn(Class, "styles") && !Object.hasOwn(Class, fetchedStyles)) {
@@ -35,6 +36,7 @@ export const hooks = {
 
 		let Self = this.constructor;
 		let supers = getSupers(Self, HTMLElement);
+		supers.push(Self);
 
 		for (let Class of supers) {
 			if (Class[fetchedStyles]) {

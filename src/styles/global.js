@@ -13,6 +13,7 @@ export const hooks = {
 		}
 
 		let supers = getSupers(this, HTMLElement);
+		supers.push(this);
 		let Super;
 
 		for (let Class of supers) {
