@@ -16,16 +16,8 @@ export const provides = {
 
 		this.observations.delete(target);
 
-		for (let [ref, options] of this.observations.entries()) {
-			let mutationTarget = ref.deref();
-
-			if (mutationTarget && options) {
-				this.observe(mutationTarget, options);
-			}
-			else {
-				// Possibly garbage collected
-				this.observations.delete(ref);
-			}
+		for (let [mutationTarget, options] of this.observations.entries()) {
+			this.observe(mutationTarget, options);
 		}
 	},
 };
