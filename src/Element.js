@@ -3,6 +3,7 @@
  */
 
 import { defineLazyProperty } from "./util/lazy.js";
+import { getSuper } from "./util/super.js";
 import Hooks from "./hooks.js";
 import { hasPlugin, addPlugin } from "./plugins.js";
 import symbols from "./util/symbols.js";
@@ -58,15 +59,14 @@ export default class NudeElement extends HTMLElement {
 	 * Like super, but dynamic
 	 */
 	get super () {
-		return this.constructor.super?.prototype;
+		return getSuper(this);
 	}
 
 	/**
 	 * Like super, but dynamic
 	 */
 	static get super () {
-		let Super = Object.getPrototypeOf(this);
-		return Super === Function.prototype ? null : Super;
+		return getSuper(this);
 	}
 
 	/** Plugins to install */
