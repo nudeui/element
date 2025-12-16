@@ -30,7 +30,7 @@ export const hooks = {
 		}
 	},
 
-	constructed () {
+	first_connected () {
 		if (!this[elements]) {
 			return;
 		}
