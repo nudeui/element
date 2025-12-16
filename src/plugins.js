@@ -26,6 +26,8 @@ export function addPlugin (Class, plugin) {
 		Class[plugins] = new Set();
 	}
 
+	Class[plugins].add(plugin);
+
 	if (plugin.dependencies) {
 		for (let dependency of plugin.dependencies) {
 			addPlugin(Class, dependency);
