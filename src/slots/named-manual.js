@@ -30,7 +30,7 @@ export const slottedObserver = new MutationObserver(records => {
 
 export const hooks = {
 	connected () {
-		if (this[slots].shadowRoot?.slotAssignment !== "manual") {
+		if (this[slots]?.shadowRoot?.slotAssignment !== "manual") {
 			// Nothing to do here
 			return;
 		}
