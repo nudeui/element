@@ -7,16 +7,14 @@
  */
 
 import base, { slots } from "./base.js";
+import { getElement } from "./util.js";
 
 export const dependencies = [base];
 
 export const slottedObserver = new MutationObserver(records => {
-	let host = records[0].target;
-	if (host.nodeType !== Node.ELEMENT_NODE) {
-		host = host.parentNode;
-	}
-
 	for (let r of records) {
+		let host = getElement(r.target);
+
 		if (r.type === "attributes") {
 			host[slots].assign(r.target);
 		}
