@@ -87,7 +87,7 @@ export default class Hooks {
 			this.hooks.get(name)?.run(env);
 		}
 
-		if (name !== "*") {
+		if (name !== "*" && name !== "first_*") {
 			this.run("*", {hookName: name, ...env});
 		}
 	}
