@@ -50,6 +50,13 @@ export const hooks = {
 	disconnected () {
 		slottedObserver.disconnect();
 	},
+
+	slots_changed (records) {
+		for (let r of records) {
+			let slot = r.target;
+			// TODO
+		}
+	}
 };
 
 export default { dependencies, hooks };

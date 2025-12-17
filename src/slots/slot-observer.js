@@ -1,75 +1,82 @@
 /**
- * An observer for slot mutations (new slots, removed slots, renamed slots)
+ * Allows marking certain slots as dynamic and reacts to changes in those slots
  */
 
-export default class SlotObserver {
-	mutationObserver = new MutationObserver(records => {
-		this.handleMutation(records);
-	});
+import MutationObserver2 from "../mo2/index.js";
 
-	constructor (callback) {
-		this.callback = callback;
+/**
+ * @typedef {Object} SlotMutation
+ * @property {string} [renamedFrom]
+ * @property {Node} [addedTo]
+ * @property {Node} [removedFrom]
+ * @property {boolean} [fallback]
+ */
+
+export default class SlotObserver extends MutationObserver2 {
+	observe (target, options = { }) {
+		// Translate to SlotObserver options
+		let moOptions = {};
+
+		if (options.rename) {
+			moOptions.attributes = true;
+			moOptions.attributeFilter = ["name"];
+		}
+		if (options.addRemove) {
+			moOptions.childList = true;
+			moOptions.subtree = options.subtree !== false;
+		}
+
+		return super.observe(target, moOptions);
 	}
 
-	handleMutation (mutationRecords) {
-		let slots = new Map();
+	static callback (records, that) {
+		let slotsChanged = new Map();
 
-		// This batches changes together, so that if a slot is changed multiple times,
-		// we only get one record
-		for (let r of mutationRecords) {
-			if (r.type === "attributes" && r.target.tagName === "SLOT") {
-				slots.set(r.target, { type: "renamed", target: r.target, oldName: r.oldValue });
-			}
-			else {
-				for (let node of r.addedNodes) {
-					slots.set(node, { type: "added", target: node });
+		for (let r of records) {
+			let isTargetSlot = r.target.tagName === "SLOT";
+
+			if (r.type === "attributes") {
+				if (!isTargetSlot) {
+					continue;
 				}
 
-				for (let node of r.removedNodes) {
-					slots.set(node, { type: "removed", target: node });
+				// Slot was renamed
+				let mutation = slotsChanged.get(r.target) ?? {};
+				// ??= because if it went A → B → C, we'd still summarize it as A → C
+				mutation.renamedFrom ??= r.oldValue;
+				slotsChanged.set(r.target, mutation);
+			}
+			else if (r.type === "childList" && !isTargetSlot) {
+				for (let addedSlot of r.addedNodes) {
+					if (addedSlot.tagName !== "SLOT") {
+						continue;
+					}
+
+					let mutation = slotsChanged.get(addedSlot) ?? {};
+					mutation.addedTo = r.target;
+					slotsChanged.set(addedSlot, mutation);
+				}
+
+				for (let removedSlot of r.removedNodes) {
+					if (removedSlot.tagName !== "SLOT") {
+						continue;
+					}
+
+					let mutation = slotsChanged.get(removedSlot) ?? {};
+					mutation.removedFrom = r.target;
+					slotsChanged.set(removedSlot, mutation);
 				}
 			}
-		}
-
-		let records = [...slots.values()];
-
-		if (records.length > 0) {
-			this.callback(records);
-		}
-	}
-
-	observe (host, options = { existing: true, added: true, removed: true, renamed: true }) {
-		if (!host.shadowRoot) {
-			return;
-		}
-
-		this.constructor.mutationObserver.observe(host.shadowRoot, {
-			childList: options.added || options.removed,
-			subtree: true,
-			attributes: options.renamed,
-			attributeFilter: ["name"],
-			attributeOldValue: options.renamed,
-		});
-
-		// Fire callback for existing slots
-		if (options.existing !== false) {
-			let records = [...host.shadowRoot.querySelectorAll("slot")].map(slot => ({
-				target: slot,
-			}));
-
-			if (records.length > 0) {
-				this.callback(records);
+			else if (isTargetSlot) {
+				let mutation = slotsChanged.get(r.target) ?? {};
+				mutation.fallback = true;
+				slotsChanged.set(r.target, mutation);
 			}
 		}
-	}
 
-	disconnect () {
-		let records = this.constructor.mutationObserver.takeRecords();
-
-		if (records.length > 0) {
-			this.callback(records);
+		if (slotsChanged.size > 0) {
+			let records = slotsChanged.entries().map(([target, mutation]) => ({ target, ...mutation }));
+			super.callback(records, that);
 		}
-
-		this.constructor.mutationObserver.disconnect();
 	}
 }
