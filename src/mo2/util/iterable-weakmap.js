@@ -58,9 +58,8 @@ export default class IterableWeakMap extends Map {
 			}
 		}
 
-		for (const key of deadRefs) {
-			super.delete(key);
-			weakRefs.delete(key);
+		for (const ref of deadRefs) {
+			super.delete(ref);
 		}
 	}
 
