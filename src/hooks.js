@@ -79,7 +79,9 @@ export default class Hooks {
 
 		this.parent?.run(name, env);
 
+		let baseName = name;
 		if (name.startsWith("first_")) {
+			baseName = name.slice(6);
 			this.hooks.get(name)?.runOnce(env);
 		}
 		else {
@@ -87,7 +89,7 @@ export default class Hooks {
 			this.hooks.get(name)?.run(env);
 		}
 
-		if (name !== "*" && name !== "first_*") {
+		if (baseName !== "*") {
 			this.run("*", {hookName: name, ...env});
 		}
 	}
