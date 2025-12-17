@@ -22,17 +22,17 @@ export function addPlugin (Class, plugin) {
 
 	let plugins = Class.symbols ? Class.symbols.plugins : "pluginsInstalled";
 
-	if (!Object.hasOwn(Class, plugins)) {
-		Class[plugins] = new Set();
-	}
-
-	Class[plugins].add(plugin);
-
 	if (plugin.dependencies) {
 		for (let dependency of plugin.dependencies) {
 			addPlugin(Class, dependency);
 		}
 	}
+
+	if (!Object.hasOwn(Class, plugins)) {
+		Class[plugins] = new Set();
+	}
+
+	Class[plugins].add(plugin);
 
 	if (plugin.provides) {
 		extend(Class.prototype, plugin.provides);
