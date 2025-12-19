@@ -2,13 +2,8 @@
  * Base class for all elements
  */
 
-import { defineLazyProperty } from "./util/lazy.js";
-import { getSuper } from "./util/super.js";
-import Hooks from "./hooks.js";
-import { hasPlugin, addPlugin } from "./plugins.js";
 import symbols from "./util/symbols.js";
-
-const { initialized } = symbols.new;
+import makeExtensible from "./extensible.js"
 
 export default class NudeElement extends HTMLElement {
 	constructor () {
@@ -41,63 +36,7 @@ export default class NudeElement extends HTMLElement {
 
 	static symbols = symbols.known;
 
-	static hooks = new Hooks();
 	static {
-		defineLazyProperty(this, "hooks", {
-			value: this.hooks,
-			get (hooks) {
-				let ret = new Hooks(hooks);
-				ret.parent = this.super?.hooks;
-				return ret;
-			},
-			configurable: true,
-			writable: true,
-		});
-	}
-
-	/**
-	 * Like super, but dynamic
-	 */
-	get super () {
-		return getSuper(this);
-	}
-
-	/**
-	 * Like super, but dynamic
-	 */
-	static get super () {
-		return getSuper(this);
-	}
-
-	/** Plugins to install */
-	static plugins = [];
-
-	static hasPlugin (plugin) {
-		return hasPlugin(this, plugin);
-	}
-
-	static addPlugin (plugin) {
-		addPlugin(this, plugin);
-	}
-
-	/**
-	 * Code initializing the class that needs to be called as soon as possible after class definition
-	 * And needs to be called separately per subclass
-	 * @returns {void}
-	 */
-	static setup () {
-		if (Object.hasOwn(this, initialized)) {
-			return;
-		}
-
-		this.super?.setup?.();
-
-		for (let plugin of this.plugins) {
-			this.addPlugin(plugin);
-		}
-
-		this.hooks.run("setup", this);
-
-		this[initialized] = true;
+		makeExtensible(this);
 	}
 }

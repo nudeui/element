@@ -24,6 +24,8 @@ export function getSupers (Class, FromClass) {
  * @returns {Function | null} The superclass of the object, or null if no superclass exists.
  */
 export function getSuper (obj) {
+	obj ??= this;
+
 	let Super = Object.getPrototypeOf(obj);
 
 	if (Super === Function.prototype) {
