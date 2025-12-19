@@ -25,7 +25,7 @@ export default function makeExtensible (Class) {
 
 	Object.defineProperty(Class, "plugins", {
 		get () {
-			if (!Object.hasOwn(this, hooks)) {
+			if (!Object.hasOwn(this, plugins)) {
 				this[plugins] = [];
 			}
 
