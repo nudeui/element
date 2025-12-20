@@ -1,3 +1,18 @@
+/**
+ * @typedef Plugin
+ * @type {object}
+ * @property {object} [provides] - Methods to add to the class prototype
+ * @property {object} [providesStatic] - Methods to add to the class itself
+ * @property {object} [hooks] - Hooks to add to the class
+ * @property {Plugin[]} [dependencies] - Plugins that this plugin depends on
+ */
+
+/**
+ * Check if a plugin is installed on a class
+ * @param {FunctionConstructor} Class
+ * @param {Plugin} plugin
+ * @returns {boolean}
+ */
 export function hasPlugin (Class, plugin) {
 	let Super = Object.getPrototypeOf(Class);
 
@@ -15,6 +30,12 @@ export function hasPlugin (Class, plugin) {
 	return Class[plugins].has(plugin);
 }
 
+/**
+ * Add a plugin to a class
+ * @param {FunctionConstructor} Class
+ * @param {Plugin} plugin
+ * @returns {void}
+ */
 export function addPlugin (Class, plugin) {
 	if (hasPlugin(Class, plugin)) {
 		return;
