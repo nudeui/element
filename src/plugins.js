@@ -43,8 +43,6 @@ export function addPlugin (Class, plugin) {
 	}
 
 	Class.hooks.add(plugin.hooks);
-
-	plugin.setup?.call(Class);
 }
 
 /**
