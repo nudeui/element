@@ -48,7 +48,12 @@ export default class SlotController {
 		return this.host[shadowRoot] ?? this.host.shadowRoot;
 	}
 
-	update (slotName) {
+	/**
+	 * Update the slot reference
+	 * @param {string} slotName
+	 * @returns {HTMLSlotElement | null} The slot, or null if the slot is not found
+	 */
+	update (slotName = "") {
 		if (slotName === "$default") {
 			slotName = "";
 		}
@@ -58,6 +63,11 @@ export default class SlotController {
 		return this[slotName];
 	}
 
+	/**
+	 * Get a slot by name
+	 * @param {string} slotName
+	 * @returns {HTMLSlotElement | null} The slot, or null if the slot is not found
+	 */
 	get (slotName) {
 		return this[slotName] ?? this.update(slotName);
 	}
