@@ -54,7 +54,16 @@ export const hooks = {
 	slots_changed (records) {
 		for (let r of records) {
 			let slot = r.target;
-			// TODO
+
+			// Get any children explicitly assigned to this slot by name
+			let assignedElements = this.querySelectorAll(`:scope > [slot="${slot.name}"]`);
+			for (let element of assignedElements) {
+				this[slots].assign(element);
+			}
+
+			// TODO what about the default slot?
+			// How do we make sure we're not undoing any custom logic,
+			// such as that by [data-assign]?
 		}
 	}
 };
