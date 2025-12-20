@@ -8,7 +8,7 @@ import { hasPlugin, addPlugin } from "./plugins.js";
 import { getSuper } from "./util/super.js";
 import symbols from "./util/symbols.js";
 
-const {hooks, plugins, initialized} = symbols.new;
+const { hooks, plugins } = symbols.new;
 
 export const provides = {
 	/**
@@ -57,25 +57,16 @@ export const providesStatic = {
 	addPlugin (plugin) {
 		return addPlugin(this, plugin);
 	},
+
 	/**
 	 * Code initializing the class that needs to be called as soon as possible after class definition
 	 * And needs to be called separately per subclass
 	 * @returns {void}
 	 */
 	setup () {
-		if (Object.hasOwn(this, initialized)) {
-			return;
+		if (!this.hooks.hasRun("setup")) {
+			this.hooks.run("setup", this);
 		}
-
-		this.super?.setup?.();
-
-		for (let plugin of this.plugins) {
-			this.addPlugin(plugin);
-		}
-
-		this.hooks.run("setup", this);
-
-		this[initialized] = true;
 	},
 };
 
