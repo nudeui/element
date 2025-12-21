@@ -5,7 +5,8 @@
  */
 
 export * from "./index-fn.js";
-import { getElement, commonPlugins } from "./index-fn.js";
+import { getElement, commonPlugins, Element as NudeElement } from "./index-fn.js";
+export { NudeElement };
 
 const Element = getElement(HTMLElement, commonPlugins);
 Element.setup();

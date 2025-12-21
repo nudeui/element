@@ -39,7 +39,9 @@ Plugins also include other plugins as dependencies.
 
 ## Usage
 
-Defining your element as a subclass of `NudeElement` gives you the nicest, most declarative syntax.
+### Using the default export
+
+Defining your element as a subclass of the default export gives you the nicest, most declarative syntax and automatically includes common plugins.
 
 ```js
 import NudeElement from "nude-element";
@@ -119,8 +121,10 @@ There are certain static properties that relevant plugins expect on the element 
 | `cssProperties` | Custom properties that the element reads or exposes (TODO) |
 | `formBehavior` | Parameters for form associated behavior |
 
-These can be either regular properties (e.g. `MyElement.props`) or known symbols for when that is not an option.
 This makes it trivial to generate documentation for the element, or even to build generic tooling around it.
+
+You _can_ still use Nude Element plugins without defining such static properties,
+but you may need to do some manual plumbing to get the plugins to work.
 
 ### Known symbols
 
@@ -135,17 +139,72 @@ const { props, events, slots, internals } = symbols.known;
 ```
 
 Note that any symbols you destructure that have not already been defined, will be created on the fly.
+This ensures that this is not affected by timing effects: you can get these symbols before any plugins get them and they'd still be the correct symbols.
+
+### Customizing which plugins are included
+
+You can always include additional plugins by calling `Element.addPlugin(plugin)` or `Element.addPlugins(plugins)`.
+To include *fewer* plugins, you can use the `NudeElement` export (or the default export from `nude-element/fn`) which includes no plugins by default:
+
+```js
+import { NudeElement, props, events } from "nude-element";
+
+class MyElement extends NudeElement {
+	// ...
+
+	static plugins = [props, events];
+
+	static {
+		this.setup();
+	}
+}
+```
 
 ## Using Nude Element plugins on your own base class
 
 If Nude Element taking over your parent class seems too intrusive,
-you can implement the same API via one-off composable plugins,
-at the cost of handling some of the plumbing yourself.
+or if you already have a base class you want to extend,
+you can still use Nude Element,
+at the cost of potentially handling some of the plumbing yourself.
 
-To use the plugins directly on your own base class you need to:
-- Include a static `hooks` instance and run its hooks at the appropriate times
-- Use `addPlugin()` to install the plugins
+### Using the mixin class
 
+If all you need is a different superclass (e.g. `LitElement`), you can use `NudeElement` as a mixin, by importing `getElement` and calling it with your desired superclass and plugins:
+
+```js
+import { getElement, commonPlugins } from "nude-element";
+import LitElement from "lit-element";
+
+export default getElement(LitElement, commonPlugins);
+```
+
+### Making any base class extensible
+
+```js
+import { makeExtensible } from "nude-element";
+
+class MyElement extends HTMLElement {
+	static {
+		makeExtensible(this);
+	}
+}
+```
+
+Note that this will not call the right hooks at the right times (`constructed`, `connected`, etc.) so it is not enough to make plugins work.
+Either you need to call them yourself,
+or install the `elementMembers` too:
+
+
+```js
+import { makeExtensible, elementMembers, addPlugin } from "nude-element";
+
+class MyElement extends HTMLElement {
+	static {
+		makeExtensible(this);
+		addPlugin(this, elementMembers);
+	}
+}
+```
 
 ### Known Hooks
 
