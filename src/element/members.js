@@ -1,5 +1,3 @@
-import symbols from "../util/symbols.js";
-
 export const provides = {
 	constructed () {
 		this.constructor.setup(); // Last resort
@@ -26,10 +24,6 @@ export const provides = {
 	disconnectedCallback () {
 		this.constructor.hooks.run("disconnected", this);
 	},
-};
-
-export const providesStatic = {
-	symbols: symbols.known,
 };
 
 export default { provides, providesStatic };

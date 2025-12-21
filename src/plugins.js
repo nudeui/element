@@ -7,6 +7,8 @@
  * @property {Plugin[]} [dependencies] - Plugins that this plugin depends on
  */
 
+import symbols from "./util/symbols.js";
+
 /**
  * Check if a plugin is installed on a class
  * @param {FunctionConstructor} Class
@@ -20,7 +22,7 @@ export function hasPlugin (Class, plugin) {
 		return true;
 	}
 
-	let plugins = Class.symbols ? Class.symbols.plugins : "pluginsInstalled";
+	let plugins = Class.symbols?.plugins ?? symbols.known.plugins;
 
 	if (!Object.hasOwn(Class, plugins)) {
 		// No plugins installed
@@ -41,7 +43,7 @@ export function addPlugin (Class, plugin) {
 		return;
 	}
 
-	let plugins = Class.symbols ? Class.symbols.plugins : "pluginsInstalled";
+	let plugins = Class.symbols?.plugins ?? symbols.known.plugins;
 
 	if (plugin.dependencies) {
 		for (let dependency of plugin.dependencies) {
