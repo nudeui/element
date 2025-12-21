@@ -19,15 +19,16 @@ export const hooks = {
 export const providesStatic = {
 	formAssociated: true,
 
-	defineFormBehavior (def = this[formBehavior] ?? this.formBehavior) {
+	defineFormBehavior (def = this.formBehavior) {
 		if (!def) {
 			return;
 		}
 
+		this[formBehavior] ??= {};
+
 		const env = {context: this, formBehavior: def};
 		this.hooks.run("define-form-behavior", env);
 
-		this[formBehavior] ??= {};
 		Object.assign(this[formBehavior], env.formBehavior);
 	},
 };

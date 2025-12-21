@@ -11,11 +11,13 @@ export const hooks = {
 };
 
 export const providesStatic = {
-	defineEvents (def = this[events] ?? this.events) {
+	defineEvents (def = this.events) {
 		this[events] ??= {};
-		Object.assign(this[events], def);
 
-		this.hooks.run("define-events", {context: this, events: def});
+		let env = {context: this, events: def};
+		this.hooks.run("define-events", env);
+
+		Object.assign(this[events], env.events);
 	},
 };
 

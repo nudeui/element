@@ -36,7 +36,7 @@ export const hooks = {
 };
 
 export const providesStatic = {
-	defineElements (def = this[elements] ?? this.elements) {
+	defineElements (def = this.elements) {
 		if (!def) {
 			return;
 		}
