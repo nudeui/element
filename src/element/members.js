@@ -26,4 +26,4 @@ export const provides = {
 	},
 };
 
-export default { provides, providesStatic };
+export default { provides };
