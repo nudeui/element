@@ -27,7 +27,7 @@ export const providesStatic = {
 		return getSuper(this);
 	},
 
-	get () {
+	get hooks () {
 		if (!Object.hasOwn(this, hooks)) {
 			this[hooks] = new Hooks();
 			this[hooks].parent = this.super?.hooks;
