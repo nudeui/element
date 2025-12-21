@@ -2,9 +2,7 @@
  * Retarget events from internal elements to the host
  */
 
-import { resolveValue } from "../util.js";
-import { pick } from "../util/pick.js";
-
+import { resolveValue, pick } from "./util.js";
 import base, { events } from "./base.js";
 
 export const dependencies = [base];

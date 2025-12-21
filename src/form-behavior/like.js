@@ -1,5 +1,5 @@
 import symbols from "../plugins/symbols.js";
-import { resolveValue } from "../util.js";
+import { resolveValue } from "../util/resolve-value.js";
 import { getRole } from "./role.js";
 import base, { formBehavior } from "./base.js";
 
