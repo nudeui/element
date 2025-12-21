@@ -8,6 +8,12 @@ export const hooks = {
 	constructed () {
 		this[slots] = SlotController.create(this);
 	},
+
+	setup () {
+		if (this.slots) {
+			this.defineSlots();
+		}
+	},
 };
 
 export const providesStatic = {

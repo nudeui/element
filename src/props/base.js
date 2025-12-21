@@ -3,7 +3,7 @@ import { defineLazyProperty, symbols } from "../plugins/index.js";
 
 let { props } = symbols.known;
 
-function first_constructor_static () {
+function setup () {
 	// TODO how does this work if attributeChangedCallback is inherited?
 	let _attributeChangedCallback = this.prototype.attributeChangedCallback;
 	this.prototype.attributeChangedCallback = function (name, oldValue, value) {
@@ -31,7 +31,7 @@ export const hooks = {
 		}
 	},
 
-	first_constructor_static,
+	setup,
 
 	first_connected () {
 		this.constructor.props.initializeFor(this);

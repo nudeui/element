@@ -3,7 +3,7 @@ import symbols from "../plugins/symbols.js";
 export const { events } = symbols.known;
 
 export const hooks = {
-	first_constructor_static () {
+	setup () {
 		if (this.events) {
 			this.defineEvents();
 		}

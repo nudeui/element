@@ -9,7 +9,7 @@ export const dependencies = [internalsPlugin];
 export const { formBehavior } = symbols.known;
 
 export const hooks = {
-	firstConstructorStatic () {
+	setup () {
 		if (this.formBehavior) {
 			this.defineFormBehavior();
 		}
