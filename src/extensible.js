@@ -35,7 +35,7 @@ export const providesStatic = {
 
 		return this[hooks];
 	},
-	set (value) {
+	set hooks (value) {
 		this[hooks] = value;
 	},
 
