@@ -64,7 +64,13 @@ export const providesStatic = {
 	 * @returns {void}
 	 */
 	setup () {
+		// TODO what about plugins that were added after setup was called?
 		if (!this.hooks.hasRun("setup")) {
+			// Install any plugins in Class.plugins
+			for (let plugin of this.plugins) {
+				addPlugin(this, plugin);
+			}
+
 			this.hooks.run("setup", this);
 		}
 	},
