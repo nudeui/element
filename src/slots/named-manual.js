@@ -28,7 +28,7 @@ export const slottedObserver = new MutationObserver(records => {
 
 export const hooks = {
 	connected () {
-		if (this[slots]?.shadowRoot?.slotAssignment !== "manual") {
+		if (!this[slots]?.isManual) {
 			// Nothing to do here
 			return;
 		}
@@ -56,16 +56,19 @@ export const hooks = {
 			let slot = r.target;
 
 			// Get any children explicitly assigned to this slot by name
+			// TODO should we just assume that an explicit [slot] trumps everything or should we use `getSlotFor()`?
 			let assignedElements = this.querySelectorAll(`:scope > [slot="${slot.name}"]`);
 			for (let element of assignedElements) {
 				this[slots].assign(element);
 			}
-
-			// TODO what about the default slot?
-			// How do we make sure we're not undoing any custom logic,
-			// such as that by [data-assign]?
 		}
-	}
+	},
+
+	get_slot_for ({ child }) {
+		if (child.hasAttribute("slot")) {
+			return child.getAttribute("slot");
+		}
+	},
 };
 
 export default { dependencies, hooks };

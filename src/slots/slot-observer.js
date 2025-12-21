@@ -21,12 +21,16 @@ export default class SlotObserver extends MutationObserver2 {
 			moOptions.attributes = true;
 			moOptions.attributeFilter = ["name"];
 		}
+
 		if (options.addRemove) {
 			moOptions.childList = true;
 			moOptions.subtree = options.subtree !== false;
 		}
 
-		return super.observe(target, moOptions);
+		let env = { context: this, target, options, moOptions };
+		this.constructor.hooks.run("observe", env);
+
+		return super.observe(env.target, env.moOptions);
 	}
 
 	static callback (records, that) {

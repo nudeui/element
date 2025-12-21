@@ -48,6 +48,19 @@ export default class SlotController {
 		return this.host[shadowRoot] ?? this.host.shadowRoot;
 	}
 
+	get isManual () {
+		return this.shadowRoot.slotAssignment === "manual";
+	}
+
+	getSlotFor (child) {
+		if (!this.isManual) {
+			// This is pointless in automatic slot assignment
+			return;
+		}
+
+		this.host.constructor.hooks.run("get-slot-for", { context: this.host, child });
+	}
+
 	/**
 	 * Update the slot reference
 	 * @param {string} slotName
