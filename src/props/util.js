@@ -1,3 +1,5 @@
+export * from "../util/resolve-value.js";
+
 /**
  * Extract a list of property names from static `this.propertyName` in a function
  * @param {function} fn

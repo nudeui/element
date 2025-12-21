@@ -1,6 +1,4 @@
-import { resolveValue } from "../util.js";
-import { inferDependencies } from "./util.js";
-
+import { inferDependencies, resolveValue } from "./util.js";
 import * as types from "./types.js";
 
 let Self = class Prop {

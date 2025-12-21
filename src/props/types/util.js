@@ -1,3 +1,5 @@
+export * from "../../util/resolve-value.js";
+
 export const defaultPairs = {
 	nest: {
 		"(": ")",

@@ -1,6 +1,5 @@
-import { resolveValue } from "../../util.js";
+import { resolveValue, split } from "./util.js";
 import { parse, stringify, equals } from "../types.js";
-import { split } from "./util.js";
 
 function parseEntries (
 	value,
