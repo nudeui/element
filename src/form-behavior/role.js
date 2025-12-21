@@ -1,4 +1,4 @@
-import symbols from "../util/symbols.js";
+import symbols from "../plugins/symbols.js";
 
 const { defaultRole } = symbols.new;
 const { internals } = symbols.known;

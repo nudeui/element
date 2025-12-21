@@ -2,8 +2,8 @@
  * Extensible MutationObserver class
  */
 
-import makeExtensible from "../extensible.js";
-import { registry as symbolRegistry } from "../util/symbols.js";
+import makeExtensible from "../plugins/extensible.js";
+import { registry as symbolRegistry } from "../plugins/symbols.js";
 import IterableWeakMap from "./util/iterable-weakmap.js";
 
 export const symbols = symbolRegistry();

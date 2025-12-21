@@ -2,7 +2,7 @@
  * Mixin for adding shadow DOM styles
  */
 import { getSupers, adoptCSS, fetchCSS } from "./util.js";
-import symbols from "../util/symbols.js";
+import symbols from "../plugins/symbols.js";
 
 const { fetchedStyles } = symbols.new;
 

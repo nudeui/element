@@ -2,7 +2,7 @@
  * Slot controller
  * Per-element data structure for accessing and manipulating slots
  */
-import symbols from "../util/symbols.js";
+import symbols from "../plugins/symbols.js";
 
 export const { shadowRoot } = symbols.known;
 

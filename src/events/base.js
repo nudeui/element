@@ -1,5 +1,5 @@
 
-import symbols from "../util/symbols.js";
+import symbols from "../plugins/symbols.js";
 export const { events } = symbols.known;
 
 export const hooks = {

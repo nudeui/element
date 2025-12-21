@@ -1,4 +1,4 @@
-import Hooks from "../hooks.js";
+import Hooks from "../plugins/hooks.js";
 
 export default class Slots {
 	hooks = new Hooks();

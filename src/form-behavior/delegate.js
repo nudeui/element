@@ -2,7 +2,7 @@
  * Expose form-related ElementInternals properties on the host element
  */
 import { delegate } from "../util/delegate.js";
-import symbols from "../util/symbols.js";
+import symbols from "../plugins/symbols.js";
 import base, { formBehavior } from "./base.js";
 
 const { internals } = symbols.known;

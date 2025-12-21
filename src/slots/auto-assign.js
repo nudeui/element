@@ -5,7 +5,7 @@
  */
 
 import base, { slots } from "./base.js";
-import symbols from "../util/symbols.js";
+import symbols from "../plugins/symbols.js";
 import SlotObserver from "./slot-observer.js";
 
 SlotObserver.hooks.add("observe", function ({ moOptions }) {

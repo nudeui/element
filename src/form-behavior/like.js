@@ -1,4 +1,4 @@
-import symbols from "../util/symbols.js";
+import symbols from "../plugins/symbols.js";
 import { resolveValue } from "../util.js";
 import { getRole } from "./role.js";
 import base, { formBehavior } from "./base.js";

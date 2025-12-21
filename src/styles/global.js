@@ -2,7 +2,7 @@
  * Mixin for adding light DOM styles
  */
 import { getSupers, adoptCSS, fetchCSS } from "./util.js";
-import symbols from "../util/symbols.js";
+import symbols from "../plugins/symbols.js";
 
 const { fetchedGlobalStyles, roots } = symbols.new;
 

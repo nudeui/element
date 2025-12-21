@@ -7,7 +7,7 @@
  * @property {Plugin[]} [dependencies] - Plugins that this plugin depends on
  */
 
-import symbols from "./util/symbols.js";
+import symbols from "./symbols.js";
 
 /**
  * Check if a plugin is installed on a class

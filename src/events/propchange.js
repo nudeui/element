@@ -3,7 +3,7 @@
  * Events that fire when a specific prop changes
  */
 
-import symbols from "../util/symbols.js";
+import symbols from "../plugins/symbols.js";
 import base, { events } from "./base.js";
 
 const { propchange } = symbols.new;

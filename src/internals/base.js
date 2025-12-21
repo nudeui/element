@@ -2,8 +2,7 @@
  * Provide access to element internals through a symbol property
  */
 
-import symbols from "../util/symbols.js";
-import { defineLazyProperty } from "../util/lazy.js";
+import { defineLazyProperty, symbols } from "../plugins/index.js";
 
 const { internals } = symbols.known;
 const _attachInternals = HTMLElement.prototype.attachInternals;

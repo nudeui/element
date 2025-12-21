@@ -2,8 +2,7 @@
  * Provide access to an element's shadow root through a symbol property (even when it’s closed)
  */
 
-import symbols from "../util/symbols.js";
-import { defineLazyProperty } from "../util/lazy.js";
+import { defineLazyProperty, symbols } from "../plugins/index.js";
 
 const { shadowRoot, shadowRootOptions } = symbols.known;
 const _attachShadow = HTMLElement.prototype.attachShadow;

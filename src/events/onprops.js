@@ -4,7 +4,8 @@
  */
 import propsPlugin from "../props/base.js";
 import base from "./base.js";
-import symbols from "../util/symbols.js";
+import symbols from "../plugins/symbols.js";
+
 const { eventProps } = symbols.new;
 
 export const dependencies = [propsPlugin, base];

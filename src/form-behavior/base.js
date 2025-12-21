@@ -1,6 +1,6 @@
 
 
-import symbols from "../util/symbols.js";
+import symbols from "../plugins/symbols.js";
 
 import internalsPlugin from "../internals/base.js";
 

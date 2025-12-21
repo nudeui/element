@@ -3,8 +3,7 @@
  * TODO update references when DOM changes
  */
 
-import symbols from "../util/symbols.js";
-import { defineLazyProperty } from "../util/lazy.js";
+import { defineLazyProperty, symbols } from "../plugins/index.js";
 import shadowPlugin from "../shadow/base.js";
 
 const { shadowRoot, elements } = symbols.known;
