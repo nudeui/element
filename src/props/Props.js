@@ -198,19 +198,4 @@ export default class Props extends Map {
 			this.eventDispatchQueue.delete(element);
 		}
 	}
-
-	/**
-	 * Add a prop regardless of whether props have been processed or not yet
-	 * @param {Function} Class
-	 * @param {string} name
-	 * @param {object} spec
-	 */
-	static add (Class, name, spec) {
-		if (Class.props instanceof this) {
-			Class.props.add(name, spec);
-		}
-		else {
-			Class.props[name] = spec;
-		}
-	}
 }
