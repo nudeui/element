@@ -4,10 +4,9 @@
  * @modifies {Element}
  */
 
-import { Element, commonPlugins } from "./index-fn.js";
-
-Element.plugins.push(...commonPlugins);
-Element.setup();
-
 export * from "./index-fn.js";
+import { getElement, commonPlugins } from "./index-fn.js";
+
+const Element = getElement(HTMLElement, commonPlugins);
+Element.setup();
 export default Element;

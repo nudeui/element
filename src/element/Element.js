@@ -1,5 +1,6 @@
 /**
- * Base class for all elements
+ * NudeElement base class with no plugins
+ * Why not just use mixin.js and do export default getElement()? For better stack traces when debugging.
  */
 
 import { symbols, addPlugin, makeExtensible } from "../plugins/index.js";

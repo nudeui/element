@@ -68,12 +68,20 @@ export function addPlugin (Class, plugin) {
 	Class.hooks.add(plugin.hooks);
 }
 
+export function addPlugins (Class, plugins) {
+	for (let plugin of plugins) {
+		addPlugin(Class, plugin);
+	}
+}
+
 /**
  * Extend an object with the properties of another object
  * @param {Object} base
  * @param {Object} plugin
  */
 function extend (base, plugin) {
+	// TODO how to handle conflicts?
+	// TODO handle data properties separately?
 	let descriptors = Object.getOwnPropertyDescriptors(plugin);
 	Object.defineProperties(base, descriptors);
 }
