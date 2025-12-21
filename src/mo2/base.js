@@ -2,7 +2,7 @@
  * Extensible MutationObserver class
  */
 
-import Hooks from "../hooks.js";
+import makeExtensible from "../extensible.js";
 import { registry as symbolRegistry } from "../util/symbols.js";
 import IterableWeakMap from "./util/iterable-weakmap.js";
 
@@ -17,7 +17,9 @@ export default class MutationObserver2 extends MutationObserver {
 	/** @type {WeakMap<Node, MutationObserverInit>} */
 	observations = new IterableWeakMap();
 
-	static hooks = new Hooks();
+	static {
+		makeExtensible(this);
+	}
 
 	constructor (callback) {
 		super(new.target.callback);
