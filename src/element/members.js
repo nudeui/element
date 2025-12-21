@@ -1,14 +1,7 @@
-/**
- * Base class for all elements
- */
+import symbols from "../util/symbols.js";
 
-import symbols from "./util/symbols.js";
-import makeExtensible from "./extensible.js"
-
-export default class NudeElement extends HTMLElement {
-	constructor () {
-		super();
-
+export const provides = {
+	constructed () {
 		this.constructor.setup(); // Last resort
 		this.constructor.hooks.run("constructor-static", this.constructor);
 		this.constructor.hooks.run("constructor", this);
@@ -19,7 +12,7 @@ export default class NudeElement extends HTMLElement {
 				this.constructor.hooks.run("constructed", this);
 			}
 		});
-	}
+	},
 
 	connectedCallback () {
 		if (!this.constructor.hooks.hasRun("constructed")) {
@@ -28,15 +21,15 @@ export default class NudeElement extends HTMLElement {
 		}
 
 		this.constructor.hooks.run("connected", this);
-	}
+	},
 
 	disconnectedCallback () {
 		this.constructor.hooks.run("disconnected", this);
-	}
+	},
+};
 
-	static symbols = symbols.known;
+export const providesStatic = {
+	symbols: symbols.known,
+};
 
-	static {
-		makeExtensible(this);
-	}
-}
+export default { provides, providesStatic };

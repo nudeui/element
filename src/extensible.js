@@ -78,3 +78,5 @@ export default function makeExtensible (Class) {
 
 // This means the default export is also a plugin
 Object.assign(makeExtensible, plugin);
+
+export { hasPlugin, addPlugin };

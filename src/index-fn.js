@@ -2,7 +2,7 @@
  * Main entry point
  * when tree-shaking and no side effects are desired
  */
-export { default as Element } from "./Element.js";
+export { default as Element } from "./element/Element.js";
 export * from "./common-plugins.js";
 export { default as commonPlugins } from "./common-plugins.js";
 export { default as Hooks } from "./hooks.js";
