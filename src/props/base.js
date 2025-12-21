@@ -1,20 +1,20 @@
 import Props from "./Props.js";
 import { defineLazyProperty, symbols } from "../plugins/index.js";
 
-let { props } = symbols.known;
+export const { props } = symbols.known;
 
 function setup () {
 	// TODO how does this work if attributeChangedCallback is inherited?
 	let _attributeChangedCallback = this.prototype.attributeChangedCallback;
 	this.prototype.attributeChangedCallback = function (name, oldValue, value) {
-		this.constructor.props.attributeChanged(this, name, oldValue, value);
+		this.constructor[props].attributeChanged(this, name, oldValue, value);
 		_attributeChangedCallback?.call(this, name, oldValue, value);
 	};
 
 	// FIXME how to combine with existing observedAttributes?
 	if (!Object.hasOwn(this, "observedAttributes")) {
 		Object.defineProperty(this, "observedAttributes", {
-			get: () => this.props.observedAttributes,
+			get: () => this[props].observedAttributes,
 			configurable: true,
 		});
 	}
@@ -26,7 +26,7 @@ function setup () {
 
 export const hooks = {
 	constructor () {
-		if (this.propChangedCallback && this.constructor.props) {
+		if (this.propChangedCallback && this.constructor[props]) {
 			this.addEventListener("propchange", this.propChangedCallback);
 		}
 	},
@@ -34,14 +34,14 @@ export const hooks = {
 	setup,
 
 	first_connected () {
-		this.constructor.props.initializeFor(this);
+		this.constructor[props].initializeFor(this);
 	},
 };
 
 export const provides = {
 	// ...composed({
 	// 	attributeChangedCallback (name, oldValue, value) {
-	// 		this.constructor.props.attributeChanged(this, name, oldValue, value);
+	// 		this.constructor[props].attributeChanged(this, name, oldValue, value);
 	// 	},
 	// }),
 };
@@ -65,27 +65,23 @@ defineLazyProperty(provides, "ignoredAttributes", {
 });
 
 export const providesStatic = {
-	defineProps (def = this[props] ?? this.props) {
+	defineProps (def = this.props) {
 		if (def instanceof Props && def.Class === this) {
 			// Already defined
 			return null;
 		}
 
-		// TODO move to symbol for Props object too?
-		if (this.props instanceof Props) {
-			// Props already defined, add these props to it
-			this.props.add(def);
-			return;
-		}
+		this[props] ??= new Props(this);
 
-		// First time defining props
-		this[props] = this.props;
-		this.props = new Props(this, def);
+		let env = {context: this, props: def};
+		this.hooks.run("define-props", env);
+
+		this[props].add(env.props);
 	},
 
 	// ...composed({
 	// 	get observedAttributes () {
-	// 		let thisProps = this.props.observedAttributes ?? [];
+	// 		let thisProps = this[props].observedAttributes ?? [];
 	// 		let superProps = this.super?.observedAttributes ?? [];
 	// 		return [...superProps, ...thisProps];
 	// 	},

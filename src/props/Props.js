@@ -2,6 +2,8 @@ import { sortObject } from "./util.js";
 import Prop from "./Prop.js";
 import PropChangeEvent from "./PropChangeEvent.js";
 
+import { props } from "../base.js";
+
 export default class Props extends Map {
 	/**
 	 * Dependency graph
@@ -13,15 +15,17 @@ export default class Props extends Map {
 	/**
 	 *
 	 * @param {HTMLElement} Class The class to define props for
-	 * @param {Object} [props=Class.props] The props to define as an object with the prop name as the key and the prop spec as the value.
+	 * @param {Object} [props] The props to define as an object with the prop name as the key and the prop spec as the value.
 	 */
-	constructor (Class, props = Class.props) {
-		super(Object.entries(props));
+	constructor (Class, props) {
+		super();
 
 		this.Class = Class;
 
 		// Define getters and setters for each prop
-		this.add(props);
+		if (props) {
+			this.add(props);
+		}
 	}
 
 	get observedAttributes () {
