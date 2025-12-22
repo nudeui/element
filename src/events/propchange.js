@@ -5,6 +5,7 @@
 
 import symbols from "../plugins/symbols.js";
 import base, { events } from "./base.js";
+import { props } from "../props/base.js";
 
 const { propchange } = symbols.new;
 
@@ -26,7 +27,7 @@ export const hooks = {
 
 			for (let eventName in this[propchange]) {
 				let propName = this[propchange][eventName];
-				let prop = this.props.get(propName);
+				let prop = this[props].get(propName);
 
 				if (prop) {
 					(prop.eventNames ??= []).push(eventName);
@@ -45,9 +46,9 @@ export const hooks = {
 			let value = this[propName];
 
 			if (value !== undefined) {
-				this.constructor.props.firePropChangeEvent(this, eventName, {
+				this.constructor[props].firePropChangeEvent(this, eventName, {
 					name: propName,
-					prop: this.constructor.props.get(propName),
+					prop: this.constructor[props].get(propName),
 				});
 			}
 		}

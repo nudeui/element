@@ -2,8 +2,6 @@ import { sortObject } from "./util.js";
 import Prop from "./Prop.js";
 import PropChangeEvent from "./PropChangeEvent.js";
 
-import { props } from "../base.js";
-
 export default class Props extends Map {
 	/**
 	 * Dependency graph

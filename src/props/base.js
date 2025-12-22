@@ -3,7 +3,7 @@ import { defineLazyProperty, symbols } from "../plugins/index.js";
 
 export const { props } = symbols.known;
 
-function setup () {
+function first_constructor_static () {
 	// TODO how does this work if attributeChangedCallback is inherited?
 	let _attributeChangedCallback = this.prototype.attributeChangedCallback;
 	this.prototype.attributeChangedCallback = function (name, oldValue, value) {
@@ -18,20 +18,22 @@ function setup () {
 			configurable: true,
 		});
 	}
-
-	if (this.props) {
-		this.defineProps();
-	}
 }
 
 export const hooks = {
+	setup () {
+		if (this.props) {
+			this.defineProps();
+		}
+	},
+
 	constructor () {
 		if (this.propChangedCallback && this.constructor[props]) {
 			this.addEventListener("propchange", this.propChangedCallback);
 		}
 	},
 
-	setup,
+	first_constructor_static,
 
 	first_connected () {
 		this.constructor[props].initializeFor(this);
@@ -73,7 +75,7 @@ export const providesStatic = {
 
 		this[props] ??= new Props(this);
 
-		let env = {context: this, props: def};
+		let env = { context: this, props: def };
 		this.hooks.run("define-props", env);
 
 		this[props].add(env.props);
@@ -88,4 +90,4 @@ export const providesStatic = {
 	// }),
 };
 
-export default {hooks, provides, providesStatic};
+export default { hooks, provides, providesStatic };
