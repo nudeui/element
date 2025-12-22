@@ -1,8 +1,6 @@
 import { inferDependencies, resolveValue } from "./util.js";
 import * as types from "./types.js";
 
-import { props } from "../base.js";
-
 let Self = class Prop {
 	/**
 	 * @type {Props} props - The props object this prop belongs to
@@ -117,7 +115,7 @@ let Self = class Prop {
 			delete element[name]; // Deleting the data property will uncover the accessor
 			element[name] = value; // Invoking the accessor means the value doesn't skip parsing
 		}
-		else if (element[props][name] === undefined && !this.defaultProp) {
+		else if (element.props[name] === undefined && !this.defaultProp) {
 			// Is not set and its default is not another prop
 			this.changed(element, { source: "default", element });
 		}
@@ -150,11 +148,11 @@ let Self = class Prop {
 	}
 
 	get (element) {
-		let value = element[props][this.name];
+		let value = element.props[this.name];
 
 		if (value === undefined) {
 			this.update(element);
-			value = element[props][this.name];
+			value = element.props[this.name];
 		}
 
 		if (value === undefined || value === null) {
@@ -185,7 +183,7 @@ let Self = class Prop {
 	}
 
 	set (element, value, { source, name, oldValue } = {}) {
-		let oldInternalValue = element[props][this.name];
+		let oldInternalValue = element.props[this.name];
 
 		let attributeName = name;
 		let parsedValue;
@@ -210,7 +208,7 @@ let Self = class Prop {
 			return;
 		}
 
-		element[props][this.name] = parsedValue;
+		element.props[this.name] = parsedValue;
 
 		let change = {
 			element,
@@ -291,7 +289,7 @@ let Self = class Prop {
 	 * @param {*} element
 	 */
 	update (element, dependency) {
-		let oldValue = element[props][this.name];
+		let oldValue = element.props[this.name];
 
 		if (dependency === this.defaultProp) {
 			// We have no way of checking if the default prop has changed
@@ -322,7 +320,7 @@ let Self = class Prop {
 
 		return (
 			this.dependencies.has(prop.name) ||
-			(this.defaultProp === prop && element[props][this.name] === undefined)
+			(this.defaultProp === prop && element.props[this.name] === undefined)
 		);
 	}
 
