@@ -2,7 +2,7 @@
  * Provide access to element internals through a symbol property
  */
 
-import { defineLazyProperty, symbols, getSuper } from "../plugins/index.js";
+import { defineLazyProperty, symbols, getSuperMember } from "../plugins/index.js";
 
 const { internals } = symbols.known;
 
@@ -19,11 +19,14 @@ function getOwnValue (object, name) {
 
 export const provides = {
 	attachInternals () {
-		if (getOwnValue(this, internals)) {
-			return this[internals];
+		let existing = getOwnValue(this, internals);
+		if (existing !== undefined) {
+			return existing;
 		}
 
-		const _attachInternals = getSuper(this)?.attachInternals ?? HTMLElement.prototype.attachInternals;
+		// If the plugin is installed on a superclass, super.attachInternals will be the same function
+		// We want the attachInternals that sits above it
+		const _attachInternals = getSuperMember(this, "attachInternals")?.value;
 
 		if (_attachInternals === undefined) {
 			// Not supported

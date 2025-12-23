@@ -2,7 +2,7 @@
  * Provide access to an element's shadow root through a symbol property (even when it’s closed)
  */
 
-import { defineLazyProperty, symbols, getSuper } from "../plugins/index.js";
+import { defineLazyProperty, symbols, getSuperMember } from "../plugins/index.js";
 
 const { shadowRoot } = symbols.known;
 
@@ -18,15 +18,15 @@ function getOwnValue (object, name) {
 }
 
 export const provides = {
-	attachShadow (options = this.constructor.shadowRootOptions) {
-		if (getOwnValue(this, shadowRoot)) {
-			return this[shadowRoot];
-		}
-		if (getOwnValue(this, "shadowRoot")) {
-			return this.shadowRoot;
+	attachShadow (options) {
+		let existing = getOwnValue(this, shadowRoot) ?? getOwnValue(this, "shadowRoot");
+		if (existing) {
+			return existing;
 		}
 
-		const _attachShadow = getSuper(this)?.attachShadow ?? HTMLElement.prototype.attachShadow;
+		// If the plugin is installed on a superclass, super.attachShadow will be the same function
+		// We want the attachShadow that sits above it
+		const _attachShadow = getSuperMember(this, "attachShadow")?.value;
 
 		if (_attachShadow === undefined) {
 			// Not supported
