@@ -19,6 +19,8 @@ export function adoptCSS (style, root = globalThis.document) {
 		adoptedStyleSheets.set(root, rootAdoptedStyleSheets);
 	}
 
+	// FIXME do not adopt the same style multiple times
+	// currently we check by object equality, which is never true for strings
 	if (root.adoptedStyleSheets) {
 		let sheet = rootAdoptedStyleSheets.get(style);
 

@@ -3,19 +3,9 @@
  */
 
 import { defineLazyProperty, symbols, getSuperMember } from "../plugins/index.js";
+import { getOwnValue } from "../util/get-own-value.js";
 
 const { internals } = symbols.known;
-
-/**
- * Get the own value of a property (if one exists) without triggering any getters
- * @param {object} object
- * @param {string} name
- * @returns {any}
- */
-function getOwnValue (object, name) {
-	let descriptor = Object.getOwnPropertyDescriptor(object, name);
-	return descriptor?.value;
-}
 
 export const provides = {
 	attachInternals () {
