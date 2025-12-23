@@ -1,47 +1,37 @@
 /**
  * Mixin for adding light DOM styles
  */
-import { getSupers, adoptCSS, fetchCSS } from "./util.js";
+import { adoptCSS, fetchCSS, getAllValues } from "./util.js";
 import symbols from "../plugins/symbols.js";
 
-const { fetchedGlobalStyles, roots } = symbols.new;
+const { globalStyles, roots } = symbols.new;
 
 export const hooks = {
+	// Initiate fetching when the first element is constructed
 	first_constructor_static () {
 		if (!this.globalStyles) {
 			return;
 		}
 
-		let supers = getSupers(this, HTMLElement);
-		supers.push(this);
-		let Super;
+		this[roots] = new WeakSet();
 
-		for (let Class of supers) {
-			if (
-				Object.hasOwn(Class, "globalStyles") &&
-				!Object.hasOwn(Class, fetchedGlobalStyles)
-			) {
-				// Initiate fetching when the first element is constructed
-				let styles = (Class[fetchedGlobalStyles] = Array.isArray(Class.globalStyles)
-					? Class.globalStyles.slice()
-					: [Class.globalStyles]);
-				Class[roots] = new WeakSet();
-
-				for (let i = 0; i < styles.length; i++) {
-					styles[i] = fetchCSS(styles[i], Class.url);
-				}
-			}
+		if (Object.hasOwn(this, "globalStyles")) {
+			// Get fetched styles from this and all superclasses that define any
+			// We're doing a bit of duplicate work here, but that's ok because fetchCSS() caches results anyway
+			this[globalStyles] = getAllValues(this, "globalStyles").flat().map(localUrl => fetchCSS(localUrl, this.url));
 		}
 	},
 
 	async connected () {
 		let Self = this.constructor;
 
-		if (!Self[fetchedGlobalStyles]?.length) {
+		if (!Self[globalStyles]) {
 			return;
 		}
 
-		for (let css of Self[fetchedGlobalStyles]) {
+		let styles = Self[globalStyles];
+
+		for (let css of styles) {
 			if (css instanceof Promise) {
 				// Why not just await css anyway?
 				// Because this way if this is already fetched, we don’t need to wait for a microtask

@@ -1,53 +1,43 @@
 /**
  * Mixin for adding shadow DOM styles
  */
-import { getSupers, adoptCSS, fetchCSS } from "./util.js";
+import { getSupers, adoptCSS, fetchCSS, getAllValues } from "./util.js";
 import symbols from "../plugins/symbols.js";
 
-const { fetchedStyles } = symbols.new;
+const { shadowStyles } = symbols.new;
+const { shadowRoot } = symbols.known;
 
 export const hooks = {
+	// Initiate fetching when the first element is constructed
 	first_constructor_static () {
 		if (!this.styles) {
 			return;
 		}
 
-		let supers = getSupers(this, HTMLElement);
-		supers.push(this);
-
-		for (let Class of supers) {
-			if (Object.hasOwn(Class, "styles") && !Object.hasOwn(Class, fetchedStyles)) {
-				// Initiate fetching when the first element is constructed
-				let styles = (Class[fetchedStyles] = Array.isArray(Class.styles)
-					? Class.styles.slice()
-					: [Class.styles]);
-
-				for (let i = 0; i < styles.length; i++) {
-					styles[i] = fetchCSS(styles[i], Class.url);
-				}
-			}
+		if (Object.hasOwn(this, "styles")) {
+			// Get fetched styles from this and all superclasses that define any
+			// We're doing a bit of duplicate work here, but that's ok because fetchCSS() caches results anyway
+			this[shadowStyles] = getAllValues(this, "styles").flat().map(localUrl => fetchCSS(localUrl, this.url));
 		}
 	},
 
 	async first_connected () {
-		if (!this.shadowRoot) {
+		if (!this.shadowRoot && !this[shadowRoot]) {
 			return;
 		}
 
 		let Self = this.constructor;
-		let supers = getSupers(Self, HTMLElement);
-		supers.push(Self);
 
-		for (let Class of supers) {
-			if (Class[fetchedStyles]) {
-				for (let css of Class[fetchedStyles]) {
-					if (css instanceof Promise) {
-						css = await css;
-					}
+		if (!Self[shadowStyles]) {
+			return;
+		}
 
-					adoptCSS(css, this.shadowRoot);
-				}
+		for (let css of Self[shadowStyles]) {
+			if (css instanceof Promise) {
+				css = await css;
 			}
+
+			adoptCSS(css, this.shadowRoot);
 		}
 	},
 };
