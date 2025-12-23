@@ -10,10 +10,6 @@ const { shadowRoot } = symbols.known;
 export const hooks = {
 	// Initiate fetching when the first element is constructed
 	first_constructor_static () {
-		if (!this.styles) {
-			return;
-		}
-
 		if (Object.hasOwn(this, "styles")) {
 			// Get fetched styles from this and all superclasses that define any
 			// We're doing a bit of duplicate work here, but that's ok because fetchCSS() caches results anyway
