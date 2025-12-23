@@ -7,11 +7,24 @@ import { defineLazyProperty, symbols } from "../plugins/index.js";
 const { shadowRoot, shadowRootOptions } = symbols.known;
 const _attachShadow = HTMLElement.prototype.attachShadow;
 
+/**
+ * Get the own value of a property (if one exists) without triggering any getters
+ * @param {object} object
+ * @param {string} name
+ * @returns {any}
+ */
+function getOwnValue (object, name) {
+	let descriptor = Object.getOwnPropertyDescriptor(object, name);
+	return descriptor?.value;
+}
+
 export const provides = {
 	attachShadow (options = this.constructor[shadowRootOptions] ?? this.constructor.shadowRoot) {
-		let descriptor = Object.getOwnPropertyDescriptor(this, shadowRoot);
-		if (descriptor?.value) {
-			return descriptor.value;
+		if (getOwnValue(this, shadowRoot)) {
+			return this[shadowRoot];
+		}
+		if (getOwnValue(this, "shadowRoot")) {
+			return this.shadowRoot;
 		}
 
 		if (_attachShadow === undefined) {

@@ -7,11 +7,21 @@ import { defineLazyProperty, symbols } from "../plugins/index.js";
 const { internals } = symbols.known;
 const _attachInternals = HTMLElement.prototype.attachInternals;
 
+/**
+ * Get the own value of a property (if one exists) without triggering any getters
+ * @param {object} object
+ * @param {string} name
+ * @returns {any}
+ */
+function getOwnValue (object, name) {
+	let descriptor = Object.getOwnPropertyDescriptor(object, name);
+	return descriptor?.value;
+}
+
 export const provides = {
 	attachInternals () {
-		let descriptor = Object.getOwnPropertyDescriptor(this, internals);
-		if (descriptor?.value) {
-			return descriptor.value;
+		if (getOwnValue(this, internals)) {
+			return this[internals];
 		}
 
 		if (_attachInternals === undefined) {
