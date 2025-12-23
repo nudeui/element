@@ -4,7 +4,7 @@
 
 import { defineLazyProperty, symbols, getSuper } from "../plugins/index.js";
 
-const { shadowRoot, shadowRootOptions } = symbols.known;
+const { shadowRoot } = symbols.known;
 
 /**
  * Get the own value of a property (if one exists) without triggering any getters
@@ -18,7 +18,7 @@ function getOwnValue (object, name) {
 }
 
 export const provides = {
-	attachShadow (options = this.constructor[shadowRootOptions] ?? this.constructor.shadowRoot) {
+	attachShadow (options = this.constructor.shadowRootOptions) {
 		if (getOwnValue(this, shadowRoot)) {
 			return this[shadowRoot];
 		}
@@ -32,8 +32,6 @@ export const provides = {
 			// Not supported
 			return this[shadowRoot] = null;
 		}
-
-		this[shadowRootOptions] ??= options;
 
 		try {
 			this[shadowRoot] = _attachShadow.call(this, options);
