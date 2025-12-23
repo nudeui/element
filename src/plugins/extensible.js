@@ -5,7 +5,7 @@
 
 import Hooks from "./hooks.js";
 import { hasPlugin, addPlugin } from "./plugins.js";
-import { getSuper } from "./super.js";
+import { getSuper } from "./util/super.js";
 import symbols from "./symbols.js";
 
 const { hooks, plugins } = symbols.new;
