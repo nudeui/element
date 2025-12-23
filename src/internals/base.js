@@ -2,10 +2,9 @@
  * Provide access to element internals through a symbol property
  */
 
-import { defineLazyProperty, symbols } from "../plugins/index.js";
+import { defineLazyProperty, symbols, getSuper } from "../plugins/index.js";
 
 const { internals } = symbols.known;
-const _attachInternals = HTMLElement.prototype.attachInternals;
 
 /**
  * Get the own value of a property (if one exists) without triggering any getters
@@ -23,6 +22,8 @@ export const provides = {
 		if (getOwnValue(this, internals)) {
 			return this[internals];
 		}
+
+		const _attachInternals = getSuper(this)?.attachInternals ?? HTMLElement.prototype.attachInternals;
 
 		if (_attachInternals === undefined) {
 			// Not supported
