@@ -9,12 +9,6 @@ const { globalStyles, roots } = symbols.new;
 export const hooks = {
 	// Initiate fetching when the first element is constructed
 	first_constructor_static () {
-		if (!this.globalStyles) {
-			return;
-		}
-
-		this[roots] = new WeakSet();
-
 		if (Object.hasOwn(this, "globalStyles")) {
 			// Get fetched styles from this and all superclasses that define any
 			// We're doing a bit of duplicate work here, but that's ok because fetchCSS() caches results anyway
@@ -30,6 +24,7 @@ export const hooks = {
 		}
 
 		let styles = Self[globalStyles];
+		Self[roots] ??= new WeakSet();
 
 		for (let css of styles) {
 			if (css instanceof Promise) {
