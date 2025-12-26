@@ -6,9 +6,6 @@
 import Hooks from "./hooks.js";
 import { hasPlugin, addPlugin } from "./plugins.js";
 import { getSuper } from "./util/super.js";
-import symbols from "./symbols.js";
-
-const { hooks, plugins } = symbols.new;
 
 export const provides = {
 	/**
@@ -18,6 +15,7 @@ export const provides = {
 		return getSuper(this);
 	},
 };
+import { defineOwnProperties } from "./util/own.js";
 
 export const providesStatic = {
 	/**
@@ -25,30 +23,6 @@ export const providesStatic = {
 	 */
 	get super () {
 		return getSuper(this);
-	},
-
-	get hooks () {
-		if (!Object.hasOwn(this, hooks)) {
-			this[hooks] = new Hooks();
-			this[hooks].parent = this.super?.hooks;
-		}
-
-		return this[hooks];
-	},
-	set hooks (value) {
-		this[hooks] = value;
-	},
-
-	/** Plugins to install */
-	get plugins () {
-		if (!Object.hasOwn(this, plugins)) {
-			this[plugins] = [];
-		}
-
-		return this[plugins];
-	},
-	set plugins (value) {
-		this[plugins] = value;
 	},
 
 	/**
@@ -70,6 +44,21 @@ export const providesStatic = {
 };
 
 export const plugin = { provides, providesStatic };
+defineOwnProperties(providesStatic, {
+	hooks: {
+		get () {
+			let ret = new Hooks();
+			ret.parent = getSuper(this)?.hooks;
+			return ret;
+		},
+	},
+	plugins: {
+		get () {
+			return [];
+		},
+	},
+})
+
 
 export default function makeExtensible (Class) {
 	return addPlugin(Class, plugin);

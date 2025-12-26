@@ -3,7 +3,8 @@
  * TODO update references when DOM changes
  */
 
-import { defineLazyProperty, symbols } from "../plugins/index.js";
+import { symbols, defineOwnProperty } from "../plugins/index.js";
+import { defineLazyProperty } from "../util/lazy.js";
 import shadowPlugin from "../shadow/base.js";
 
 const { shadowRoot, elements } = symbols.known;
@@ -43,21 +44,23 @@ export const providesStatic = {
 
 		if (!this[elements]) {
 			this[elements] = {};
-			defineLazyProperty(this.prototype, elements, {
-				value: {}, // mainly to ensure the getter doesn't get overwritten on the prototype
+			defineOwnProperty(this.prototype, elements, {
 				get () {
 					let ret = {};
-					for (let name in this.constructor[elements]) {
-						defineLazyProperty(ret, name, {
-							get () {
-								return getElement(this, this.constructor[elements][name]);
-							},
-						});
+
+					if (this.constructor?.[elements]) {
+						for (let name in this.constructor[elements]) {
+							defineLazyProperty(ret, name, {
+								get () {
+									return getElement(this, this.constructor[elements][name]);
+								},
+							});
+						}
 					}
+
 					return ret;
 				},
-				configurable: true,
-				enumerable: true,
+				internal: elements,
 			});
 		}
 
