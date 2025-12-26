@@ -51,13 +51,6 @@ export const providesStatic = {
 		this[plugins] = value;
 	},
 
-	hasPlugin (plugin) {
-		return hasPlugin(this, plugin);
-	},
-	addPlugin (plugin) {
-		return addPlugin(this, plugin);
-	},
-
 	/**
 	 * Code initializing the class that needs to be called as soon as possible after class definition
 	 * And needs to be called separately per subclass
