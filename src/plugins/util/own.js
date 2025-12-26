@@ -2,11 +2,18 @@ const own = Symbol("own");
 
 /**
  * Define static properties that do not inherit (every subclass has its own value)
- * @param {*} obj
- * @param {*} name
- * @param {*} options
+ * @overload
+ * @param {object} obj
+ * @param {PropertyKey} name
+ * @param {function} init
+ * @param {object} options
+ *
+ * @overload
+ * @param {object} obj
+ * @param {PropertyKey} name
+ * @param {object} options
  */
-export function defineOwnProperty (obj, name, options = {}) {
+export function defineOwnProperty (obj, name, init, options = {}) {
 	let existingDescriptor = Object.getOwnPropertyDescriptor(obj, name);
 
 	if (existingDescriptor?.get?.[own]) {
@@ -14,8 +21,9 @@ export function defineOwnProperty (obj, name, options = {}) {
 		return;
 	}
 
-	if (typeof options === "function") {
-		options = { get: options };
+	if (typeof init === "object") {
+		options = init;
+		init = options.init;
 	}
 
 	let _name = options.internal ?? Symbol(name);
@@ -26,13 +34,23 @@ export function defineOwnProperty (obj, name, options = {}) {
 
 	function get () {
 		if (!Object.hasOwn(this, _name)) {
-			this[_name] = options.get.call(this);
+			this[_name] = init.call(this);
 		}
 
-		return this[_name];
+		let value = this[_name];
+
+		if (options.get) {
+			value = options.get.call(this, value);
+		}
+
+		return value;
 	}
 
 	function set (value) {
+		if (options.set) {
+			value = options.set.call(this, value);
+		}
+
 		if (options.writable === false && Object.hasOwn(this, _name) && this[_name] !== value) {
 			throw new Error(`Cannot set read-only property ${name}`);
 		}

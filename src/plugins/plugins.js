@@ -49,7 +49,7 @@ export function addPlugin (Class, plugin) {
 	}
 
 	defineOwnProperty(Class, plugins, {
-		get () {
+		init () {
 			return new Set();
 		},
 	});

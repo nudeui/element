@@ -29,14 +29,14 @@ export const providesStatic = {
 
 defineOwnProperties(providesStatic, {
 	hooks: {
-		get () {
+		init () {
 			let ret = new Hooks();
 			ret.parent = getSuper(this)?.hooks;
 			return ret;
 		},
 	},
 	plugins: {
-		get () {
+		init () {
 			return [];
 		},
 	},
