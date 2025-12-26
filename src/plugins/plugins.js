@@ -9,6 +9,7 @@
 
 import symbols from "./symbols.js";
 import { defineOwnProperty } from "./util/own.js";
+import { getSuper } from "./util/super.js";
 
 /**
  * Check if a plugin is installed on a class
@@ -17,7 +18,7 @@ import { defineOwnProperty } from "./util/own.js";
  * @returns {boolean}
  */
 export function hasPlugin (Class, plugin) {
-	let Super = Object.getPrototypeOf(Class);
+	let Super = getSuper(Class);
 
 	if (Super && hasPlugin(Super, plugin)) {
 		return true;
