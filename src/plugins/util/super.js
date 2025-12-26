@@ -50,7 +50,12 @@ export function getAllValues (obj, forMember) {
  * @returns {Function | Object | null} The relevant superclass or prototype or null if none exists.
  */
 export function getSuper (obj, forMember) {
-	let Super = Object.getPrototypeOf(obj);
+	if (!obj) {
+		return null;
+	}
+
+	let isInstance = typeof obj === "object";
+	let Super =  Object.getPrototypeOf(isInstance ? obj.constructor?.prototype : obj);
 
 	if (Super === Function.prototype) {
 		return null;
