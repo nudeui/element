@@ -8,6 +8,7 @@
  */
 
 import symbols from "./symbols.js";
+import { defineOwnProperty } from "./util/own.js";
 
 /**
  * Check if a plugin is installed on a class
@@ -23,11 +24,6 @@ export function hasPlugin (Class, plugin) {
 	}
 
 	let plugins = Class.symbols?.plugins ?? symbols.known.plugins;
-
-	if (!Object.hasOwn(Class, plugins)) {
-		// No plugins installed
-		return false;
-	}
 
 	return Class[plugins].has(plugin);
 }
@@ -51,9 +47,11 @@ export function addPlugin (Class, plugin) {
 		}
 	}
 
-	if (!Object.hasOwn(Class, plugins)) {
-		Class[plugins] = new Set();
-	}
+	defineOwnProperty(Class, plugins, {
+		get () {
+			return new Set();
+		},
+	});
 
 	Class[plugins].add(plugin);
 
