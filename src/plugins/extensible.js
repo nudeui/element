@@ -6,25 +6,9 @@
 import Hooks from "./hooks.js";
 import { hasPlugin, addPlugin } from "./plugins.js";
 import { getSuper } from "./util/super.js";
-
-export const provides = {
-	/**
-	 * Like super, but dynamic
-	 */
-	get super () {
-		return getSuper(this);
-	},
-};
 import { defineOwnProperties } from "./util/own.js";
 
 export const providesStatic = {
-	/**
-	 * Like super, but dynamic
-	 */
-	get super () {
-		return getSuper(this);
-	},
-
 	/**
 	 * Code initializing the class that needs to be called as soon as possible after class definition
 	 * And needs to be called separately per subclass
@@ -43,7 +27,6 @@ export const providesStatic = {
 	},
 };
 
-export const plugin = { provides, providesStatic };
 defineOwnProperties(providesStatic, {
 	hooks: {
 		get () {
@@ -59,6 +42,7 @@ defineOwnProperties(providesStatic, {
 	},
 })
 
+export const plugin = { providesStatic };
 
 export default function makeExtensible (Class) {
 	return addPlugin(Class, plugin);
