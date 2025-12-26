@@ -25,7 +25,7 @@ export function hasPlugin (Class, plugin) {
 
 	let plugins = Class.symbols?.plugins ?? symbols.known.plugins;
 
-	return Class[plugins].has(plugin);
+	return Class[plugins]?.has(plugin);
 }
 
 /**
