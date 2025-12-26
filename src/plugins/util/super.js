@@ -46,10 +46,10 @@ export function getAllValues (obj, forMember) {
  * Instead use `getSuperMember(this, methodName)`, which ensures the parent method is returned.
  *
  * @param {object | Function} obj - An object, class or instance.
- * @param {string | symbol} [forMember] - If defined, the function will return the superclass that defines a given member.
+ * @param {string | symbol} [test] - If defined, the function will return the superclass that defines a given member.
  * @returns {Function | Object | null} The relevant superclass or prototype or null if none exists.
  */
-export function getSuper (obj, forMember) {
+export function getSuper (obj, test) {
 	if (!obj) {
 		return null;
 	}
@@ -61,15 +61,10 @@ export function getSuper (obj, forMember) {
 		return null;
 	}
 
-	if (forMember) {
-		if (!(forMember in Super)) {
-			// No superclass defines this member
-			return null;
-		}
-
-		if (!Object.hasOwn(Super, forMember)) {
-			// A superclass defines this member
-			return getSuper(Super, forMember);
+	if (Super && test) {
+		if (!test(Super)) {
+			// Check superclass
+			return getSuper(Super, test);
 		}
 	}
 
@@ -88,7 +83,7 @@ export function getSuperMember (obj, name) {
 	let thisMember = Object.getOwnPropertyDescriptor(obj, name);
 	let Super = obj;
 
-	while (Super = getSuper(Super, name)) {
+	while (Super = getSuper(Super, C => Object.hasOwn(C, name))) {
 		if (!Super) {
 			return undefined;
 		}
