@@ -2,7 +2,7 @@
  * Provide access to element internals through a symbol property
  */
 
-import { defineLazyProperty, symbols, getSuper } from "../plugins/index.js";
+import { defineOwnProperty, symbols, getSuper } from "../plugins/index.js";
 import { getOwnValue } from "../util/get-own-value.js";
 
 const { internals } = symbols.known;
@@ -34,7 +34,7 @@ export const provides = {
 	attachInternals,
 };
 
-defineLazyProperty(provides, internals, {
+defineOwnProperty(provides, internals, {
 	get () {
 		return this.attachInternals();
 	},

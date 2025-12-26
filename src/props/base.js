@@ -1,5 +1,5 @@
 import Props from "./Props.js";
-import { defineLazyProperty, symbols } from "../plugins/index.js";
+import { defineOwnProperty, symbols } from "../plugins/index.js";
 
 export const { props } = symbols.known;
 
@@ -49,7 +49,7 @@ export const provides = {
 };
 
 // Internal prop values
-defineLazyProperty(provides, "props", {
+defineOwnProperty(provides, "props", {
 	get () {
 		return {};
 	},
@@ -58,7 +58,7 @@ defineLazyProperty(provides, "props", {
 });
 
 // Ignore mutations on these attributes
-defineLazyProperty(provides, "ignoredAttributes", {
+defineOwnProperty(provides, "ignoredAttributes", {
 	get () {
 		return new Set();
 	},
