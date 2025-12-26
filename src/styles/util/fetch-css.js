@@ -9,24 +9,24 @@ const defaultBaseURL = globalThis.document?.location?.href ?? import.meta.url;
 
 /**
  * Fetch a style from a URL or a string
- * @param {string | Promise<string> | {css: string | Promise<string>}} style
+ * @param {string | Promise<string> | {css: string | Promise<string>}} url
  * @param {string | URL} [baseUrl]
  * @returns {string | Promise<string>}
  */
-export function fetchCSS (style, baseUrl = defaultBaseURL) {
+export function fetchCSS (url, baseUrl = defaultBaseURL) {
 	let css;
 
-	if (style instanceof Promise) {
-		return style;
+	if (url instanceof Promise) {
+		return url;
 	}
-	else if (style?.css) {
+	else if (url?.css) {
 		// The component provides a CSS string (either as a promise or a string)
-		return style.css;
+		return url.css;
 	}
 
-	if (typeof style === "string") {
+	if (typeof url === "string") {
 		// URL, either absolute or relative to the component
-		let url = new URL(style, baseUrl);
+		let url = new URL(url, baseUrl);
 		let fullUrl = url.href;
 		css = fetchedStyles[fullUrl];
 

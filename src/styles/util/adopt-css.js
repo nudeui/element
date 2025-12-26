@@ -1,61 +1,63 @@
 /**
- * We store adopted stylesheets here to avoid adopting the same style multiple times
- * @type {WeakMap<Document | ShadowRoot, Map<string, CSSStyleSheet | HTMLStyleElement>>}
- */
-const adoptedStyleSheets = new WeakMap();
-
-/**
  * Adopt a CSS style to a document or shadow root
  * Does not adopt the same style multiple times
- * @param {string | CSSStyleSheet} style
+ * @param {string} css
  * @param {Document | ShadowRoot} root
  * @returns {CSSStyleSheet}
  */
 export function adoptCSS (style, root = globalThis.document) {
-	let rootAdoptedStyleSheets = adoptedStyleSheets.get(root);
-
-	if (!rootAdoptedStyleSheets) {
-		rootAdoptedStyleSheets = new Map();
-		adoptedStyleSheets.set(root, rootAdoptedStyleSheets);
+	if (!root.adoptedStyleSheets) {
+		return;
 	}
 
-	// FIXME do not adopt the same style multiple times
-	// currently we check by object equality, which is never true for strings
-	if (root.adoptedStyleSheets) {
-		let sheet = rootAdoptedStyleSheets.get(style);
+	let sheet = cssToSheet(style);
+	adoptSheet(sheet, root);
+	return sheet;
+}
 
-		if (!sheet && typeof style === "string") {
-			sheet = new CSSStyleSheet();
-			sheet.replaceSync(style);
-			rootAdoptedStyleSheets.set(style, sheet);
-			style = sheet;
-		}
+/**
+ * @internal
+ * @type {Map<string, CSSStyleSheet>}
+ */
+const sheets = new Map();
+/**
+ * Memoize CSS strings to CSSStyleSheet objects
+ * @param {string | CSSStyleSheet} css
+ * @returns {CSSStyleSheet}
+ */
+export function cssToSheet (css) {
+	if (css instanceof CSSStyleSheet) {
+		return css;
+	}
 
-		if (!root.adoptedStyleSheets.includes(sheet)) {
-			// Not already adopted, so we need to adopt it
-			if (Object.isFrozen(root.adoptedStyleSheets)) {
-				// Slightly older browsers
-				root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
-			}
-			else {
-				root.adoptedStyleSheets.push(sheet);
-			}
-		}
+	let sheet = sheets.get(css);
 
-		return sheet;
+	if (!sheet) {
+		sheet = new CSSStyleSheet();
+		sheet.replaceSync(css);
+		sheets.set(css, sheet);
+	}
+
+	return sheet;
+}
+
+/**
+ * Adopt a CSSStyleSheet to a document or shadow root.
+ * @internal
+ * @param {CSSStyleSheet} sheet
+ * @param {Document | ShadowRoot} root
+ * @returns
+ */
+export function adoptSheet (sheet, root) {
+	if (root.adoptedStyleSheets.includes(sheet)) {
+		return;
+	}
+
+	if (Object.isFrozen(root.adoptedStyleSheets)) {
+		// Slightly older browsers
+		root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
 	}
 	else {
-		// Older browsers
-		let styleElement = rootAdoptedStyleSheets.get(style);
-
-		if (!styleElement) {
-			styleElement = document.createElement("style");
-			styleElement.textContent = style;
-			let styleRoot = root.nodeType === Node.DOCUMENT_NODE ? root.head : root;
-			styleRoot.appendChild(styleElement);
-			rootAdoptedStyleSheets.set(style, styleElement);
-		}
-
-		return styleElement;
+		root.adoptedStyleSheets.push(sheet);
 	}
 }
