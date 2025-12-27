@@ -26,7 +26,7 @@ export function fetchCSS (url, baseUrl = defaultBaseURL) {
 
 	if (typeof url === "string") {
 		// URL, either absolute or relative to the component
-		let url = new URL(url, baseUrl);
+		url = new URL(url, baseUrl);
 		let fullUrl = url.href;
 		css = fetchedStyles[fullUrl];
 
