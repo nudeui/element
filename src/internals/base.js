@@ -2,7 +2,8 @@
  * Provide access to element internals through a symbol property
  */
 
-import { defineLazyProperty, symbols, getSuper } from "../plugins/index.js";
+import { symbols, getSuper } from "../plugins/index.js";
+import { defineLazyProperty } from "../util/lazy.js";
 import { getOwnValue } from "../util/get-own-value.js";
 
 const { internals } = symbols.known;

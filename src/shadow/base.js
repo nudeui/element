@@ -2,7 +2,8 @@
  * Provide access to an element's shadow root through a symbol property (even when it’s closed)
  */
 
-import { defineLazyProperty, symbols, getSuperMember } from "../plugins/index.js";
+import { symbols, getSuperMember } from "../plugins/index.js";
+import { defineLazyProperty } from "../util/lazy.js";
 import { getOwnValue } from "../util/get-own-value.js";
 
 const { shadowRoot } = symbols.known;
