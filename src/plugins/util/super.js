@@ -97,6 +97,14 @@ export function getSuperMember (obj, name) {
 }
 
 function descriptorEquals (a, b) {
+	if (!a && !b) {
+		return true;
+	}
+
+	if (!a || !b) {
+		return false;
+	}
+
 	for (let key in a) {
 		if (a[key] !== b[key]) {
 			return false;
