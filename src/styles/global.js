@@ -1,40 +1,36 @@
 /**
- * Mixin for adding light DOM styles
+ * Plugin for adding light DOM styles on every root node all the way up to the document
  */
-import { adoptStyleByUrl, getAllValues } from "./util.js";
-import symbols from "../plugins/symbols.js";
 
-const { globalStyles } = symbols.new;
+import stylesPlugin from "./base.js";
+
+export const dependencies = [stylesPlugin];
 
 export const hooks = {
-	// Initiate fetching when the first element is constructed
 	first_constructor_static () {
 		if (Object.hasOwn(this, "globalStyles")) {
-			// Get fetched styles from this and all superclasses that define any
-			this[globalStyles] = getAllValues(this, "globalStyles").flat();
+			this.defineStyles(this.globalStyles, { global: true });
 		}
 	},
 
-	async connected () {
-		let Self = this.constructor;
-
-		if (!Self[globalStyles]) {
-			return;
-		}
-
-		let styles = Self[globalStyles];
-		let roots = getRoots(this);
-
-		for (let url of styles) {
-			// Recursively adopt style on all shadow roots all the way up to the document
-			for (let root of roots) {
-				adoptStyleByUrl(url, root);
+	connected_apply_style ({ roots, options }) {
+		if (options.roots.has("global")) {
+			for (let root of getRoots(this)) {
+				roots.add(root);
 			}
+		}
+	},
+
+	define_style ({ style }) {
+		if (style.global) {
+			style.roots.add("global");
+			style.roots.delete("light");
+			style.roots.delete("document");
 		}
 	},
 };
 
-export default {hooks};
+export default { dependencies, hooks };
 
 function getRoots (element) {
 	let roots = [];

@@ -26,7 +26,7 @@ export function defineOwnProperty (obj, name, init, options = {}) {
 		init = options.init;
 	}
 
-	let _name = options.internal ?? Symbol(name);
+	let _name = options.internal ?? Symbol(typeof name === "symbol" ? name.description : name);
 
 	if (existingDescriptor && !Object.hasOwn(obj, _name)) {
 		Object.defineProperty(obj, _name, existingDescriptor);

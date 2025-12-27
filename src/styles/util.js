@@ -1,4 +1,4 @@
-export { adoptCSS } from "./util/adopt-css.js";
-export { fetchCSS } from "./util/fetch-css.js";
-export { getSupers, getSuper, getAllValues } from "../plugins/util/super.js";
-export { adoptStyleByUrl } from "./util/adopt-style-by-url.js";
+export { adoptStyle } from "./util/adopt-style.js";
+export { cachedFetch } from "./util/cached-fetch.js";
+export { getSupers, getSuper } from "../plugins/util/super.js";
+export { getOwnValue } from "../util/get-own-value.js";
