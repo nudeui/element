@@ -1,7 +1,6 @@
 /**
  * Main entry point.
- * Use @link{index-fn} for tree-shaking and no side effects
- * @modifies {Element}
+ * Use @link{index-fn} for tree-shaking
  */
 
 export * from "./index-fn.js";

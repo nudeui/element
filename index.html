@@ -6,7 +6,7 @@
 <title>Document</title>
 <script type="module">
 import {Element, addPlugin} from "./src/index.js";
-import styles from "./src/styles/index.js";
+import styles from "./src/plugins/styles/index.js";
 
 class TestElement extends Element {
 	constructor () {
@@ -18,10 +18,10 @@ class TestElement extends Element {
 	static styles = [
 		{
 			css: `:host { display: block; background: gold; } test-element { border: 1px solid red; }`,
-			// shadow: true,
-			light: true,
+			shadow: true,
+			// light: true,
 			document: true,
-			global: true,
+			// global: true,
 		}
 	]
 

@@ -3,7 +3,7 @@
  * Why not just use mixin.js and do export default getElement()? For better stack traces when debugging.
  */
 
-import { symbols, addPlugin, makeExtensible } from "../plugins/index.js";
+import extensible, { symbols, addPlugins } from "../plugins/base.js";
 import members from "./members.js";
 
 export default class NudeElement extends HTMLElement {
@@ -15,7 +15,6 @@ export default class NudeElement extends HTMLElement {
 	static symbols = symbols.known;
 
 	static {
-		makeExtensible(this);
-		addPlugin(this, members);
+		addPlugins(this, extensible, members);
 	}
 }

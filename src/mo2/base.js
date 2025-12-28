@@ -2,8 +2,8 @@
  * Extensible MutationObserver class
  */
 
-import makeExtensible from "../plugins/extensible.js";
-import { registry as symbolRegistry } from "../plugins/symbols.js";
+import extensible, { addPlugin } from "../plugins/base.js";
+import { registry as symbolRegistry } from "../symbols.js";
 import IterableWeakMap from "./util/iterable-weakmap.js";
 
 export const symbols = symbolRegistry();
@@ -18,7 +18,7 @@ export default class MutationObserver2 extends MutationObserver {
 	observations = new IterableWeakMap();
 
 	static {
-		makeExtensible(this);
+		addPlugin(this, extensible);
 	}
 
 	constructor (callback) {

@@ -1,4 +1,4 @@
-import { getSuperMember } from "../../plugins/util/super.js";
+import { getSuperMember } from "../super.js";
 
 /**
  * Get all values of a given property across the prototype chain.

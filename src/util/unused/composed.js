@@ -1,4 +1,4 @@
-import symbols from "../../plugins/symbols.js";
+import symbols from "../../symbols.js";
 
 let { composed, constituents } = symbols.known;
 

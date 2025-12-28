@@ -2,7 +2,7 @@
  * Factory for NudeElement base classes with custom params
  */
 
-import { symbols, addPlugin, addPlugins, makeExtensible } from "../plugins/index.js";
+import extensible, { symbols, addPlugins } from "../plugins/base.js";
 import members from "./members.js";
 
 export default (Super = HTMLElement, plugins = []) => class NudeElement extends Super {
@@ -14,11 +14,6 @@ export default (Super = HTMLElement, plugins = []) => class NudeElement extends 
 	static symbols = symbols.known;
 
 	static {
-		makeExtensible(this);
-		addPlugin(this, members);
-
-		if (plugins?.length > 0) {
-			addPlugins(this, plugins);
-		}
+		addPlugins(this, extensible, members, plugins);
 	}
-}
+};
