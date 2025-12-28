@@ -124,13 +124,13 @@ const urlSheets = new Map();
 function urlToSheet (url) {
 	let sheet = urlSheets.get(url);
 	if (!sheet) {
-		let css = cachedFetch(url).then(css => {
+		sheet = cachedFetch(url).then(css => {
 			// TODO process @imports?
 			let sheet = cssToSheet(css);
 			urlSheets.set(url, sheet);
 			return sheet;
 		});
-		urlSheets.set(url, css);
+		urlSheets.set(url, sheet);
 	}
 	return sheet;
 }
