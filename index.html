@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Document</title>
 <script type="module">
-import {Element, addPlugins} from "./src/index.js";
+import {Element, addPlugin} from "./src/index.js";
 import styles from "./src/styles/index.js";
 
 class TestElement extends Element {
@@ -30,7 +30,7 @@ class TestElement extends Element {
 	}
 }
 
-addPlugins(TestElement, styles);
+addPlugin(TestElement, styles);
 
 globalThis.TestElement = TestElement;
 
