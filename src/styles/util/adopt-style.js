@@ -44,6 +44,11 @@ export function adoptStyle (ref, root = globalThis.document) {
 		return sheet.then(sheet => adoptSheet(sheet, root));
 	}
 
+	if (!sheet) {
+		console.log("No sheet found for", ref);
+		return null;
+	}
+
 	return adoptSheet(sheet, root);
 }
 
