@@ -1,3 +1,5 @@
+import { getSuperMember } from "../../plugins/util/super.js";
+
 /**
  * Get all values of a given property across the prototype chain.
  * @param {object | Function} obj - An object, class or instance.

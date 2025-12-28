@@ -2,7 +2,7 @@
  * Provide access to element internals through a symbol property
  */
 
-import { symbols, getSuper } from "../plugins/index.js";
+import { symbols, getSuperMethod } from "../plugins/index.js";
 import { defineLazyProperty } from "../util/lazy.js";
 import { getOwnValue } from "../util/get-own-value.js";
 
@@ -16,7 +16,7 @@ function attachInternals () {
 
 	// If the plugin is installed on a superclass, super.attachInternals will be the same function
 	// We want the attachInternals that sits above it
-	const _attachInternals = getSuper(this, C => Object.hasOwn(C, "attachInternals") && C.attachInternals !== attachInternals)?.attachInternals;
+	const _attachInternals = getSuperMethod(this, attachInternals);
 
 	if (_attachInternals === undefined) {
 		// Not supported

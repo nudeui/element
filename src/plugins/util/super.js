@@ -52,43 +52,30 @@ export function getSuper (obj, testFn) {
 
 /**
  * Get the value of a member from the superclass that defines it.
- * Ensures a different value than `obj[name]` is returned at all times.
- *
  * @param {object | Function} obj - An object, class or instance. Defaults to `this`.
- * @param {string | symbol} forMember - The method or accessor to check for.
- * @returns {PropertyDescriptor | undefined} The property descriptor or undefined if none exists.
+ * @param {string | symbol} name - The method or accessor to check for.
+ * @param {any} [currentValue=obj[name]] - The current value of the property. Will ensure the result is different than this value. Useful for looking up properties further up the chain.
+ * @returns {any | undefined} The property value or undefined if none exists.
  */
-export function getSuperMember (obj, name) {
-	let thisMember = Object.getOwnPropertyDescriptor(obj, name);
-	let Super = obj;
-
-	while (Super = getSuper(Super, C => Object.hasOwn(C, name))) {
-		if (!Super) {
-			return undefined;
-		}
-
-		let superMember = Object.getOwnPropertyDescriptor(Super, name);
-
-		if (!descriptorEquals(superMember, thisMember)) {
-			return superMember;
-		}
+export function getSuperMember (obj, name, currentValue = obj[name]) {
+	if (typeof name === "function") {
+		[name, currentValue] = [name.name, name];
 	}
+	if (currentValue === undefined) {
+		return undefined;
+	}
+
+	let fn = C => Object.hasOwn(C, name) && C[name] !== currentValue;
+	return getSuper(obj, fn)?.[name];
 }
 
-function descriptorEquals (a, b) {
-	if (!a && !b) {
-		return true;
-	}
-
-	if (!a || !b) {
-		return false;
-	}
-
-	for (let key in a) {
-		if (a[key] !== b[key]) {
-			return false;
-		}
-	}
-
-	return true;
+/**
+ * Get the same method, one level up the prototype chain.
+ * The closest we can get to `super.methodName()`.
+ * @param {object | FunctionConstructor} obj - An object, class or instance.
+ * @param {Function} currentMethod - The calling method to get the super method of.
+ * @returns {Function | undefined} The super method or undefined if none exists.
+ */
+export function getSuperMethod (obj, currentMethod) {
+	return getSuperMember(obj, currentMethod.name, currentMethod);
 }
