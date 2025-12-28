@@ -4,9 +4,9 @@
  */
 
 export * from "./index-fn.js";
-import { getElement, commonPlugins, Element as NudeElement } from "./index-fn.js";
+import { ElementFactory, commonPlugins, Element as NudeElement } from "./index-fn.js";
 export { NudeElement };
 
-const Element = getElement(HTMLElement, commonPlugins);
+const Element = ElementFactory(HTMLElement, commonPlugins);
 Element.setup();
 export default Element;
