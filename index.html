@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document</title>
+<script type="module">
+import {Element, addPlugins} from "./src/index.js";
+import styles from "./src/styles/index.js";
+
+class TestElement extends Element {
+	constructor () {
+		super();
+		this.attachShadow({ mode: "open" });
+		this.shadowRoot.innerHTML = `<p>Hello</p>`;
+	}
+
+	static styles = [
+		{
+			css: `:host { display: block; background: gold; } test-element { border: 1px solid red; }`,
+			// shadow: true,
+			light: true,
+			document: true,
+			global: true,
+		}
+	]
+
+	static get plugins () {
+		return this[this.symbols.plugins];
+	}
+}
+
+addPlugins(TestElement, styles);
+
+globalThis.TestElement = TestElement;
+
+customElements.define("test-element", TestElement);
+</script>
+	</head>
+	<body>
+		<test-element>Hi</test-element>
+	</body>
+</html>
