@@ -16,7 +16,7 @@ function applyStyles (ElementConstructor = this.constructor) {
 	for (let options of ElementConstructor[styles]) {
 		let env = { context: this, options, ElementConstructor };
 		env.roots = new Set();
-		console.log("env.options", env.options);
+
 		if (env.options.roots.has("shadow")) {
 			let root = this.shadowRoot ?? this[symbols.known.shadowRoot];
 			if (root) {
