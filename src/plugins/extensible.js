@@ -8,7 +8,7 @@ import { hasPlugin, addPlugin } from "./plugins.js";
 import { getSuper } from "./util/super.js";
 import { defineOwnProperty } from "./util/own.js";
 
-export const providesStatic = {
+const providesStatic = {
 	/**
 	 * Code initializing the class that needs to be called as soon as possible after class definition
 	 * And needs to be called separately per subclass

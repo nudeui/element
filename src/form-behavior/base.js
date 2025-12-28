@@ -4,11 +4,11 @@ import symbols from "../plugins/symbols.js";
 
 import internalsPlugin from "../internals/base.js";
 
-export const dependencies = [internalsPlugin];
+const dependencies = [internalsPlugin];
 
 export const { formBehavior } = symbols.known;
 
-export const hooks = {
+const hooks = {
 	setup () {
 		if (this.formBehavior) {
 			this.defineFormBehavior();
@@ -16,7 +16,7 @@ export const hooks = {
 	},
 };
 
-export const providesStatic = {
+const providesStatic = {
 	formAssociated: true,
 
 	defineFormBehavior (def = this.formBehavior) {

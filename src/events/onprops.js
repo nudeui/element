@@ -8,9 +8,9 @@ import symbols from "../plugins/symbols.js";
 
 const { eventProps } = symbols.new;
 
-export const dependencies = [propsPlugin, base];
+const dependencies = [propsPlugin, base];
 
-export const hooks = {
+const hooks = {
 	defineEvents (env) {
 		let def = env.events;
 

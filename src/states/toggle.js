@@ -3,9 +3,9 @@ import internalsPlugin from "../internals/base.js";
 
 const { internals } = symbols.known;
 
-export const dependencies = [internalsPlugin];
+const dependencies = [internalsPlugin];
 
-export const provides = {
+const provides = {
 	toggleState (state, force) {
 		if (!this[internals]) {
 			return;

@@ -31,7 +31,7 @@ function attachInternals () {
 	}
 }
 
-export const provides = {
+const provides = {
 	attachInternals,
 };
 

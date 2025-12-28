@@ -1,14 +1,14 @@
 import base from "./base.js";
 
-export const dependencies = [base];
+const dependencies = [base];
 
-export const hooks = {
+const hooks = {
 	disconnect () {
 		this.flush();
 	},
 };
 
-export const provides = {
+const provides = {
 	flush () {
 		let records = this.takeRecords();
 		if (records.length > 0) {

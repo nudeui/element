@@ -4,7 +4,7 @@
 
 import { addPlugin, defineOwnProperty } from "./index.js";
 
-export const hooks = {
+const hooks = {
 	setup () {
 		// Install any plugins in Class.plugins
 		if (!this.plugins) {
@@ -15,9 +15,9 @@ export const hooks = {
 			addPlugin(this, plugin);
 		}
 	},
-}
+};
 
-export const providesStatic = {};
+const providesStatic = {};
 
 defineOwnProperty(providesStatic, "plugins", () => []);
 

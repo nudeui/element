@@ -3,11 +3,11 @@ import { resolveValue } from "../util/resolve-value.js";
 import { getRole } from "./role.js";
 import base, { formBehavior } from "./base.js";
 
-export const dependencies = [base];
+const dependencies = [base];
 
 const { internals } = symbols.known;
 
-export const hooks = {
+const hooks = {
 	first_connected () {
 		if (!this.constructor[formBehavior]) {
 			return;

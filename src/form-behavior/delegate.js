@@ -7,7 +7,7 @@ import base, { formBehavior } from "./base.js";
 
 const { internals } = symbols.known;
 
-export const dependencies = [base];
+const dependencies = [base];
 
 // Find built-in properties to delegate
 let objects = [ElementInternals, HTMLInputElement, HTMLSelectElement, HTMLTextAreaElement, HTMLButtonElement];
@@ -15,7 +15,7 @@ let props = objects.map(o => new Set(Object.getOwnPropertyNames(o.prototype)));
 const defaultProperties = props.reduce((acc, cur) => acc.intersection(cur));
 defaultProperties.delete("constructor");
 
-export const hooks = {
+const hooks = {
 	first_constructor_static () {
 		if (!this.formBehavior) {
 			return;

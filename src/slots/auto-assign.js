@@ -17,7 +17,7 @@ SlotObserver.hooks.add("observe", function ({ moOptions }) {
 
 export const { autoAssign } = symbols.new;
 
-export const dependencies = [base];
+const dependencies = [base];
 
 function updateAutoAssign (host) {
 	let slotElements = [...host[slots].shadowRoot.querySelectorAll("slot[data-assign]")];
@@ -49,7 +49,7 @@ function updateSlottedFor (host) {
 	}
 }
 
-export const hooks = {
+const hooks = {
 	connected () {
 		if (!this[slots]?.isManual) {
 			// Nothing to do here

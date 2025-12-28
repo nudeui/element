@@ -30,7 +30,7 @@ function applyStyles (ElementConstructor = this.constructor) {
 	}
 }
 
-export const hooks = {
+const hooks = {
 	setup () {
 		defineOwnProperty(this, styles, () => []);
 	},
@@ -58,7 +58,7 @@ export const hooks = {
 	},
 };
 
-export const providesStatic = {
+const providesStatic = {
 	/**
 	 * Define styles for the component
 	 * @param { (object | string)[] } def - Styles to define

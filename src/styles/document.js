@@ -1,8 +1,8 @@
 import stylesPlugin from "./base.js";
 
-export const dependencies = [stylesPlugin];
+const dependencies = [stylesPlugin];
 
-export const hooks = {
+const hooks = {
 	first_constructor_static () {
 		if (Object.hasOwn(this, "documentStyles")) {
 			this.defineStyles(this.documentStyles, { document: true });

@@ -21,7 +21,7 @@ function first_constructor_static () {
 	}
 }
 
-export const hooks = {
+const hooks = {
 	setup () {
 		if (this.props) {
 			this.defineProps();
@@ -41,7 +41,7 @@ export const hooks = {
 	},
 };
 
-export const provides = {
+const provides = {
 	// ...composed({
 	// 	attributeChangedCallback (name, oldValue, value) {
 	// 		this.constructor[props].attributeChanged(this, name, oldValue, value);
@@ -67,7 +67,7 @@ defineLazyProperty(provides, "ignoredAttributes", {
 	writable: true,
 });
 
-export const providesStatic = {
+const providesStatic = {
 	defineProps (def = this.props) {
 		if (def instanceof Props && def.Class === this) {
 			// Already defined

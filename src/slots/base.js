@@ -4,7 +4,7 @@ import SlotController from "./slot-controller.js";
 
 export const { slots } = symbols.known;
 
-export const hooks = {
+const hooks = {
 	constructed () {
 		this[slots] = SlotController.create(this);
 	},
@@ -16,7 +16,7 @@ export const hooks = {
 	},
 };
 
-export const providesStatic = {
+const providesStatic = {
 	defineSlots (def = this[slots] ?? this.slots) {
 		if (!(this[slots] instanceof Slots)) {
 			this[slots] = new Slots(this, def);

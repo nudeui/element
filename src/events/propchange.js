@@ -9,9 +9,9 @@ import { props } from "../props/base.js";
 
 const { propchange } = symbols.new;
 
-export const dependencies = [base];
+const dependencies = [base];
 
-export const hooks = {
+const hooks = {
 	first_constructor_static () {
 		if (!this[events]) {
 			return;

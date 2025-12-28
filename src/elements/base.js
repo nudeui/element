@@ -9,7 +9,7 @@ import shadowPlugin from "../shadow/base.js";
 
 const { shadowRoot, elements } = symbols.known;
 
-export const dependencies = [shadowPlugin];
+const dependencies = [shadowPlugin];
 
 function getElement (host, options) {
 	let { selector, light, multiple } = options;
@@ -23,7 +23,7 @@ function getElement (host, options) {
 	}
 }
 
-export const hooks = {
+const hooks = {
 	connected () {
 		if (!this[elements]) {
 			return;
@@ -36,7 +36,7 @@ export const hooks = {
 	},
 };
 
-export const providesStatic = {
+const providesStatic = {
 	defineElements (def = this.elements) {
 		if (!def) {
 			return;

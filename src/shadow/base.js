@@ -34,7 +34,7 @@ function attachShadow (options) {
 	return this[shadowRoot];
 }
 
-export const provides = {
+const provides = {
 	attachShadow,
 };
 

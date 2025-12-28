@@ -22,7 +22,7 @@ let slotObserver = new SlotObserver(records => {
 	}
 });
 
-export const hooks = {
+const hooks = {
 	constructed () {
 		slotObserver.observe(this, { subtree: true });
 	},

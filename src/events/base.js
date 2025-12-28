@@ -2,7 +2,7 @@
 import symbols from "../plugins/symbols.js";
 export const { events } = symbols.known;
 
-export const hooks = {
+const hooks = {
 	setup () {
 		if (this.events) {
 			this.defineEvents();
@@ -10,7 +10,7 @@ export const hooks = {
 	},
 };
 
-export const providesStatic = {
+const providesStatic = {
 	defineEvents (def = this.events) {
 		this[events] ??= {};
 

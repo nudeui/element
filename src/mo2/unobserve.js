@@ -1,11 +1,11 @@
 import base from "./base.js";
 
-export const dependencies = [base];
+const dependencies = [base];
 
 /**
  * Implement https://github.com/whatwg/dom/issues/126
  */
-export const provides = {
+const provides = {
 	unobserve (target) {
 		let env = { context: this, target };
 

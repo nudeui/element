@@ -9,7 +9,7 @@
 import base, { slots } from "./base.js";
 import { getElement } from "./util.js";
 
-export const dependencies = [base];
+const dependencies = [base];
 
 export const slottedObserver = new MutationObserver(records => {
 	for (let r of records) {
@@ -26,7 +26,7 @@ export const slottedObserver = new MutationObserver(records => {
 	}
 });
 
-export const hooks = {
+const hooks = {
 	connected () {
 		if (!this[slots]?.isManual) {
 			// Nothing to do here

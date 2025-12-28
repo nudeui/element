@@ -5,9 +5,9 @@
 import { resolveValue, pick } from "./util.js";
 import base, { events } from "./base.js";
 
-export const dependencies = [base];
+const dependencies = [base];
 
-export const hooks = {
+const hooks = {
 	first_connected () {
 		if (!this.constructor[events]) {
 			return;

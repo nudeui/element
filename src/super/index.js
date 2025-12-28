@@ -4,14 +4,14 @@
 
 import { getSuper } from "../plugins/util/super.js";
 
-export const provides = {
+const provides = {
 	get super () {
 		// TODO maybe return a proxy that calls getSuper(, memberName)? Or is that too much magic?
 		return getSuper(this);
 	},
 };
 
-export const providesStatic = {
+const providesStatic = {
 	get super () {
 		return getSuper(this);
 	},

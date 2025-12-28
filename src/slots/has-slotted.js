@@ -7,7 +7,7 @@ import symbols from "../plugins/symbols.js";
 
 const SUPPORTS_HAS_SLOTTED = globalThis.CSS?.supports("selector(:has-slotted)");
 
-export const hooks = SUPPORTS_HAS_SLOTTED ? {} : {
+const hooks = SUPPORTS_HAS_SLOTTED ? {} : {
 	constructed () {
 		let shadowRoot = this[symbols.known.shadowRoot] ?? this.shadowRoot;
 		shadowRoot.addEventListener("slotchange", event => {

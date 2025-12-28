@@ -1,4 +1,4 @@
-export const provides = {
+const provides = {
 	constructed () {
 		this.constructor.setup(); // Last resort
 		this.constructor.hooks.run("constructor-static", this.constructor);
