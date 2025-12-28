@@ -31,10 +31,6 @@ function applyStyles (ElementConstructor = this.constructor) {
 }
 
 const hooks = {
-	setup () {
-		defineOwnProperty(this, styles, () => []);
-	},
-
 	first_constructor_static () {
 		if (Object.hasOwn(this, "styles")) {
 			this.defineStyles(this.styles);
@@ -74,8 +70,6 @@ const providesStatic = {
 			def = [def];
 		}
 
-		this[styles] ??= [];
-
 		const baseUrl = this.url ?? defaultBaseURL;
 
 		for (let options of def) {
@@ -112,5 +106,7 @@ const providesStatic = {
 		}
 	},
 };
+
+defineOwnProperty(providesStatic, styles, () => []);
 
 export default { hooks, providesStatic };
