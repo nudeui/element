@@ -2,15 +2,15 @@
  * Extensible plugin for adding styles to an element's shadow root or other roots
  */
 import { getOwnValue, adoptStyle } from "./util.js";
-import { getSuperMethod, defineOwnProperty, symbols } from "../base.js";
+import { getSuperForMember, defineOwnProperty, symbols } from "../base.js";
 
 export const { styles } = symbols.known;
 const defaultBaseURL = globalThis.document?.location?.href ?? import.meta.url;
 
 function applyStyles (ElementConstructor = this.constructor) {
-	let Super = getSuperMethod(this, applyStyles);
+	let Super = getSuperForMember(this, styles);
 	if (Super) {
-		applyStyles.call(this, ElementConstructor);
+		applyStyles.call(this, Super);
 	}
 
 	for (let options of ElementConstructor[styles]) {

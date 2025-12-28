@@ -51,6 +51,25 @@ export function getSuper (obj, testFn) {
 }
 
 /**
+ * Get the superclass that defines a member.
+ * @param {object | Function} obj - An object, class or instance. Defaults to `this`.
+ * @param {string | symbol} name - The member to check for.
+ * @param {any} [currentValue=obj[name]] - The current value of the property. Will ensure the returned superclass value is different than this value. Useful for looking up properties further up the chain.
+ * @returns {FunctionConstructor | null} The superclass that defines the member or null if none exists.
+ */
+export function getSuperForMember (obj, name, currentValue = obj[name]) {
+	if (typeof name === "function") {
+		[name, currentValue] = [name.name, name];
+	}
+	if (currentValue === undefined) {
+		return null;
+	}
+
+	let fn = C => Object.hasOwn(C, name) && C[name] !== currentValue;
+	return getSuper(obj, fn);
+}
+
+/**
  * Get the value of a member from the superclass that defines it.
  * @param {object | Function} obj - An object, class or instance. Defaults to `this`.
  * @param {string | symbol} name - The method or accessor to check for.
@@ -61,12 +80,7 @@ export function getSuperMember (obj, name, currentValue = obj[name]) {
 	if (typeof name === "function") {
 		[name, currentValue] = [name.name, name];
 	}
-	if (currentValue === undefined) {
-		return undefined;
-	}
-
-	let fn = C => Object.hasOwn(C, name) && C[name] !== currentValue;
-	return getSuper(obj, fn)?.[name];
+	return getSuperForMember(obj, name, currentValue)?.[name];
 }
 
 /**
