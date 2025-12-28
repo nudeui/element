@@ -11,9 +11,11 @@ export {
 	globalStyles,
 };
 
-export default [
-	styles,
-	lightStyles,
-	documentStyles,
-	globalStyles,
-];
+export default {
+	dependencies: [
+		styles,
+		lightStyles,
+		documentStyles,
+		globalStyles,
+	],
+};

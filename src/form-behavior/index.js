@@ -1,13 +1,17 @@
-import base from "./base.js";
+import formBehavior from "./base.js";
 import like from "./like.js";
 import delegate from "./delegate.js";
 
-export { base, like, delegate };
-
-export const dependencies = [
-	base,
+export {
+	formBehavior,
 	like,
 	delegate,
-];
+};
 
-export default {dependencies};
+export default {
+	dependencies: [
+		formBehavior,
+		like,
+		delegate,
+	],
+};
