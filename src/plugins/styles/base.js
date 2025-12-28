@@ -102,7 +102,7 @@ const providesStatic = {
 
 			this.hooks.run("define-style", env);
 
-			if (env.style.roots.size === 0) {
+			if (env.style.roots.size === 0 || env.options.shadow) {
 				env.style.roots.add("shadow");
 			}
 
