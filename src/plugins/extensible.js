@@ -6,7 +6,7 @@
 import Hooks from "./hooks.js";
 import { hasPlugin, addPlugin } from "./plugins.js";
 import { getSuper } from "./util/super.js";
-import { defineOwnProperties } from "./util/own.js";
+import { defineOwnProperty } from "./util/own.js";
 
 export const providesStatic = {
 	/**
@@ -17,30 +17,16 @@ export const providesStatic = {
 	setup () {
 		// TODO what about plugins that were added after setup was called?
 		if (!this.hooks.hasRun("setup")) {
-			// Install any plugins in Class.plugins
-			for (let plugin of this.plugins) {
-				addPlugin(this, plugin);
-			}
-
 			this.hooks.run("setup", this);
 		}
 	},
 };
 
-defineOwnProperties(providesStatic, {
-	hooks: {
-		init () {
-			let ret = new Hooks();
-			ret.parent = getSuper(this)?.hooks;
-			return ret;
-		},
-	},
-	plugins: {
-		init () {
-			return [];
-		},
-	},
-})
+defineOwnProperty(providesStatic, "hooks", function init () {
+	let ret = new Hooks();
+	ret.parent = getSuper(this)?.hooks;
+	return ret;
+});
 
 export const plugin = { providesStatic };
 

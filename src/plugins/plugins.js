@@ -32,10 +32,22 @@ export function hasPlugin (Class, plugin) {
 /**
  * Add a plugin to a class
  * @param {FunctionConstructor} Class
- * @param {Plugin} plugin
+ * @param {Plugin | Iterable<Plugin>} ...plugins - One or more plugins to add, in order
  * @returns {void}
  */
-export function addPlugin (Class, plugin) {
+export function addPlugin (Class, ...plugin) {
+	if (plugin.length > 1) {
+		plugin = plugin.flat();
+
+		for (let p of plugin) {
+			addPlugin(Class, p);
+		}
+		return;
+	}
+
+	// If we're here, we only have one plugin
+	plugin = plugin[0];
+
 	if (hasPlugin(Class, plugin)) {
 		return;
 	}
@@ -48,11 +60,7 @@ export function addPlugin (Class, plugin) {
 		}
 	}
 
-	defineOwnProperty(Class, plugins, {
-		init () {
-			return new Set();
-		},
-	});
+	defineOwnProperty(Class, plugins, () => new Set());
 
 	Class[plugins].add(plugin);
 
