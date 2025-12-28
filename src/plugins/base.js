@@ -27,7 +27,8 @@ defineOwnProperty(providesStatic, "hooks", function init () {
 	return ret;
 });
 
-export default { providesStatic };
+export const base = { providesStatic };
+export default base;
 
 export * from "../plugins.js";
 export * from "../util/own.js";

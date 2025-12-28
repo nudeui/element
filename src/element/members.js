@@ -1,4 +1,5 @@
 const provides = {
+	// Called by the constructor
 	constructed () {
 		this.constructor.setup(); // Last resort
 		this.constructor.hooks.run("constructor-static", this.constructor);
