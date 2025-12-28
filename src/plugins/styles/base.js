@@ -8,7 +8,7 @@ export const { styles } = symbols.known;
 const defaultBaseURL = globalThis.document?.location?.href ?? import.meta.url;
 
 function applyStyles (ElementConstructor = this.constructor) {
-	let Super = getSuperForMember(this, styles);
+	let Super = getSuperForMember(ElementConstructor, styles);
 	if (Super) {
 		applyStyles.call(this, Super);
 	}
