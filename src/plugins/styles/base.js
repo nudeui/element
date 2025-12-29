@@ -62,10 +62,10 @@ const providesStatic = {
 	/**
 	 * Define styles for the component
 	 * @param { (object | string)[] } def - Styles to define
-	 * @param {object} stringOptions - Options for styles passed as string URLs
+	 * @param {object} defaultOptions - Options for styles passed as string URLs
 	 * @void
 	 */
-	defineStyles (def = getOwnValue(this, "styles"), stringOptions = { shadow: true }) {
+	defineStyles (def = getOwnValue(this, "styles"), defaultOptions = { roots: new Set(["shadow"]) }) {
 		if (!def) {
 			return;
 		}
@@ -78,7 +78,10 @@ const providesStatic = {
 
 		for (let options of def) {
 			if (typeof options === "string") {
-				options = { url: options, ...stringOptions };
+				options = { url: options, ...defaultOptions };
+			}
+			else {
+				options = Object.assign({}, defaultOptions, options);
 			}
 
 			let env = { context: this, options, style: options };

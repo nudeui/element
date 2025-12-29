@@ -30,14 +30,31 @@ class TestElement extends Element {
 	}
 }
 
+class TestElement2 extends TestElement {
+	static globalStyles = [
+		{
+			css: `test-element2 { box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5); border: 1px solid green; margin: 10px; }`,
+		}
+	]
+
+	static shadowStyles = [
+		{
+			css: `:host { background: lightblue; }`,
+		}
+	]
+}
+
 addPlugin(TestElement, styles);
 
 globalThis.TestElement = TestElement;
-
+globalThis.TestElement2 = TestElement2;
 customElements.define("test-element", TestElement);
+customElements.define("test-element2", TestElement2);
+
 </script>
-	</head>
-	<body>
-		<test-element>Hi</test-element>
-	</body>
+</head>
+<body>
+	<test-element>Hi</test-element>
+	<test-element2>Hi</test-element2>
+</body>
 </html>
