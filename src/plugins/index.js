@@ -3,7 +3,7 @@
  */
 
 import base from "./base.js";
-import pluginsProperty from "./declarative/index.js";
+import pluginsProperty from "./plugins-property/index.js";
 import elements from "./elements/index.js";
 import props from "./props/index.js";
 import events from "./events/index.js";

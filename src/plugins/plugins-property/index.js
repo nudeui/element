@@ -1,5 +1,5 @@
 /**
- * Allow declaratively specifying plugins via a plugins property
+ * Allow declaratively specifying plugins via a `plugins` property
  */
 
 import { addPlugin, defineOwnProperty } from "../base.js";

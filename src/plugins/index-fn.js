@@ -2,7 +2,7 @@
  * All plugins, exported in a tree-shaking friendly way
  */
 export * from "./base.js";
-export * from "./declarative/index.js";
+export * from "./plugins-property/index.js";
 export * from "./elements/index.js";
 export * from "./events/index.js";
 export * from "./form-behavior/index.js";
