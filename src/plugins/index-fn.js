@@ -12,4 +12,4 @@ export * from "./shadow/index.js";
 export * from "./slots/index.js";
 export * from "./states/index.js";
 export * from "./styles/index.js";
-export * from "./super/index.js";
+export * from "./super-property/index.js";
