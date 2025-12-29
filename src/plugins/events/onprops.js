@@ -34,9 +34,9 @@ const hooks = {
 			this[eventProps] = Object.fromEntries(eventPropsArray);
 			this.defineProps(this[eventProps]);
 
-			this.hooks.add("first-connected", function firstConnected () {
+			// this.hooks.add("first-connected", function firstConnected () {
 
-			});
+			// });
 		}
 	},
 
