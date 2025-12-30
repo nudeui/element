@@ -2,19 +2,22 @@ import base, { addPlugin } from "../src/extensible.js";
 
 export default {
 	name: "hooks",
-	run (hookName, classes) {
+	run ({ hook, classes, create }) {
 		let ret = [];
 
 		for (let name of classes) {
 			let Class = this.data[name];
-			Class.hooks.add(hookName, function () {
+			Class.hooks.add(hook, function () {
 				let isStatic = typeof this === "function";
 				let suffix = isStatic ? ":" + this.name : "";
 				ret.push(name + suffix);
 			});
 		}
 
-		new this.data[classes.at(-1)]();
+		create = Array.isArray(create) ? create : [create];
+		for (let name of create) {
+			new this.data[name]();
+		}
 
 		return ret;
 	},
@@ -35,12 +38,40 @@ export default {
 	},
 	tests: [
 		{
-			args: ["first_constructor_static", ["B", "C", "D"]],
+			name: "Simple",
+			arg: {
+				hook: "constructor",
+				classes: ["D"],
+				create: "D",
+			},
+			expect: ["D"],
+		},
+		{
+			name: "first_ prefix",
+			arg: {
+				hook: "first_constructor",
+				classes: ["D"],
+				create: ["D", "D", "D"],
+			},
+			expect: ["D"],
+		},
+		{
+			name: "Inheritance (static)",
+			arg: {
+				hook: "first_constructor_static",
+				classes: ["B", "C", "D"],
+				create: "D",
+			},
 			expect: ["B:D", "C:D", "D:D"],
 			// expect: ["B:B", "B:C", "B:D", "C:C", "C:D", "D:D"],
 		},
 		{
-			args: ["constructor", ["B", "C", "D"]],
+			name: "Inheritance (instance)",
+			arg: {
+				hook: "constructor",
+				classes: ["B", "C", "D"],
+				create: "D",
+			},
 			expect: ["B", "C", "D"],
 		},
 	],
