@@ -9,6 +9,7 @@ const defaultBaseURL = globalThis.document?.location?.href ?? import.meta.url;
 
 function applyStyles (ElementConstructor = this.constructor) {
 	if (!ElementConstructor?.[styles]) {
+		// We've reached the top
 		return;
 	}
 
@@ -18,7 +19,7 @@ function applyStyles (ElementConstructor = this.constructor) {
 	}
 
 	for (let options of ElementConstructor[styles]) {
-		let env = { options, ElementConstructor };
+		let env = { options };
 		env.roots = new Set();
 
 		if (env.options.roots.has("shadow")) {
@@ -28,7 +29,7 @@ function applyStyles (ElementConstructor = this.constructor) {
 			}
 		}
 
-		ElementConstructor.$hook("connected-apply-style", env);
+		this.$hook("connected-apply-style", env);
 
 		adoptStyle(env.options, env.roots);
 	}
