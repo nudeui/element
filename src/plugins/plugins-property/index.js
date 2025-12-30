@@ -2,7 +2,7 @@
  * Allow declaratively specifying plugins via a `plugins` property
  */
 
-import { addPlugin, defineOwnProperty } from "../base.js";
+import { addPlugin, defineOwnProperty } from "../../extensible.js";
 
 const hooks = {
 	setup () {

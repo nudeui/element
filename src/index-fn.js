@@ -6,3 +6,4 @@ export * from "./element/index.js";
 export { default as default } from "./element/index.js";
 export * from "./plugins/index-fn.js";
 export { default as commonPlugins } from "./plugins/index.js";
+export * from "./extensible.js";

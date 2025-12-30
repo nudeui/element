@@ -2,7 +2,7 @@
  * Factory for NudeElement base classes with custom params
  */
 
-import extensible, { symbols, addPlugins } from "../plugins/base.js";
+import extensible, { symbols, addPlugins } from "../extensible.js";
 import members from "./members.js";
 
 /**

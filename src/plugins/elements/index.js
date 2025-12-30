@@ -3,7 +3,7 @@
  * TODO update references when DOM changes
  */
 
-import { symbols, defineOwnProperty } from "../base.js";
+import { symbols, defineOwnProperty } from "../../extensible.js";
 import { defineLazyProperty } from "../../util/lazy.js";
 import shadowPlugin from "../shadow/index.js";
 

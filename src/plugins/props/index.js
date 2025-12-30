@@ -1,5 +1,5 @@
 import Props from "./util/Props.js";
-import { symbols } from "../base.js";
+import symbols from "../../symbols.js";
 import { defineLazyProperty } from "../../util/lazy.js";
 
 export const { props } = symbols.known;

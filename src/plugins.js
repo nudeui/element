@@ -10,7 +10,6 @@
 import symbols from "./symbols.js";
 import { defineOwnProperty } from "./util/own.js";
 import { getSuper } from "./util/super.js";
-import basePlugin from "./plugins/base.js";
 
 /**
  * Check if a plugin is installed on a class

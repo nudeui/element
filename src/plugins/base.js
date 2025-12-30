@@ -32,9 +32,3 @@ defineOwnProperty(providesStatic, "hooks", function init () {
 
 export const base = { providesStatic };
 export default base;
-
-export * from "../plugins.js";
-export * from "../util/own.js";
-export * from "../util/super.js";
-export { default as symbols } from "../symbols.js";
-export { default as Hooks } from "../hooks.js";

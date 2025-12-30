@@ -2,7 +2,7 @@
  * Extensible plugin for adding styles to an element's shadow root or other roots
  */
 import { getOwnValue, adoptStyle } from "./util.js";
-import { getSuper, defineOwnProperty, symbols } from "../base.js";
+import { getSuper, defineOwnProperty, symbols } from "../../extensible.js";
 
 export const { styles } = symbols.known;
 const defaultBaseURL = globalThis.document?.location?.href ?? import.meta.url;

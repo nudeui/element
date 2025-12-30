@@ -2,7 +2,7 @@
  * Extensible MutationObserver class
  */
 
-import extensible, { addPlugin } from "../plugins/base.js";
+import extensible, { addPlugin } from "../extensible.js";
 import { registry as symbolRegistry } from "../symbols.js";
 import IterableWeakMap from "./util/iterable-weakmap.js";
 
