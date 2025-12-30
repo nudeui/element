@@ -90,7 +90,11 @@ export function cssToSheet (css) {
  * @returns {CSSStyleSheet}
  */
 export function adoptSheet (sheet, roots) {
-	if (roots?.[Symbol.iterator]) {
+	if (!roots) {
+		return sheet;
+	}
+
+	if (roots[Symbol.iterator]) {
 		for (let root of roots) {
 			adoptSheet(sheet, root);
 		}
@@ -111,8 +115,6 @@ export function adoptSheet (sheet, roots) {
 
 	return sheet;
 }
-
-
 
 /**
  * Memoize CSS strings to CSSStyleSheet objects
