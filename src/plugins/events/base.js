@@ -4,7 +4,7 @@ export const { events } = symbols.known;
 
 const hooks = {
 	setup () {
-		if (this.events) {
+		if (Object.hasOwn(this, "events")) {
 			this.defineEvents();
 		}
 	},
