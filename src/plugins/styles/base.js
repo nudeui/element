@@ -40,14 +40,7 @@ const hooks = {
 			this.defineStyles(this.styles);
 		}
 		if (Object.hasOwn(this, "shadowStyles")) {
-			this.shadowStyles = Array.isArray(this.shadowStyles) ? this.shadowStyles : [this.shadowStyles];
-			for (let style of this.shadowStyles) {
-				if (typeof style === "object") {
-					style.shadow = true;
-				}
-			}
-
-			this.defineStyles(this.shadowStyles);
+			this.defineStyles(this.shadowStyles, { shadow: true });
 		}
 	},
 
