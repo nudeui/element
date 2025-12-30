@@ -131,6 +131,7 @@ let Self = class Prop {
 				return me.get(this);
 			},
 			enumerable,
+			configurable: true,
 		};
 
 		if (!this.spec.get || this.spec.set === true) {
