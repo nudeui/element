@@ -1,6 +1,7 @@
 import Props from "./util/Props.js";
 import symbols from "../../symbols.js";
 import { defineLazyProperty } from "../../util/lazy.js";
+import { defineOwnProperty } from "../../extensible.js";
 
 export const { props } = symbols.known;
 
@@ -74,8 +75,6 @@ const providesStatic = {
 			return null;
 		}
 
-		this[props] ??= new Props(this);
-
 		let env = { props: def };
 		this.$hook("define-props", env);
 
@@ -90,5 +89,9 @@ const providesStatic = {
 	// 	},
 	// }),
 };
+
+defineOwnProperty(providesStatic, props, function () {
+	return new Props(this);
+});
 
 export default { hooks, provides, providesStatic };
