@@ -1,6 +1,7 @@
 import symbols from "../../symbols.js";
 import Slots from "./util/slots.js";
 import SlotController from "./util/slot-controller.js";
+import { defineOwnProperty } from "../../extensible.js";
 
 export const { slots } = symbols.known;
 
@@ -10,7 +11,7 @@ const hooks = {
 	},
 
 	setup () {
-		if (this.slots) {
+		if (Object.hasOwn(this, "slots")) {
 			this.defineSlots();
 		}
 	},
@@ -32,5 +33,7 @@ const providesStatic = {
 		this.$hook("define-slots", { slots: def });
 	},
 };
+
+defineOwnProperty(providesStatic, slots, () => undefined);
 
 export default { hooks, providesStatic };

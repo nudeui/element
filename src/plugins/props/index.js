@@ -24,7 +24,7 @@ function first_constructor_static () {
 
 const hooks = {
 	setup () {
-		if (this.props) {
+		if (Object.hasOwn(this, "props")) {
 			this.defineProps();
 		}
 	},

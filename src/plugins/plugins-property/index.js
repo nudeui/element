@@ -7,7 +7,7 @@ import { addPlugin, defineOwnProperty } from "../../extensible.js";
 const hooks = {
 	setup () {
 		// Install any plugins in Class.plugins
-		if (!this.plugins) {
+		if (!Object.hasOwn(this, "plugins")) {
 			return;
 		}
 

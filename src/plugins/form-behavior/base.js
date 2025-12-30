@@ -9,7 +9,7 @@ export const { formBehavior } = symbols.known;
 
 const hooks = {
 	setup () {
-		if (this.formBehavior) {
+		if (Object.hasOwn(this, "formBehavior")) {
 			this.defineFormBehavior();
 		}
 	},
