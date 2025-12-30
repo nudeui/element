@@ -62,8 +62,9 @@ export default {
 				classes: ["B", "C", "D"],
 				create: "D",
 			},
-			expect: ["B:D", "C:D", "D:D"],
-			// expect: ["B:B", "B:C", "B:D", "C:C", "C:D", "D:D"],
+			// previous output:
+			// expect: ["B:D", "C:D", "D:D"],
+			expect: ["B:B", "B:C", "B:D", "C:C", "C:D", "D:D"],
 		},
 		{
 			name: "Inheritance (instance)",
