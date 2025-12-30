@@ -60,11 +60,14 @@ export default class Hooks {
 		}
 		else {
 			// Single hook, single callback
-			name = Hooks.getCanonicalName(name);
-			if (!this.hooks.has(name)) {
-				this.hooks.set(name, new Hook());
+			let resolved = Hooks.resolve(name);
+			let hook = this.hooks.get(resolved.name);
+			if (!hook) {
+				hook = new Hook();
+				this.hooks.set(resolved.name, hook);
 			}
-			this.hooks.get(name).add(callback);
+
+			hook.set(callback, resolved.options);
 		}
 	}
 
@@ -73,24 +76,16 @@ export default class Hooks {
 	 * @param {string} name
 	 * @param {object} [env]
 	 */
-	run (name, env) {
-		name = Hooks.getCanonicalName(name);
+	run (name, env, options) {
+		name = toUnderscoreCase(name);
 		this.ran.add(name);
 
 		getSuper(this.owner)?.hooks?.run(name, env);
 
-		let baseName = name;
-		if (name.startsWith("first_")) {
-			baseName = name.slice(6);
-			this.hooks.get(name)?.runOnce(env);
-		}
-		else {
-			this.run("first_" + name, env);
-			this.hooks.get(name)?.run(env);
-		}
+		this.hooks.get(name)?.run(env, options);
 
-		if (baseName !== "*") {
-			this.run("*", { hookName: name, ...env });
+		if (name !== "*") {
+			this.run("*", { hookName: name, ...env }, options);
 		}
 	}
 
@@ -100,46 +95,41 @@ export default class Hooks {
 	}
 
 	// Allow either camelCase, underscore_case or kebab-case for hook names
-	static getCanonicalName (name) {
-		return name.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`).replace(/-/g, "_");
+	static resolve (name) {
+		let nameRaw = name;
+		let options = {};
+
+		// Convert to underscore_case
+		name = toUnderscoreCase(name);
+
+		if (name.startsWith("first_")) {
+			options.once = true;
+			name = name.slice(6);
+		}
+
+		return { nameRaw, name, options };
 	}
 }
 
-export class Hook extends Set {
+export class Hook extends Map {
 	/**
 	 * Track which contexts the hook has been run on so far
 	 * @type {WeakMap<object, WeakSet<Function>>}
 	 */
 	contexts = new WeakMap();
 
-	run (env) {
-		for (let callback of this) {
+	run (env, options) {
+		for (let [callback, addOptions] of this) {
 			let context = env?.context ?? env;
-			callback.call(context, env);
+			let once = options?.once ?? addOptions.once;
 
 			let callbacks = this.contexts.get(context);
-			if (!callbacks) {
-				callbacks = new WeakSet();
-				this.contexts.set(context, callbacks);
-			}
-			callbacks.add(callback);
-		}
-	}
-
-	/**
-	 * Like run(), but only executes the callback once per context
-	 * @param {*} env
-	 */
-	runOnce (env) {
-		for (let callback of this) {
-			let context = env?.context ?? env;
-
-			let callbacks = this.contexts.get(context);
-			if (callbacks && callbacks.has(callback)) {
+			if (once && callbacks?.has(callback)) {
 				continue;
 			}
 
 			callback.call(context, env);
+
 			// TODO what about callbacks added after this?
 			if (!callbacks) {
 				callbacks = new WeakSet();
@@ -148,4 +138,8 @@ export class Hook extends Set {
 			callbacks.add(callback);
 		}
 	}
+}
+
+function toUnderscoreCase (name) {
+	return name.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`).replace(/-/g, "_");
 }
