@@ -90,7 +90,7 @@ export default class Hooks {
 	}
 
 	hasRun (name = "*") {
-		name = Hooks.getCanonicalName(name);
+		name = toUnderscoreCase(name);
 		return this.ran.has(name);
 	}
 
