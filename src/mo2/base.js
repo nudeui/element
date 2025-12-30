@@ -7,11 +7,7 @@ import { registry as symbolRegistry } from "../symbols.js";
 import IterableWeakMap from "./util/iterable-weakmap.js";
 
 export const symbols = symbolRegistry();
-export const {
-	callback,
-	invoke,
-	refresh,
-} = symbols;
+export const { callback, invoke, refresh } = symbols;
 
 export default class MutationObserver2 extends MutationObserver {
 	/** @type {WeakMap<Node, MutationObserverInit>} */

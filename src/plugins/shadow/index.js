@@ -20,7 +20,7 @@ function attachShadow (options) {
 
 	if (_attachShadow === undefined) {
 		// Not supported
-		return this[shadowRoot] = null;
+		return (this[shadowRoot] = null);
 	}
 
 	try {
@@ -46,4 +46,4 @@ defineLazyProperty(provides, shadowRoot, {
 	writable: true,
 });
 
-export default {provides};
+export default { provides };

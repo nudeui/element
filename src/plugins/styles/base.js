@@ -65,7 +65,10 @@ const providesStatic = {
 	 * @param {object} defaultOptions - Options for styles passed as string URLs
 	 * @void
 	 */
-	defineStyles (def = getOwnValue(this, "styles"), defaultOptions = { roots: new Set(["shadow"]) }) {
+	defineStyles (
+		def = getOwnValue(this, "styles"),
+		defaultOptions = { roots: new Set(["shadow"]) },
+	) {
 		if (!def) {
 			return;
 		}

@@ -13,7 +13,7 @@ import MutationObserver2 from "../../../mo2/index.js";
  */
 
 export default class SlotObserver extends MutationObserver2 {
-	observe (target, options = { }) {
+	observe (target, options = {}) {
 		// Translate to SlotObserver options
 		let moOptions = {};
 
@@ -79,7 +79,9 @@ export default class SlotObserver extends MutationObserver2 {
 		}
 
 		if (slotsChanged.size > 0) {
-			let records = slotsChanged.entries().map(([target, mutation]) => ({ target, ...mutation }));
+			let records = slotsChanged
+				.entries()
+				.map(([target, mutation]) => ({ target, ...mutation }));
 			super.callback(records, that);
 		}
 	}
