@@ -1,48 +1,48 @@
 {
-  "name": "nude-element",
-  "version": "0.0.14",
-  "description": "Composable web component helpers",
-  "main": "index.js",
-  "type": "module",
-  "scripts": {
-    "eslint": "npx eslint .",
-    "eslint:fix": "npx eslint . --fix",
-    "build:apidocs": "npx typedoc",
-    "watch:apidocs": "npx typedoc --watch --preserveWatchOutput",
-    "build": "npm run build:apidocs",
-    "watch": "npm run watch:apidocs",
-    "test": "npx htest ./test",
-    "release": "npx release-it"
-  },
-  "exports": {
-    ".": "./src/index.js",
-    "./fn": "./src/index-fn.js",
-    "./plugins": "./src/plugins/index.js",
+	"name": "nude-element",
+	"version": "0.0.14",
+	"description": "Composable web component helpers",
+	"main": "index.js",
+	"type": "module",
+	"scripts": {
+		"eslint": "npx eslint .",
+		"eslint:fix": "npx eslint . --fix",
+		"build:apidocs": "npx typedoc",
+		"watch:apidocs": "npx typedoc --watch --preserveWatchOutput",
+		"build": "npm run build:apidocs",
+		"watch": "npm run watch:apidocs",
+		"test": "npx htest ./test",
+		"release": "npx release-it"
+	},
+	"exports": {
+		".": "./src/index.js",
+		"./fn": "./src/index-fn.js",
+		"./plugins": "./src/plugins/index.js",
 		"./plugins/fn": "./src/plugins/index-fn.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/nudeui/element.git"
-  },
-  "keywords": [
-    "Web Components"
-  ],
-  "author": "Lea Verou",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/nudeui/element/issues"
-  },
-  "homepage": "https://github.com/nudeui/element#readme",
-  "devDependencies": {
-    "@stylistic/eslint-plugin": "latest",
-    "eslint": "latest",
-    "globals": "latest",
-    "htest.dev": "^0.0.15",
-    "prettier-plugin-brace-style": "latest",
-    "prettier-plugin-merge": "latest",
-    "prettier-plugin-space-before-function-paren": "latest",
-    "release-it": "^17.2.1",
-    "typedoc": "latest",
-    "typedoc-plugin-rename-defaults": "latest"
-  }
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nudeui/element.git"
+	},
+	"keywords": [
+		"Web Components"
+	],
+	"author": "Lea Verou",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/nudeui/element/issues"
+	},
+	"homepage": "https://github.com/nudeui/element#readme",
+	"devDependencies": {
+		"@stylistic/eslint-plugin": "^5.6.1",
+		"eslint": "^9.39.2",
+		"globals": "^16.5.0",
+		"htest.dev": "^0.0.20",
+		"prettier-plugin-brace-style": "^0.8.2",
+		"prettier-plugin-merge": "^0.8.0",
+		"prettier-plugin-space-before-function-paren": "^0.0.10",
+		"release-it": "^17.11.0",
+		"typedoc": "^0.28.15",
+		"typedoc-plugin-rename-defaults": "^0.7.3"
+	}
 }
