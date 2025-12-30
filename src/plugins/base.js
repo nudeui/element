@@ -4,7 +4,7 @@
  */
 
 import Hooks from "../hooks.js";
-import { getSuper, getSuperMethod } from "../util/super.js";
+import { getSuperMethod } from "../util/super.js";
 import { defineOwnProperty } from "../util/own.js";
 
 const provides = {
@@ -28,9 +28,7 @@ const providesStatic = {
 		getSuperMethod(this, providesStatic.setup)?.call(this);
 
 		// TODO what about plugins that were added after setup was called?
-		if (!this.hooks.hasRun("setup")) {
-			this.$hook("setup");
-		}
+		this.$hook("setup", this, { once: true });
 	},
 };
 

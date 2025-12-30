@@ -4,9 +4,6 @@ export default class Hooks {
 	/** @type {Map<string, Hook>} */
 	hooks = new Map();
 
-	/** @type {Set<string>} */
-	ran = new Set();
-
 	/**
 	 * The object this hooks object is attached to.
 	 * It is expected that this.owner.hooks === this
@@ -78,7 +75,6 @@ export default class Hooks {
 	 */
 	run (name, env, options) {
 		name = toUnderscoreCase(name);
-		this.ran.add(name);
 
 		let Super = getSuper(this.owner);
 		Super?.hooks?.run(name, env, options);
@@ -104,11 +100,6 @@ export default class Hooks {
 		if (name !== "*") {
 			this.run("*", { hookName: name, env }, options);
 		}
-	}
-
-	hasRun (name = "*") {
-		name = toUnderscoreCase(name);
-		return this.ran.has(name);
 	}
 
 	// Allow either camelCase, underscore_case or kebab-case for hook names

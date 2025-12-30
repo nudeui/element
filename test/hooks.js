@@ -41,19 +41,38 @@ export default {
 			name: "Simple",
 			arg: {
 				hook: "constructor",
-				classes: ["D"],
-				create: "D",
+				classes: ["B"],
+				create: "B",
 			},
-			expect: ["D"],
+			expect: ["B"],
 		},
 		{
 			name: "first_ prefix",
 			arg: {
 				hook: "first_constructor",
-				classes: ["D"],
-				create: ["D", "D", "D"],
+				classes: ["B"],
+				create: ["B", "B", "B"],
 			},
-			expect: ["D"],
+			expect: ["B"],
+		},
+		{
+			name: "once as a run option",
+			run () {
+				let { B } = this.data;
+				B.prototype.foo = function () {
+					this.$hook("foo", {}, { once: true });
+				};
+				let b = new B();
+				let counter = 0;
+				B.hooks.add("foo", function () {
+					counter++;
+				});
+				b.foo();
+				b.foo();
+				b.foo();
+				return counter;
+			},
+			expect: 1,
 		},
 		{
 			name: "Inheritance (static)",
