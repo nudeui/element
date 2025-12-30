@@ -1,3 +1,4 @@
+import { defineOwnProperty } from "../../extensible.js";
 import symbols from "../../symbols.js";
 export const { events } = symbols.known;
 
@@ -11,13 +12,13 @@ const hooks = {
 
 const providesStatic = {
 	defineEvents (def = this.events) {
-		this[events] ??= {};
-
 		let env = { events: def };
 		this.$hook("define-events", env);
 
 		Object.assign(this[events], env.events);
 	},
 };
+
+defineOwnProperty(providesStatic, events, () => ({}));
 
 export default { hooks, providesStatic };

@@ -1,10 +1,10 @@
-
 /**
  * Add on* props for UI events, just like native UI events
  */
 import propsPlugin from "../props/index.js";
 import base from "./base.js";
 import symbols from "../../symbols.js";
+import { defineOwnProperty } from "../../extensible.js";
 
 const { eventProps } = symbols.new;
 
@@ -73,4 +73,8 @@ const hooks = {
 	},
 };
 
-export default {dependencies, hooks};
+const providesStatic = {};
+
+defineOwnProperty(providesStatic, eventProps, () => undefined);
+
+export default { dependencies, hooks, providesStatic };
