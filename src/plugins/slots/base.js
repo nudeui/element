@@ -29,7 +29,7 @@ const providesStatic = {
 		// New slots to add
 		this[slots].define(def);
 
-		this.hooks.run("define-slots", {context: this, slots: def});
+		this.$hook("define-slots", { slots: def });
 	},
 };
 

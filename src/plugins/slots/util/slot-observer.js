@@ -27,8 +27,8 @@ export default class SlotObserver extends MutationObserver2 {
 			moOptions.subtree = options.subtree !== false;
 		}
 
-		let env = { context: this, target, options, moOptions };
-		this.constructor.hooks.run("observe", env);
+		let env = { target, options, moOptions };
+		this.$hook("observe", env);
 
 		return super.observe(env.target, env.moOptions);
 	}

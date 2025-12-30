@@ -18,7 +18,7 @@ function applyStyles (ElementConstructor = this.constructor) {
 	}
 
 	for (let options of ElementConstructor[styles]) {
-		let env = { context: this, options, ElementConstructor };
+		let env = { options, ElementConstructor };
 		env.roots = new Set();
 
 		if (env.options.roots.has("shadow")) {
@@ -28,7 +28,7 @@ function applyStyles (ElementConstructor = this.constructor) {
 			}
 		}
 
-		ElementConstructor.hooks.run("connected-apply-style", env);
+		ElementConstructor.$hook("connected-apply-style", env);
 
 		adoptStyle(env.options, env.roots);
 	}
@@ -84,7 +84,7 @@ const providesStatic = {
 				options = Object.assign({}, defaultOptions, options);
 			}
 
-			let env = { context: this, options, style: options };
+			let env = { options, style: options };
 
 			if (options.url) {
 				// Consolidate style definitions with the same URL
@@ -101,7 +101,7 @@ const providesStatic = {
 
 			env.style.roots ??= new Set();
 
-			this.hooks.run("define-style", env);
+			this.$hook("define-style", env);
 
 			if (env.style.roots.size === 0 || env.options.shadow) {
 				env.style.roots.add("shadow");

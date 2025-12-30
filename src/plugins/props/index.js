@@ -76,8 +76,8 @@ const providesStatic = {
 
 		this[props] ??= new Props(this);
 
-		let env = { context: this, props: def };
-		this.hooks.run("define-props", env);
+		let env = { props: def };
+		this.$hook("define-props", env);
 
 		this[props].add(env.props);
 	},

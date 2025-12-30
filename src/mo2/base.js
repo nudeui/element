@@ -24,21 +24,20 @@ export default class MutationObserver2 extends MutationObserver {
 	constructor (callback) {
 		super(new.target.callback);
 		Object.defineProperty(this, "callback", { value: callback });
-		this.constructor.hooks.run("constructor", { context: this });
+		this.$hook("constructor");
 	}
 
 	observe (target, options = {}) {
-		let env = { context: this, target, options };
+		let env = { target, options };
 
-		this.constructor.hooks.run("observe", env);
+		this.$hook("observe", env);
 		this.observations.set(env.target, env.options);
 
 		super.observe(env.target, env.options);
 	}
 
 	disconnect () {
-		let env = { context: this };
-		this.constructor.hooks.run("disconnect", env);
+		this.$hook("disconnect");
 		super.disconnect();
 		this.observations.clear();
 	}
@@ -46,9 +45,8 @@ export default class MutationObserver2 extends MutationObserver {
 	static symbols = symbols;
 
 	static callback (records, that) {
-		let env = { context: that, records };
-		that.constructor.hooks.run("callback", env);
+		let env = { records };
+		that.$hook("callback", env);
 		return that.callback(env.records, that);
 	}
 }
-

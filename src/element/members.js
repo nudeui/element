@@ -7,13 +7,13 @@ const provides = {
 		getSuperMethod(this, provides.constructed)?.call(this);
 
 		this.constructor.setup(); // Last resort
-		this.constructor.hooks.run("constructor-static", this.constructor);
-		this.constructor.hooks.run("constructor", this);
+		this.constructor.$hook("constructor-static");
+		this.$hook("constructor");
 
 		// We use a microtask so that this executes after the subclass constructor has run as well
 		Promise.resolve().then(() => {
 			if (!this.constructor.hooks.hasRun("constructed")) {
-				this.constructor.hooks.run("constructed", this);
+				this.$hook("constructed");
 			}
 		});
 	},
@@ -24,17 +24,17 @@ const provides = {
 
 		if (!this.constructor.hooks.hasRun("constructed")) {
 			// If the element starts off connected, this will fire *before* the microtask
-			this.constructor.hooks.run("constructed", this);
+			this.$hook("constructed");
 		}
 
-		this.constructor.hooks.run("connected", this);
+		this.$hook("connected");
 	},
 
 	disconnectedCallback () {
 		// super.disconnectedCallback()
 		getSuperMethod(this, provides.disconnectedCallback)?.call(this);
 
-		this.constructor.hooks.run("disconnected", this);
+		this.$hook("disconnected");
 	},
 };
 

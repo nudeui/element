@@ -58,7 +58,7 @@ export default class SlotController {
 			return;
 		}
 
-		this.host.constructor.hooks.run("get-slot-for", { context: this.host, child });
+		this.host.$hook("get-slot-for", { child });
 	}
 
 	/**

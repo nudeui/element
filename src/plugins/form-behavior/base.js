@@ -1,5 +1,3 @@
-
-
 import symbols from "../../symbols.js";
 
 import internalsPlugin from "../internals/index.js";
@@ -26,8 +24,8 @@ const providesStatic = {
 
 		this[formBehavior] ??= {};
 
-		const env = {context: this, formBehavior: def};
-		this.hooks.run("define-form-behavior", env);
+		const env = { formBehavior: def };
+		this.$hook("define-form-behavior", env);
 
 		Object.assign(this[formBehavior], env.formBehavior);
 	},

@@ -24,7 +24,7 @@ function getSlotObserver () {
 
 		for (let [host, hostRecords] of hosts) {
 			host.slotsUpdated?.(hostRecords);
-			host.runHook("slots-changed", { records: hostRecords });
+			host.$hook("slots-changed", { records: hostRecords });
 		}
 	});
 
@@ -36,7 +36,7 @@ const hooks = {
 		getSlotObserver().observe(this, { subtree: true });
 	},
 
-	define_slot ({name, definition, oldDefinition}) {
+	define_slot ({ name, definition, oldDefinition }) {
 		if (!definition.dynamic) {
 			return;
 		}

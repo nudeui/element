@@ -1,4 +1,3 @@
-
 import symbols from "../../symbols.js";
 export const { events } = symbols.known;
 
@@ -14,8 +13,8 @@ const providesStatic = {
 	defineEvents (def = this.events) {
 		this[events] ??= {};
 
-		let env = {context: this, events: def};
-		this.hooks.run("define-events", env);
+		let env = { events: def };
+		this.$hook("define-events", env);
 
 		Object.assign(this[events], env.events);
 	},

@@ -25,7 +25,7 @@ function attachShadow (options) {
 
 	try {
 		this[shadowRoot] = _attachShadow.call(this, options);
-		this.constructor.hooks.run("shadow-attached", {context: this, shadowRoot});
+		this.$hook("shadow-attached", { shadowRoot });
 	}
 	catch (error) {
 		this[shadowRoot] = null;

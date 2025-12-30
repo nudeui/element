@@ -7,9 +7,9 @@ const dependencies = [base];
  */
 const provides = {
 	unobserve (target) {
-		let env = { context: this, target };
+		let env = { target };
 
-		this.constructor.hooks.run("unobserve", env);
+		this.$hook("unobserve", env);
 
 		// Disconnect the observer from the target and re-add all other observations
 		this.disconnect();
