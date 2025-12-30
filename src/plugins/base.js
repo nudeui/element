@@ -8,29 +8,14 @@ import { getSuper, getSuperMethod } from "../util/super.js";
 import { defineOwnProperty } from "../util/own.js";
 
 const provides = {
-	$hook (name, env) {
-		// options = { ...options, context: this, shallow: true };
-		if (env === undefined) {
-			env = this;
-		}
-		else if (isPlainObject(env)) {
-			env.context ??= this;
-		}
-
-		this.constructor.hooks.run(name, env);
+	$hook (name, env, options) {
+		this.constructor.hooks.run(name, env, { context: this, ...options });
 	},
 };
 
 const providesStatic = {
-	$hook (name, env) {
-		if (env === undefined) {
-			env = this;
-		}
-		else if (isPlainObject(env)) {
-			env.context ??= this;
-		}
-
-		this.hooks.run(name, env);
+	$hook (name, env, options) {
+		this.hooks.run(name, env, { context: this, ...options });
 	},
 
 	/**
@@ -55,11 +40,3 @@ defineOwnProperty(providesStatic, "hooks", function () {
 
 export const base = { provides, providesStatic };
 export default base;
-
-function isPlainObject (value) {
-	return (
-		value !== null &&
-		typeof value === "object" &&
-		Object.getPrototypeOf(value) === Object.prototype
-	);
-}

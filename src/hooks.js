@@ -1,4 +1,4 @@
-import { getSuper } from "./util/super.js";
+import { getSupers, getSuper } from "./util/super.js";
 
 export default class Hooks {
 	/** @type {Map<string, Hook>} */
@@ -63,7 +63,7 @@ export default class Hooks {
 			let resolved = Hooks.resolve(name);
 			let hook = this.hooks.get(resolved.name);
 			if (!hook) {
-				hook = new Hook();
+				hook = new Hook(this);
 				this.hooks.set(resolved.name, hook);
 			}
 
@@ -80,9 +80,26 @@ export default class Hooks {
 		name = toUnderscoreCase(name);
 		this.ran.add(name);
 
-		getSuper(this.owner)?.hooks?.run(name, env);
+		let Super = getSuper(this.owner);
+		Super?.hooks?.run(name, env, options);
+		let context = options?.context ?? env?.context ?? this.owner;
+		let isStatic = typeof context === "function";
 
-		this.hooks.get(name)?.run(env, options);
+		let hook = this.hooks.get(name);
+
+		if (isStatic) {
+			if (context.prototype instanceof this.owner) {
+				// Static hooks are run on subclasses too
+				// starting from this.owner down to the entry class
+				let supers = [this.owner, ...getSupers(context, this.owner)];
+
+				for (let Super of supers) {
+					hook?.run(env, options, Super);
+				}
+			}
+		}
+
+		hook?.run(env, options);
 
 		if (name !== "*") {
 			this.run("*", { hookName: name, env }, options);
@@ -118,11 +135,18 @@ export class Hook extends Map {
 	 */
 	contexts = new WeakMap();
 
-	run (env, options) {
-		for (let [callback, addOptions] of this) {
-			let context = env?.context ?? env;
-			let once = options?.once ?? addOptions.once;
+	constructor (owner) {
+		super();
+		this.owner = owner;
+	}
 
+	run (env, options, forceContext) {
+		let runContext = forceContext ?? options?.context;
+		let fallbackContext = env?.context ?? this.owner.owner;
+
+		for (let [callback, addOptions] of this) {
+			let context = runContext ?? addOptions.context ?? fallbackContext;
+			let once = options?.once ?? addOptions.once;
 			let callbacks = this.contexts.get(context);
 			if (once && callbacks?.has(callback)) {
 				continue;
