@@ -49,10 +49,8 @@ const providesStatic = {
 	},
 };
 
-defineOwnProperty(providesStatic, "hooks", function init () {
-	let ret = new Hooks();
-	ret.parent = getSuper(this)?.hooks;
-	return ret;
+defineOwnProperty(providesStatic, "hooks", function () {
+	return new Hooks(this);
 });
 
 export const base = { provides, providesStatic };

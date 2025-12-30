@@ -1,3 +1,5 @@
+import { getSuper } from "./util/super.js";
+
 export default class Hooks {
 	/** @type {Map<string, Hook>} */
 	hooks = new Map();
@@ -6,16 +8,14 @@ export default class Hooks {
 	ran = new Set();
 
 	/**
-	 * A parent hooks object to inherit from, if any.
-	 * Any parent hooks will be executed before this object's hooks.
-	 * @type {Hooks | null}
+	 * The object this hooks object is attached to.
+	 * It is expected that this.owner.hooks === this
+	 * @type {object | null}
 	 */
-	parent = null;
+	owner = null;
 
-	constructor (hooks) {
-		if (hooks) {
-			this.add(hooks);
-		}
+	constructor (owner) {
+		this.owner = owner;
 	}
 
 	/**
@@ -77,7 +77,7 @@ export default class Hooks {
 		name = Hooks.getCanonicalName(name);
 		this.ran.add(name);
 
-		this.parent?.run(name, env);
+		getSuper(this.owner)?.hooks?.run(name, env);
 
 		let baseName = name;
 		if (name.startsWith("first_")) {
@@ -90,7 +90,7 @@ export default class Hooks {
 		}
 
 		if (baseName !== "*") {
-			this.run("*", {hookName: name, ...env});
+			this.run("*", { hookName: name, ...env });
 		}
 	}
 
