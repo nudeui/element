@@ -13,6 +13,11 @@ const dependencies = [propsPlugin, base];
 const hooks = {
 	defineEvents (env) {
 		let def = env.events;
+		let context	= env.context;
+
+		if (context !== this) {
+			return;
+		}
 
 		let eventPropsArray = Object.keys(def)
 			// Is not a native event (e.g. input)
