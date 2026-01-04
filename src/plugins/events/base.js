@@ -12,7 +12,7 @@ const hooks = {
 
 const providesStatic = {
 	defineEvents (def = this.events) {
-		let env = { events: def };
+		let env = { events: def, context: this };
 		this.$hook("define-events", env);
 
 		Object.assign(this[events], env.events);
