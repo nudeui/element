@@ -141,7 +141,7 @@ export class Hook extends Map {
 			let context = runContext ?? addOptions.context ?? fallbackContext;
 			let once = options?.once ?? addOptions.once;
 			let callbacks = this.contexts.get(context);
-			if (once && callbacks?.has(callback)) {
+			if (once && this.hasRun(context, callback)) {
 				continue;
 			}
 
@@ -154,6 +154,23 @@ export class Hook extends Map {
 			}
 			callbacks.add(callback);
 		}
+	}
+
+	/**
+	 * Check if the hook has been run on a specific context and optionally a specific callback
+	 * @param {object} context
+	 * @param {function} [callback]
+	 * @returns {boolean}
+	 */
+	hasRun (context, callback) {
+		let callbacks = this.contexts.get(context);
+
+		if (!callback || !callbacks) {
+			// Check if the context has been run on at all
+			return Boolean(callbacks);
+		}
+
+		return callbacks.has(callback);
 	}
 }
 
