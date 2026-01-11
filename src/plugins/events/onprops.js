@@ -13,9 +13,8 @@ const dependencies = [propsPlugin, base];
 const hooks = {
 	defineEvents (env) {
 		let def = env.events;
-		let context	= env.context;
 
-		if (context !== this) {
+		if (this !== env.originalContext) {
 			return;
 		}
 

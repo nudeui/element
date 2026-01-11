@@ -84,6 +84,8 @@ export default class Hooks {
 		let hook = this.hooks.get(name);
 
 		if (isStatic) {
+			env ??= {};
+			env.originalContext = context;
 			if (context.prototype instanceof this.owner) {
 				// Static hooks are run on subclasses too
 				// starting from this.owner down to the entry class
