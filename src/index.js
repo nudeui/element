@@ -1,9 +1,12 @@
-export { default as default } from "./Element.js";
+/**
+ * Main entry point.
+ * Use @link{index-fn} for tree-shaking
+ */
 
-export { default as defineProps } from "./props/defineProps.js";
-export { default as defineEvents } from "./events/defineEvents.js";
-export { default as defineSlots } from "./slots/defineSlots.js";
-export { default as defineFormAssociated } from "./form-associated.js";
+export * from "./index-fn.js";
+import { ElementFactory, commonPlugins, Element as NudeElement } from "./index-fn.js";
+export { NudeElement };
 
-export { default as defineMixin } from "./mixins/define-mixin.js";
-export { default as Hooks } from "./mixins/hooks.js";
+const Element = ElementFactory(HTMLElement, commonPlugins);
+Element.setup();
+export default Element;
