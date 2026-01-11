@@ -12,6 +12,7 @@ const dependencies = [propsPlugin, base];
 
 const hooks = {
 	define_event (env) {
+		// Add `onprop` properties for events that need to define an on* prop
 		let onprop = env.event.onprop ?? "on" + env.name.toLowerCase();
 
 		if (onprop in this.prototype) {
@@ -37,6 +38,7 @@ const hooks = {
 			if (eventDef.onprop === false) {
 				continue;
 			}
+
 			newProps[eventDef.onprop] = {
 				type: {
 					is: Function,
@@ -46,6 +48,9 @@ const hooks = {
 					from: true,
 				},
 			};
+
+			this[eventProps] ??= {};
+			this[eventProps][eventDef.onprop] = name;
 		}
 
 		if (Object.keys(newProps).length > 0) {
@@ -53,25 +58,27 @@ const hooks = {
 		}
 	},
 
-	first_connected () {
+	constructed () {
 		// Deal with existing values
 		if (!this.constructor[eventProps]) {
 			return;
 		}
 
 		for (let name in this.constructor[eventProps]) {
+			// Read any existing on* prop value
 			let value = this[name];
+
 			if (typeof value === "function") {
-				let eventName = name.slice(2);
+				let eventName = this.constructor[eventProps][name];
 				this.addEventListener(eventName, value);
 			}
 		}
 
 		// Listen for changes
 		this.addEventListener("propchange", event => {
-			if (this.constructor[eventProps][event.name]) {
+			let eventName = this.constructor[eventProps][event.name];
+			if (eventName) {
 				// Implement onEventName attributes/properties
-				let eventName = event.name.slice(2);
 				let change = event.detail;
 
 				if (change.oldInternalValue) {
