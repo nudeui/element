@@ -37,7 +37,7 @@ const hooks = {
 
 	first_constructor_static,
 
-	first_connected () {
+	constructed () {
 		this.constructor[props].initializeFor(this);
 	},
 };
