@@ -11,36 +11,45 @@ const { eventProps } = symbols.new;
 const dependencies = [propsPlugin, base];
 
 const hooks = {
-	defineEvents (env) {
-		let def = env.events;
+	define_event (env) {
+		let onprop = env.event.onprop ?? "on" + env.name.toLowerCase();
 
-		if (this !== env.originalContext) {
+		if (onprop in this.prototype) {
+			// Already defined or native event
+			env.event.onprop ??= false;
 			return;
 		}
 
-		let eventPropsArray = Object.keys(def)
-			// Is not a native event (e.g. input)
-			.filter(name => !("on" + name in this.prototype))
-			.map(name => [
-				"on" + name,
-				{
-					type: {
-						is: Function,
-						arguments: ["event"],
-					},
-					reflect: {
-						from: true,
-					},
+		env.event.onprop ??= onprop;
+	},
+
+	// Define all on* props together at the end
+	define_events_end (env) {
+		if (this !== env.originalContext) {
+			// Run only on leaf classes
+			return;
+		}
+
+		let newProps = {};
+
+		for (let name in env.events) {
+			let eventDef = env.events[name];
+			if (eventDef.onprop === false) {
+				continue;
+			}
+			newProps[eventDef.onprop] = {
+				type: {
+					is: Function,
+					arguments: ["event"],
 				},
-			]);
+				reflect: {
+					from: true,
+				},
+			};
+		}
 
-		if (eventPropsArray.length > 0) {
-			this[eventProps] = Object.fromEntries(eventPropsArray);
-			this.defineProps(this[eventProps]);
-
-			// this.hooks.add("first-connected", function firstConnected () {
-
-			// });
+		if (Object.keys(newProps).length > 0) {
+			this.defineProps(newProps);
 		}
 	},
 
