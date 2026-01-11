@@ -2,38 +2,10 @@
  * Extensible plugin for adding styles to an element's shadow root or other roots
  */
 import { getOwnValue, adoptStyle } from "./util.js";
-import { getSuper, defineOwnProperty, symbols } from "../../extensible.js";
+import { getSuper, getComposedArray, defineOwnProperty, symbols } from "../../extensible.js";
 
 export const { styles } = symbols.known;
 const defaultBaseURL = globalThis.document?.location?.href ?? import.meta.url;
-
-function applyStyles (ElementConstructor = this.constructor) {
-	if (!ElementConstructor?.[styles]) {
-		// We've reached the top
-		return;
-	}
-
-	let Super = getSuper(ElementConstructor);
-	if (Super) {
-		applyStyles.call(this, Super);
-	}
-
-	for (let options of ElementConstructor[styles]) {
-		let env = { options };
-		env.roots = new Set();
-
-		if (env.options.roots.has("shadow")) {
-			let root = this.shadowRoot ?? this[symbols.known.shadowRoot];
-			if (root) {
-				env.roots.add(root);
-			}
-		}
-
-		this.$hook("connected-apply-style", env);
-
-		adoptStyle(env.options, env.roots);
-	}
-}
 
 const hooks = {
 	first_constructor_static () {
@@ -46,8 +18,26 @@ const hooks = {
 	},
 
 	connected () {
-		if (this.constructor[styles]) {
-			applyStyles.call(this);
+		if (!this.constructor[styles]) {
+			return;
+		}
+
+		let allStyles = getComposedArray(this.constructor, styles);
+
+		for (let options of allStyles) {
+			let env = { options };
+			env.roots = new Set();
+
+			if (env.options.roots.has("shadow")) {
+				let root = this.shadowRoot ?? this[symbols.known.shadowRoot];
+				if (root) {
+					env.roots.add(root);
+				}
+			}
+
+			this.$hook("connected-apply-style", env);
+
+			adoptStyle(env.options, env.roots);
 		}
 	},
 };

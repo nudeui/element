@@ -1,60 +1,68 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Document</title>
-<script type="module">
-import {Element, addPlugin} from "./src/index.js";
-import styles from "./src/plugins/styles/index.js";
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+		<script type="module">
+			import { Element, addPlugin } from "./src/index-fn.js";
+			import styles from "./src/plugins/styles/index.js";
 
-class TestElement extends Element {
-	constructor () {
-		super();
-		this.attachShadow({ mode: "open" });
-		this.shadowRoot.innerHTML = `<p>Hello</p>`;
-	}
+			class TestElement extends Element {
+				constructor() {
+					super();
+					this.attachShadow({ mode: "open" });
+					this.shadowRoot.innerHTML = `<p>Hello</p>`;
+				}
 
-	static styles = [
-		{
-			css: `:host { display: block; background: gold; } test-element { border: 1px solid red; }`,
-			shadow: true,
-			// light: true,
-			document: true,
-			// global: true,
-		}
-	]
+				static styles = [
+					{
+						css: `:host { display: block; background: yellowgreen; outline: 1px dashed green; } test-element { border: 1px solid red; }`,
+						shadow: true,
+						// light: true,
+						document: true,
+						// global: true,
+					},
+				];
 
-	static get plugins () {
-		return this[this.symbols.plugins];
-	}
-}
+				static get plugins() {
+					return this[this.symbols.plugins];
+				}
+			}
 
-class TestElement2 extends TestElement {
-	static globalStyles = [
-		{
-			css: `test-element2 { box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5); border: 1px solid green; margin: 10px; }`,
-		}
-	]
+			class TestElement2 extends TestElement {
+				static globalStyles = [
+					{
+						css: `test-element2 { box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5); }`,
+					},
+				];
 
-	static shadowStyles = [
-		{
-			css: `:host { background: lightblue; }`,
-		}
-	]
-}
+				static shadowStyles = [
+					{
+						css: `:host { background: lightblue; border: 2px solid green; margin: 10px; }`,
+					},
+				];
+			}
 
-addPlugin(TestElement, styles);
+			class TestElement3 extends TestElement2 {
+				static shadowStyles = [
+					{
+						css: `:host { background: pink; }`,
+					},
+				];
+			}
 
-globalThis.TestElement = TestElement;
-globalThis.TestElement2 = TestElement2;
-customElements.define("test-element", TestElement);
-customElements.define("test-element2", TestElement2);
+			addPlugin(TestElement, styles);
 
-</script>
-</head>
-<body>
-	<test-element>Hi</test-element>
-	<test-element2>Hi</test-element2>
-</body>
+			Object.assign(globalThis, { TestElement, TestElement2, TestElement3 });
+			customElements.define("test-element", TestElement);
+			customElements.define("test-element2", TestElement2);
+			customElements.define("test-element3", TestElement3);
+		</script>
+	</head>
+	<body>
+		<test-element>Hi</test-element>
+		<test-element2>Hi</test-element2>
+		<test-element3>Hi</test-element3>
+	</body>
 </html>

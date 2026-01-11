@@ -7,7 +7,7 @@
 export function getSupers (Class, FromClass) {
 	const classes = [];
 
-	while (Class = getSuper(Class)) {
+	while ((Class = getSuper(Class))) {
 		if (Class === FromClass) {
 			break;
 		}
@@ -34,7 +34,7 @@ export function getSuper (obj, testFn) {
 	}
 
 	let isInstance = typeof obj === "object";
-	let Super =  Object.getPrototypeOf(isInstance ? obj.constructor?.prototype : obj);
+	let Super = Object.getPrototypeOf(isInstance ? obj.constructor?.prototype : obj);
 
 	if (Super === Function.prototype) {
 		return null;
@@ -92,4 +92,34 @@ export function getSuperMember (obj, name, currentValue = obj[name]) {
  */
 export function getSuperMethod (obj, currentMethod) {
 	return getSuperMember(obj, currentMethod.name, currentMethod);
+}
+
+/**
+ * Get all values of a property across the prototype chain.
+ * @param {object | FunctionConstructor} obj - An object, class or instance.
+ * @param {string | symbol} property - The property to get the values of.
+ * @returns {any[]} The values of the property across the prototype chain.
+ */
+export function getAllValues (obj, property) {
+	let values = [];
+
+	do {
+		if (!(property in obj)) {
+			// Not even inherited
+			break;
+		}
+		if (Object.hasOwn(obj, property)) {
+			values.unshift(obj[property]);
+		}
+	} while ((obj = getSuper(obj)));
+
+	return values;
+}
+
+export function getComposedArray (obj, property) {
+	return getAllValues(obj, property).flat();
+}
+
+export function getComposedObject (obj, property) {
+	return Object.assign({}, ...getAllValues(obj, property));
 }
