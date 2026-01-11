@@ -33,6 +33,10 @@ export function defineOwnProperty (obj, name, init, options = {}) {
 	}
 
 	function get () {
+		if (!Object.hasOwn(this, name)) {
+			// Define the same property again so that Object.hasOwn() works
+			Object.defineProperty(this, name, descriptor);
+		}
 		if (!Object.hasOwn(this, _name)) {
 			this[_name] = init.call(this);
 		}
@@ -59,9 +63,10 @@ export function defineOwnProperty (obj, name, init, options = {}) {
 	}
 
 	get[own] = true;
-
 	let { enumerable = true, configurable = true } = options;
-	Object.defineProperty(obj, name, { get, set, configurable, enumerable });
+	let descriptor = { get, set, configurable, enumerable };
+
+	Object.defineProperty(obj, name, descriptor);
 }
 
 export function defineOwnProperties (obj, properties) {
