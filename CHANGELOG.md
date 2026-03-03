@@ -25,7 +25,7 @@ The default `nude-element` import continues to work as before — it gives you a
 
 This makes it straightforward to **write your own plugins** and compose them alongside (or instead of) the built-ins, without needing to reach into library internals. (by @LeaVerou in #66)
 
-The refactor also fixed a pre-existing bug where `adoptedStyleSheets` was misspelled as `adoptedStylesheets` throughout the styles plugin, causing styles to be silently tracked and adopted through the wrong property. by @DmitrySharabin in #55
+The refactor also fixed a pre-existing bug where `adoptedStyleSheets` was misspelled as `adoptedStylesheets` throughout the styles plugin, causing styles to be silently tracked and adopted through the wrong property, by @DmitrySharabin in #55
 
 ### New features
 
