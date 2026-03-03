@@ -34,7 +34,7 @@ The refactor also fixed a pre-existing bug where `adoptedStyleSheets` was misspe
 - **`internals` plugin**: Parallel to the `shadow` plugin — lazily creates and exposes `ElementInternals` under a symbol, with no errors on repeated access. Depended on by `states` and `form-behavior`. by @LeaVerou
 - **`elements` plugin**: Declarative access to shadow and light DOM elements; references are refreshed automatically whenever the element connects. by @LeaVerou
 
-**Full Changelog**: https://github.com/nudeui/element/compare/0.0.14...HEAD
+**Full Changelog**: https://github.com/nudeui/element/compare/0.0.14...0.1.0
 
 ## 0.0.14 (2025-07-27)
 
