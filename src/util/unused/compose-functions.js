@@ -32,10 +32,10 @@ export function composeFunctions (fn1, fn2) {
 				ret = fn.call(this, ...args) ?? ret;
 			}
 			return ret;
-		}
+		};
 
 		composedFn[functions] = [fn1, fn2];
-		composedFunctions.set(fn1, composedFn)
+		composedFunctions.set(fn1, composedFn);
 	}
 	else {
 		let prev = composedFn[functions].indexOf(fn2);

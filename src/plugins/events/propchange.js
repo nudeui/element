@@ -55,4 +55,4 @@ const hooks = {
 	},
 };
 
-export default {dependencies, hooks};
+export default { dependencies, hooks };

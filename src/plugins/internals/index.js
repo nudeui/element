@@ -20,14 +20,14 @@ function attachInternals () {
 
 	if (_attachInternals === undefined) {
 		// Not supported
-		return this[internals] = null;
+		return (this[internals] = null);
 	}
 
 	try {
-		return this[internals] = _attachInternals.call(this);
+		return (this[internals] = _attachInternals.call(this));
 	}
 	catch (error) {
-		return this[internals] = null;
+		return (this[internals] = null);
 	}
 }
 
@@ -43,4 +43,4 @@ defineLazyProperty(provides, internals, {
 	writable: true,
 });
 
-export default {provides};
+export default { provides };

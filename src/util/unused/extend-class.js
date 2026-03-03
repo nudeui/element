@@ -15,6 +15,3 @@ export function extendClass (Class, Mixin, options = {}) {
 		copyProperties(Class.prototype, Mixin.prototype, options);
 	}
 }
-
-
-

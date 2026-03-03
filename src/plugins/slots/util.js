@@ -5,4 +5,3 @@ export function getElement (node) {
 	}
 	return ret;
 }
-

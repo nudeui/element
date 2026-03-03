@@ -63,7 +63,7 @@ export default class IterableWeakMap extends Map {
 		}
 	}
 
-	*entries() {
+	*entries () {
 		for (const key of this.keys()) {
 			let value = this.get(key);
 			yield [key, value];

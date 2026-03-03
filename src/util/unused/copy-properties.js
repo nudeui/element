@@ -34,7 +34,7 @@ export function copyProperties (target, source, options = {}) {
 
 			if (isMeaningfulProto(targetProto) && isMeaningfulProto(sourceProto)) {
 				if (typeof options.recursive === "number") {
-					options = {...options, recursive: options.recursive - 1};
+					options = { ...options, recursive: options.recursive - 1 };
 				}
 
 				copyProperties(targetProto, sourceProto, options);
@@ -56,9 +56,15 @@ function copyProperty (target, source, key, options = {}) {
 	}
 
 	if (targetDescriptor && options.mergeFunctions !== false) {
-		if (typeof targetDescriptor.value === "function" && typeof sourceDescriptor.value === "function") {
+		if (
+			typeof targetDescriptor.value === "function" &&
+			typeof sourceDescriptor.value === "function"
+		) {
 			// Compatible, compose
-			targetDescriptor.value = composeFunctions(targetDescriptor.value, sourceDescriptor.value);
+			targetDescriptor.value = composeFunctions(
+				targetDescriptor.value,
+				sourceDescriptor.value,
+			);
 			sourceDescriptor = targetDescriptor;
 		}
 	}
@@ -66,5 +72,4 @@ function copyProperty (target, source, key, options = {}) {
 	if (!targetDescriptor || options.overwrite || sourceDescriptor === targetDescriptor) {
 		Object.defineProperty(target, key, sourceDescriptor);
 	}
-
 }

@@ -27,7 +27,9 @@ export function defineLazyProperty (object, name, options) {
 				return value;
 			}
 
-			let existingValue = isSameObject ? existingBaseValue : Object.getOwnPropertyDescriptor(this, name)?.value;
+			let existingValue = isSameObject
+				? existingBaseValue
+				: Object.getOwnPropertyDescriptor(this, name)?.value;
 			let v = get.call(this, existingValue);
 			Object.defineProperty(this, name, { value: v, writable, configurable, enumerable });
 			return v;

@@ -10,7 +10,13 @@ const { internals } = symbols.known;
 const dependencies = [base];
 
 // Find built-in properties to delegate
-let objects = [ElementInternals, HTMLInputElement, HTMLSelectElement, HTMLTextAreaElement, HTMLButtonElement];
+let objects = [
+	ElementInternals,
+	HTMLInputElement,
+	HTMLSelectElement,
+	HTMLTextAreaElement,
+	HTMLButtonElement,
+];
 let props = objects.map(o => new Set(Object.getOwnPropertyNames(o.prototype)));
 const defaultProperties = props.reduce((acc, cur) => acc.intersection(cur));
 defaultProperties.delete("constructor");
@@ -29,7 +35,7 @@ const hooks = {
 			to: internals,
 			descriptors: Object.getOwnPropertyDescriptors(ElementInternals.prototype),
 		});
-	}
+	},
 };
 
-export default {dependencies, hooks};
+export default { dependencies, hooks };

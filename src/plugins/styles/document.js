@@ -9,7 +9,7 @@ const hooks = {
 		}
 	},
 
-	connected_apply_style ({ roots, options}) {
+	connected_apply_style ({ roots, options }) {
 		if (options.roots.has("document")) {
 			roots.add(this.ownerDocument);
 		}

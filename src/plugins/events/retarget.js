@@ -52,10 +52,8 @@ const hooks = {
 			else {
 				target.addEventListener(type, listener);
 			}
-
 		}
-
 	},
 };
 
-export default {dependencies, hooks};
+export default { dependencies, hooks };

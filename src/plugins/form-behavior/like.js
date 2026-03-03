@@ -13,7 +13,12 @@ const hooks = {
 			return;
 		}
 
-		let { like, role, valueProp = "value", changeEvent = "input" } = this.constructor[formBehavior];
+		let {
+			like,
+			role,
+			valueProp = "value",
+			changeEvent = "input",
+		} = this.constructor[formBehavior];
 
 		if (!like) {
 			return;
@@ -35,4 +40,4 @@ const hooks = {
 	},
 };
 
-export default {dependencies, hooks};
+export default { dependencies, hooks };

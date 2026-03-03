@@ -12,17 +12,7 @@ import slots from "./slots/index.js";
 import states from "./states/index.js";
 import styles from "./styles/index.js";
 
-export {
-	base,
-	pluginsProperty,
-	elements,
-	slots,
-	states,
-	props,
-	events,
-	formBehavior,
-	styles,
-};
+export { base, pluginsProperty, elements, slots, states, props, events, formBehavior, styles };
 
 export default {
 	dependencies: [

@@ -6,7 +6,7 @@
  * @param {string[]} options.properties - Array of property names to delegate
  * @param {Object<string, PropertyDescriptor>} options.descriptors - Property descriptors for each property
  */
-export function delegate ({from, to, properties, descriptors}) {
+export function delegate ({ from, to, properties, descriptors }) {
 	for (let prop of properties) {
 		let sourceDescriptor = descriptors[prop];
 		let descriptor = {
