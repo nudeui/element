@@ -12,7 +12,7 @@
 		"build": "npm run build:apidocs",
 		"watch": "npm run watch:apidocs",
 		"test": "npx htest ./test",
-		"release": "npx release-it"
+		"release": "npm login && npx release-it"
 	},
 	"exports": {
 		".": "./src/index.js",
