@@ -1,15 +1,7 @@
-import { sortObject } from "../util.js";
 import Prop from "./Prop.js";
 import PropChangeEvent from "./PropChangeEvent.js";
 
 export default class Props extends Map {
-	/**
-	 * Dependency graph
-	 * @type {Object.<string, Set<string>>}
-	 * Key is the name of the prop, value is a set of prop names that depend on it
-	 */
-	dependents = {};
-
 	/**
 	 *
 	 * @param {HTMLElement} Class The class to define props for
@@ -42,85 +34,6 @@ export default class Props extends Map {
 			this.set(name, prop);
 			Object.defineProperty(this.Class.prototype, name, prop.getDescriptor());
 		}
-
-		this.updateDependents();
-	}
-
-	updateDependents () {
-		// Rebuild dependency graph
-		let dependents = {};
-
-		for (let name of this.keys()) {
-			dependents[name] = new Set();
-		}
-
-		let keyIndices = Object.fromEntries([...this.keys()].map((key, i) => [key, i]));
-		let sort = false;
-		let values = [...this.values()];
-
-		if (!values.every(value => value instanceof Prop)) {
-			// Not ready, still adding props
-			return;
-		}
-
-		for (let prop of this.values()) {
-			// Add dependencies
-			let dependencies = [...prop.dependencies];
-
-			if (prop.defaultProp) {
-				dependencies.push(prop.defaultProp.name);
-			}
-
-			for (let name of dependencies) {
-				// ${name} depends on ${prop.name}
-				dependents[name]?.add(prop);
-
-				// Dependent props should come after the prop they depend on
-				if (keyIndices[name] > keyIndices[prop.name]) {
-					// Swap the order of the props
-					[keyIndices[name], keyIndices[prop.name]] = [
-						keyIndices[prop.name],
-						keyIndices[name],
-					];
-					sort = true;
-				}
-			}
-		}
-
-		if (!sort) {
-			this.dependents = dependents;
-		}
-		else {
-			// Sort dependency graph using the new order in keyIndices
-			// TODO put props with no dependencies first
-			// TODO do we need a topological sort?
-			this.dependents = sortObject(dependents, ([a], [b]) => {
-				return keyIndices[a] - keyIndices[b];
-			});
-
-			// Reorder the props according to their order in the dependency graph
-			// so that every time we use this.values() or this.keys(), the result is in the correct order
-			for (let propName of Object.keys(this.dependents)) {
-				let prop = this.get(propName);
-				this.delete(propName);
-				this.set(propName, prop);
-			}
-
-			// Reorder dependents of every prop according to the dependency graph built
-			for (let [name, dependents] of Object.entries(this.dependents)) {
-				if (dependents.size < 2) {
-					// Nothing to reorder
-					continue;
-				}
-
-				let props = [...dependents]
-					.map(prop => [prop, keyIndices[prop.name]])
-					.sort((a, b) => a[1] - b[1])
-					.map(([prop, i]) => prop);
-
-				this.dependents[name] = new Set(props);
-			}
-		}
 	}
 
 	attributeChanged (element, name, oldValue) {
@@ -139,16 +52,11 @@ export default class Props extends Map {
 
 	eventDispatchQueue = new WeakMap();
 
+	/**
+	 * Called when a prop value changes. Fires propchange events.
+	 * Dependency propagation is handled automatically by signals.
+	 */
 	propChanged (element, prop, change) {
-		// Update all props that have this prop as a dependency
-		let dependents = this.dependents[prop.name] ?? new Set();
-
-		for (let dependent of dependents) {
-			if (dependent.dependsOn(prop, element)) {
-				dependent.update(element, prop);
-			}
-		}
-
 		// Fire propchange event
 		let eventNames = ["propchange", ...(prop.eventNames ?? [])];
 		for (let eventName of eventNames) {
