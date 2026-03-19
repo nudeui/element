@@ -1,5 +1,6 @@
-import { inferDependencies, resolveValue } from "../util.js";
+import { resolveValue } from "../util.js";
 import * as types from "./types.js";
+import { Signal, Computed } from "../../../signals.js";
 
 let Self = class Prop {
 	/**
@@ -8,6 +9,12 @@ let Self = class Prop {
 	props;
 
 	#initialized = false;
+
+	/**
+	 * Per-element signal storage. Keys are elements, values are Signal instances.
+	 * @type {WeakMap<HTMLElement, Signal>}
+	 */
+	#signals = new WeakMap();
 
 	constructor (name, spec, props) {
 		if (spec instanceof Prop && name === spec.name) {
@@ -22,16 +29,13 @@ let Self = class Prop {
 
 		this.default = spec.default;
 
-		if (typeof spec.default === "function") {
-			let defaultDependencies = spec.defaultDependencies ?? inferDependencies(spec.default);
-			if (defaultDependencies.length > 0) {
-				let defaultProp = "default" + name.replace(/^\w/, c => c.toUpperCase());
-				this.props.add(defaultProp, {
-					get: spec.default,
-					dependencies: defaultDependencies,
-				});
-				this.default = this.props.get(defaultProp);
-			}
+		if (typeof spec.default === "function" && this.props) {
+			// Create a computed prop so signals can auto-track dependencies at runtime
+			let defaultProp = "default" + name.replace(/^\w/, c => c.toUpperCase());
+			this.props.add(defaultProp, {
+				get: spec.default,
+			});
+			this.default = this.props.get(defaultProp);
 		}
 
 		if (spec.defaultProp) {
@@ -40,17 +44,6 @@ let Self = class Prop {
 				configurable: true,
 				enumerable: true,
 			});
-		}
-
-		if (spec.dependencies) {
-			this.dependencies = new Set(spec.dependencies);
-		}
-		else {
-			this.dependencies = new Set([
-				...inferDependencies(spec.get),
-				...inferDependencies(spec.convert),
-				...(spec.additionalDependencies ?? []),
-			]);
 		}
 
 		// Computed properties are not reflected by default
@@ -104,7 +97,49 @@ let Self = class Prop {
 		return types.parse(value, this.type);
 	}
 
+	/**
+	 * Get or lazily create the Signal for this prop on a given element.
+	 * Non-computed props get a plain Signal; computed props (with spec.get)
+	 * get a Computed signal that auto-tracks dependencies.
+	 * @param {HTMLElement} element
+	 * @returns {Signal}
+	 */
+	getSignal (element) {
+		let signal = this.#signals.get(element);
+
+		if (!signal) {
+			if (this.spec.get) {
+				signal = new Computed(() => this.spec.get.call(element));
+
+				// Computed props recompute via the signal chain, not via set(),
+				// so they need a subscriber to fire propchange events
+				signal.subscribe((newValue, oldValue) => {
+					element.props[this.name] = newValue;
+					this.changed(element, {
+						element,
+						source: "get",
+						parsedValue: newValue,
+						oldInternalValue: oldValue,
+					});
+				});
+			}
+			else {
+				signal = new Signal(undefined);
+			}
+
+			// Delegate equality to the prop's type-aware equality
+			signal.equals = (a, b) => this.equals(a, b);
+
+			this.#signals.set(element, signal);
+		}
+
+		return signal;
+	}
+
 	initializeFor (element) {
+		// Ensure signal exists for this element
+		this.getSignal(element);
+
 		// Handle any properties already set before initialization
 		let name = this.name;
 
@@ -149,12 +184,9 @@ let Self = class Prop {
 	}
 
 	get (element) {
-		let value = element.props[this.name];
-
-		if (value === undefined) {
-			this.update(element);
-			value = element.props[this.name];
-		}
+		let signal = this.getSignal(element);
+		// Reading signal.value auto-tracks if called from within a Computed
+		let value = signal.value;
 
 		if (value === undefined || value === null) {
 			if (this.default !== undefined) {
@@ -184,7 +216,8 @@ let Self = class Prop {
 	}
 
 	set (element, value, { source, name, oldValue } = {}) {
-		let oldInternalValue = element.props[this.name];
+		let signal = this.getSignal(element);
+		let oldInternalValue = signal.value;
 
 		let attributeName = name;
 		let parsedValue;
@@ -209,6 +242,7 @@ let Self = class Prop {
 			return;
 		}
 
+		// Update both signal and element.props
 		element.props[this.name] = parsedValue;
 
 		let change = {
@@ -246,7 +280,14 @@ let Self = class Prop {
 			});
 		}
 
-		this.changed(element, change);
+		// Set signal value (will notify computed dependents automatically)
+		// We set this after change handling above so reflection happens before propagation
+		signal.value = parsedValue;
+
+		// Fire propchange events (but not for computed props — those fire via signal subscriber)
+		if (!this.spec.get) {
+			this.changed(element, change);
+		}
 	}
 
 	applyChange (element, change) {
@@ -283,46 +324,6 @@ let Self = class Prop {
 	async changed (element, change) {
 		this.spec.changed?.call(element, change);
 		this.props.propChanged(element, this, change);
-	}
-
-	/**
-	 * Recalculate computed properties and cache the value
-	 * @param {*} element
-	 */
-	update (element, dependency) {
-		let oldValue = element.props[this.name];
-
-		if (dependency === this.defaultProp) {
-			// We have no way of checking if the default prop has changed
-			// and there’s nothing to set, so let’s just called changed directly
-			this.changed(element, { element, source: "default" });
-			return;
-		}
-
-		if (this.spec.get) {
-			let value = this.spec.get.call(element);
-			this.set(element, value, { source: "get", oldValue });
-		}
-
-		if (this.spec.convert && oldValue !== undefined) {
-			let value = this.spec.convert.call(element, oldValue);
-			this.set(element, value, { source: "convert", oldValue });
-		}
-	}
-
-	dependsOn (prop, element) {
-		if (!prop) {
-			return false;
-		}
-
-		if (prop === this) {
-			return true;
-		}
-
-		return (
-			this.dependencies.has(prop.name) ||
-			(this.defaultProp === prop && element.props[this.name] === undefined)
-		);
 	}
 
 	get initialized () {
