@@ -64,7 +64,23 @@ const providesStatic = {
 		const baseUrl = this.url ?? defaultBaseURL;
 
 		for (let options of def) {
-			if (typeof options === "string") {
+			if (options instanceof URL) {
+				// Bundler-portable asset reference: `new URL("./foo.css", import.meta.url)`
+				// Bundlers (Vite, Rollup, esbuild) statically analyse this pattern and emit
+				// the file as an asset, so fetch() works in both bundled and unbundled contexts.
+				options = { url: options.href, ...defaultOptions };
+			}
+			else if (options instanceof Promise) {
+				// Dynamic import: import("./foo.css", { with: { type: "css" } })
+				// Resolves to { default: CSSStyleSheet } — unwrap .default, fall back to raw value
+				options = { css: options.then(m => m.default ?? m), ...defaultOptions };
+			}
+			else if (options instanceof CSSStyleSheet) {
+				// Static import: import styles from "./foo.css" with { type: "css" }
+				// Already a CSSStyleSheet — wrap it for adoptStyle
+				options = { css: options, ...defaultOptions };
+			}
+			else if (typeof options === "string") {
 				options = { url: options, ...defaultOptions };
 			}
 			else {
