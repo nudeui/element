@@ -1,7 +1,7 @@
 /**
  * Extensible plugin for adding styles to an element's shadow root or other roots
  */
-import { getOwnValue, adoptStyle } from "./util.js";
+import { getOwnValue, adoptStyle, getCSS } from "./util.js";
 import { getSuper, getComposedArray, defineOwnProperty, symbols } from "../../extensible.js";
 
 export const { styles } = symbols.known;
@@ -65,15 +65,10 @@ const providesStatic = {
 
 		for (let options of def) {
 			if (options instanceof URL) {
-				// Bundler-portable asset reference: `new URL("./foo.css", import.meta.url)`
-				// Bundlers (Vite, Rollup, esbuild) statically analyse this pattern and emit
-				// the file as an asset, so fetch() works in both bundled and unbundled contexts.
-				options = { url: options.href, ...defaultOptions };
+				options = { url: options, ...defaultOptions };
 			}
 			else if (options instanceof Promise) {
-				// Dynamic import: import("./foo.css", { with: { type: "css" } })
-				// Resolves to { default: CSSStyleSheet } — unwrap .default, fall back to raw value
-				options = { css: options.then(m => m.default ?? m), ...defaultOptions };
+				options = { css: options.then(resolved => getCSS(resolved, baseUrl)), ...defaultOptions };
 			}
 			else if (options instanceof CSSStyleSheet) {
 				// Static import: import styles from "./foo.css" with { type: "css" }
