@@ -1,4 +1,4 @@
-import { split } from "../src/props/types/util.js";
+import { split } from "../src/plugins/props/types/util.js";
 
 export default {
 	name: "split()",
