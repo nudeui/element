@@ -1,7 +1,7 @@
 /**
  * Extensible plugin for adding styles to an element's shadow root or other roots
  */
-import { getOwnValue, adoptStyle, getCSS } from "./util.js";
+import { getOwnValue, adoptStyle, getStyle } from "./util.js";
 import { getSuper, getComposedArray, defineOwnProperty, symbols } from "../../extensible.js";
 
 export const { styles } = symbols.known;
@@ -64,23 +64,7 @@ const providesStatic = {
 		const baseUrl = this.url ?? defaultBaseURL;
 
 		for (let options of def) {
-			if (options instanceof URL) {
-				options = { url: options, ...defaultOptions };
-			}
-			else if (options instanceof Promise) {
-				options = { css: options.then(resolved => getCSS(resolved, baseUrl)), ...defaultOptions };
-			}
-			else if (options instanceof CSSStyleSheet) {
-				// Static import: import styles from "./foo.css" with { type: "css" }
-				// Already a CSSStyleSheet — wrap it for adoptStyle
-				options = { css: options, ...defaultOptions };
-			}
-			else if (typeof options === "string") {
-				options = { url: options, ...defaultOptions };
-			}
-			else {
-				options = Object.assign({}, defaultOptions, options);
-			}
+			options = getStyle(options, baseUrl, defaultOptions);
 
 			let env = { options, style: options };
 
