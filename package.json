@@ -11,7 +11,7 @@
 		"watch:apidocs": "npx typedoc --watch --preserveWatchOutput",
 		"build": "npm run build:apidocs",
 		"watch": "npm run watch:apidocs",
-		"test": "npx htest ./test",
+		"test": "npx htest test/index.js",
 		"release": "npm login && npx release-it"
 	},
 	"exports": {
