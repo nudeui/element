@@ -8,15 +8,14 @@ import { cachedFetch } from "./cached-fetch.js";
  * @returns {CSSStyleSheet | string | Promise<string>}
  */
 export function getCSS (value, baseUrl) {
-	if (value && typeof value === "object" && "default" in value) {
+	if ("default" in Object(value)) {
 		value = value.default;
 	}
-	if (value instanceof CSSStyleSheet) {
+
+	if (value instanceof CSSStyleSheet || typeof value === "string") {
 		return value;
 	}
-	if (typeof value === "string") {
-		return value;
-	}
+
 	if (value instanceof URL) {
 		// TODO: detect CSS import attribute support and use
 		// import(url, { with: { type: "css" } }) when available (see issue #89)
