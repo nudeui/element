@@ -1,4 +1,4 @@
-import { default as Props } from "../src/props/Props.js";
+import { default as Props } from "../src/plugins/props/util/Props.js";
 
 export default {
 	name: "Props class",

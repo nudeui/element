@@ -1,6 +1,6 @@
-import { default as Prop } from "../src/props/Prop.js";
-import { default as Props } from "../src/props/Props.js";
-import { resolveValue } from "../src/util.js";
+import { default as Prop } from "../src/plugins/props/util/Prop.js";
+import { default as Props } from "../src/plugins/props/util/Props.js";
+import { resolveValue } from "../src/util/resolve-value.js";
 
 export default {
 	name: "Prop class",
