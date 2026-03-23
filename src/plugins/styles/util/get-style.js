@@ -4,20 +4,22 @@ import { cssToSheet } from "./css-to-sheet.js";
 /**
  * Normalize a style input into an options object with a ready-to-adopt `css` property.
  * For URL-based inputs, `css` is resolved via fetch when `baseUrl` is provided.
- * @param {CSSStyleSheet | string | URL | Promise | { default: * } | { url?: string | URL, css?: * }} value
+ * @param {CSSStyleSheet | string | URL | Promise | { url?: string | URL, css?: * }} value
  * @param {string | URL} baseUrl - Base URL for resolving relative style URLs
  * @param {object} [defaults] - Default options merged into the result
  * @returns {{ css?: CSSStyleSheet | Promise<CSSStyleSheet>, url?: string, fullUrl?: string }}
  */
 export function getStyle (value, baseUrl, defaults) {
-	// Unwrap ES module default exports
-	if ("default" in Object(value)) {
-		value = value.default;
-	}
-
 	if (value instanceof Promise) {
-		// Resolve, then normalize the resolved value recursively
-		let css = value.then(resolved => getStyle(resolved, baseUrl).css);
+		let css = value.then(resolved => {
+			if ("default" in Object(resolved)) {
+				// Dynamic import() resolves to a module namespace; unwrap .default
+				resolved = resolved.default;
+			}
+
+			return getStyle(resolved, baseUrl).css;
+		});
+
 		return { ...defaults, css };
 	}
 
