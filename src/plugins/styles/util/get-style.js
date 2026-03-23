@@ -2,48 +2,12 @@ import { cachedFetch } from "./cached-fetch.js";
 import { cssToSheet } from "./css-to-sheet.js";
 
 /**
- * Synchronously normalize a non-Promise style input to a style options object.
- * Handles ES module default unwrapping, CSSStyleSheet, string, URL, and option dicts.
- * @param {CSSStyleSheet | string | URL | { default: * } | { url?: string | URL, css?: * }} value
- * @param {object} [defaults] - Default options to merge (e.g. `{ roots: new Set(["shadow"]) }`)
- * @returns {{ url?: string, css?: CSSStyleSheet }}
- */
-export function getStyleSync (value, defaults) {
-	// Unwrap ES module default exports
-	if ("default" in Object(value)) {
-		value = value.default;
-	}
-
-	if (value instanceof CSSStyleSheet) {
-		return { css: value, ...defaults };
-	}
-
-	if (value instanceof URL) {
-		return { url: value.href, ...defaults };
-	}
-
-	if (typeof value === "string") {
-		return { url: value, ...defaults };
-	}
-
-	// Options dict — normalize URL instances in the url property
-	let options = { ...defaults, ...value };
-
-	if (options.url instanceof URL) {
-		options.url = options.url.href;
-	}
-
-	return options;
-}
-
-/**
- * Normalize any supported style input to a style options object.
- * Handles all types that {@link getStyleSync} handles, plus Promises.
- * Promise inputs resolve `css` to a ready-to-adopt CSSStyleSheet.
+ * Normalize a style input into an options object with a ready-to-adopt `css` property.
+ * For URL-based inputs, `css` is resolved via fetch when `baseUrl` is provided.
  * @param {CSSStyleSheet | string | URL | Promise | { default: * } | { url?: string | URL, css?: * }} value
- * @param {string | URL} baseUrl
- * @param {object} [defaults] - Default options to merge (e.g. `{ roots: new Set(["shadow"]) }`)
- * @returns {{ url?: string, css?: CSSStyleSheet | Promise<CSSStyleSheet> }}
+ * @param {string | URL} baseUrl - Base URL for resolving relative style URLs
+ * @param {object} [defaults] - Default options merged into the result
+ * @returns {{ css?: CSSStyleSheet | Promise<CSSStyleSheet>, url?: string, fullUrl?: string }}
  */
 export function getStyle (value, baseUrl, defaults) {
 	// Unwrap ES module default exports
@@ -52,18 +16,46 @@ export function getStyle (value, baseUrl, defaults) {
 	}
 
 	if (value instanceof Promise) {
-		// Resolve first, then normalize — the resolved value could be any supported type
-		let css = value.then(resolved => {
-			let style = getStyleSync(resolved);
-			let css =
-				style.css ??
-				(style.url ? cachedFetch(new URL(style.url, baseUrl).href) : undefined);
-
-			return cssToSheet(css);
-		});
-
-		return { css, ...defaults };
+		// Resolve, then normalize the resolved value recursively
+		let css = value.then(resolved => getStyle(resolved, baseUrl).css);
+		return { ...defaults, css };
 	}
 
-	return getStyleSync(value, defaults);
+	if (value instanceof CSSStyleSheet) {
+		return { ...defaults, css: value };
+	}
+
+	// URL → coerce to string and fall through
+	if (value instanceof URL) {
+		value = value.href;
+	}
+
+	if (typeof value === "string") {
+		let options = { ...defaults, url: value };
+
+		if (baseUrl) {
+			options.fullUrl = new URL(value, baseUrl).href;
+			options.css = cssToSheet(cachedFetch(options.fullUrl));
+		}
+
+		return options;
+	}
+
+	// Options dict
+	let options = { ...defaults, ...value };
+
+	if (options.url instanceof URL) {
+		options.url = options.url.href;
+	}
+
+	if (options.url && baseUrl) {
+		options.fullUrl = new URL(options.url, baseUrl).href;
+		options.css ??= cssToSheet(cachedFetch(options.fullUrl));
+	}
+
+	if (typeof options.css === "string") {
+		options.css = cssToSheet(options.css);
+	}
+
+	return options;
 }
