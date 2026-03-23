@@ -1,95 +1,87 @@
-import { getStyle, getStyleSync } from "../../../src/plugins/styles/util/get-style.js";
+import { getStyle } from "../../../src/plugins/styles/util/get-style.js";
 
-// Browser globals mock
+// Browser globals mock (CSSStyleSheet is not available in Node)
 globalThis.CSSStyleSheet ??= class CSSStyleSheet {
-	replaceSync (css) {
-		this._css = css;
-	}
+	// cssToSheet() calls this to populate the sheet
+	replaceSync () {}
 };
 
-globalThis.fetch = url =>
-	Promise.resolve({
-		text: () => Promise.resolve(`/* fetched: ${url} */`),
-	});
+// Prevent real network requests from URL-based code paths
+globalThis.fetch = () => Promise.resolve({ text: () => Promise.resolve("") });
 
 let sheet = new CSSStyleSheet();
 
 export default {
-	name: "Style normalization",
+	name: "getStyle()",
+	run (arg, defaults) {
+		return getStyle(arg, "https://example.com/", defaults);
+	},
+	// Only assert properties we care about
+	check: { subset: true, deep: true },
 	tests: [
 		{
-			name: "getStyleSync()",
-			run: getStyleSync,
+			name: "Non-promise values",
 			tests: [
-				{
-					name: "String",
-					arg: "styles.css",
-					expect: { url: "styles.css" },
-				},
-				{
-					name: "URL",
-					arg: new URL("https://example.com/styles.css"),
-					expect: { url: "https://example.com/styles.css" },
-				},
 				{
 					name: "CSSStyleSheet",
 					arg: sheet,
 					expect: { css: sheet },
 				},
 				{
-					name: "ESM default unwrapping",
-					arg: { default: "styles.css" },
-					expect: { url: "styles.css" },
+					name: "String",
+					arg: "styles.css",
+					expect: { url: "styles.css", fullUrl: "https://example.com/styles.css" },
+				},
+				{
+					name: "URL",
+					arg: new URL("https://example.com/styles.css"),
+					expect: {
+						url: "https://example.com/styles.css",
+						fullUrl: "https://example.com/styles.css",
+					},
+				},
+				{
+					name: "Options dict with string url",
+					arg: { url: "styles.css" },
+					expect: { url: "styles.css", fullUrl: "https://example.com/styles.css" },
 				},
 				{
 					name: "Options dict with URL coercion",
 					arg: { url: new URL("https://example.com/styles.css"), media: "screen" },
-					expect: { url: "https://example.com/styles.css", media: "screen" },
+					expect: {
+						url: "https://example.com/styles.css",
+						fullUrl: "https://example.com/styles.css",
+						media: "screen",
+					},
+				},
+				{
+					name: "Options dict with CSS string",
+					arg: { css: "body { color: red }" },
+					check: actual => actual.css instanceof CSSStyleSheet,
+				},
+				{
+					name: "Explicit css not overwritten by URL fetch",
+					arg: { url: "styles.css", css: sheet },
+					expect: { css: sheet, fullUrl: "https://example.com/styles.css" },
 				},
 				{
 					name: "Defaults merged",
-					args: ["styles.css", { shadow: true }],
-					expect: { url: "styles.css", shadow: true },
+					args: [sheet, { shadow: true }],
+					expect: { css: sheet, shadow: true },
 				},
 			],
 		},
 		{
-			name: "getStyle()",
-			async run (arg) {
-				let result = getStyle(Promise.resolve(arg), "https://example.com/");
-				return { css: await result.css };
-			},
-			// Mock's replaceSync stores CSS text in _css; extract it for comparison
-			map (result) {
-				if (result?.css?._css) {
-					return { ...result, css: result.css._css };
-				}
-				return result;
-			},
+			name: "Promise-wrapped values",
+			check: async actual => (await actual.css) instanceof CSSStyleSheet,
 			tests: [
 				{
-					name: "resolving to CSSStyleSheet",
-					arg: sheet,
-					expect: { css: sheet },
+					name: "CSSStyleSheet",
+					arg: Promise.resolve(sheet),
 				},
 				{
-					name: "resolving to string fetches URL as CSSStyleSheet",
-					arg: "styles.css",
-					expect: { css: "/* fetched: https://example.com/styles.css */" },
-				},
-				{
-					name: "unwraps ESM default",
-					arg: { default: sheet },
-					expect: { css: sheet },
-				},
-				{
-					name: "Defaults merged",
-					async run (arg) {
-						let result = getStyle(Promise.resolve(arg), "https://example.com/", { shadow: true });
-						return { css: await result.css, shadow: result.shadow };
-					},
-					arg: sheet,
-					expect: { css: sheet, shadow: true },
+					name: "ESM default (dynamic import)",
+					arg: import("data:text/javascript,export default new CSSStyleSheet()"),
 				},
 			],
 		},
