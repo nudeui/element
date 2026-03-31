@@ -1,7 +1,7 @@
 /**
  * Extensible plugin for adding styles to an element's shadow root or other roots
  */
-import { getOwnValue, adoptStyle } from "./util.js";
+import { getOwnValue, adoptStyle, getStyle } from "./util.js";
 import { getSuper, getComposedArray, defineOwnProperty, symbols } from "../../extensible.js";
 
 export const { styles } = symbols.known;
@@ -45,8 +45,8 @@ const hooks = {
 const providesStatic = {
 	/**
 	 * Define styles for the component
-	 * @param { (object | string)[] } def - Styles to define
-	 * @param {object} defaultOptions - Options for styles passed as string URLs
+	 * @param { (object | string | URL | CSSStyleSheet | Promise)[] } def - Styles to define
+	 * @param {object} defaultOptions - Default options merged into each style entry
 	 * @void
 	 */
 	defineStyles (
@@ -64,25 +64,16 @@ const providesStatic = {
 		const baseUrl = this.url ?? defaultBaseURL;
 
 		for (let options of def) {
-			if (typeof options === "string") {
-				options = { url: options, ...defaultOptions };
-			}
-			else {
-				options = Object.assign({}, defaultOptions, options);
-			}
+			options = getStyle(options, baseUrl, defaultOptions);
 
 			let env = { options, style: options };
 
-			if (options.url) {
+			if (options.fullUrl) {
 				// Consolidate style definitions with the same URL
-				env.fullUrl = new URL(options.url, baseUrl).href;
-				env.existing = this[styles].find(style => style.fullUrl === env.fullUrl);
+				env.existing = this[styles].find(style => style.fullUrl === options.fullUrl);
 
 				if (env.existing) {
 					env.style = Object.assign(env.existing, env.options);
-				}
-				else {
-					env.style.fullUrl ??= env.fullUrl;
 				}
 			}
 

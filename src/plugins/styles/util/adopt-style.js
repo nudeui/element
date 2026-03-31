@@ -1,4 +1,5 @@
 import { cachedFetch } from "./cached-fetch.js";
+import { cssToSheet } from "./css-to-sheet.js";
 /**
  * @template T
  * @typedef {T | Promise<T>} PromiseOrValue
@@ -50,36 +51,6 @@ export function adoptStyle (ref, root = globalThis.document) {
 	}
 
 	return adoptSheet(sheet, root);
-}
-
-/**
- * @internal
- * @type {Map<string, CSSStyleSheet>}
- */
-const sheets = new Map();
-/**
- * Memoize CSS strings to CSSStyleSheet objects
- * @param {string | CSSStyleSheet} css
- * @returns {CSSStyleSheet}
- */
-export function cssToSheet (css) {
-	if (css instanceof Promise) {
-		return css.then(css => cssToSheet(css));
-	}
-
-	if (css instanceof CSSStyleSheet) {
-		return css;
-	}
-
-	let sheet = sheets.get(css);
-
-	if (!sheet) {
-		sheet = new CSSStyleSheet();
-		sheet.replaceSync(css);
-		sheets.set(css, sheet);
-	}
-
-	return sheet;
 }
 
 /**
