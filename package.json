@@ -6,7 +6,8 @@
 	"files": [
 		"src/",
 		"!src/util/unused/",
-		"index.js"
+		"index.js",
+		"README.md"
 	],
 	"type": "module",
 	"scripts": {
