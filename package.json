@@ -1,6 +1,6 @@
 {
 	"name": "nude-element",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"description": "Composable web component helpers",
 	"main": "index.js",
 	"files": [
