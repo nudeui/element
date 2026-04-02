@@ -3,6 +3,11 @@
 	"version": "0.1.1",
 	"description": "Composable web component helpers",
 	"main": "index.js",
+	"files": [
+		"src/",
+		"!src/util/unused/",
+		"index.js"
+	],
 	"type": "module",
 	"scripts": {
 		"eslint": "npx eslint .",

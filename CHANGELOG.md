@@ -1,5 +1,19 @@
 # Change Log
 
+## 0.1.2 (2026-04-02)
+
+### Improvements
+
+- **Bundler compatibility for styles plugin**: `defineStyles()` now accepts `CSSStyleSheet`, `URL`, `Promise` (including dynamic `import()` results), and raw CSS strings directly, so bundlers that transform CSS imports into JS modules work out of the box by @DmitrySharabin in #92
+
+### Internal
+
+- Switched from `.npmignore` to a `"files"` whitelist in `package.json`, excluding dev configs, tests, and unused utilities. Package size reduced from 45 kB to 34 kB by @DmitrySharabin
+- Test imports updated to match the plugin directory structure introduced in 0.1.0; added a `test/index.js` entry point by @DmitrySharabin in #93
+- Added GitHub Sponsors and Open Collective funding links by @DmitrySharabin in #50
+
+**Full Changelog**: https://github.com/nudeui/element/compare/0.1.1...0.1.2
+
 ## 0.1.0 (2026-03-03)
 
 ### New plugin architecture
