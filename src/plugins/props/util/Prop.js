@@ -16,6 +16,13 @@ let Self = class Prop {
 	 */
 	#signals = new WeakMap();
 
+	/**
+	 * Per-element raw (pre-convert) signal storage.
+	 * Only used for props with spec.convert.
+	 * @type {WeakMap<HTMLElement, Signal>}
+	 */
+	#rawSignals = new WeakMap();
+
 	constructor (name, spec, props) {
 		if (spec instanceof Prop && name === spec.name) {
 			return spec;
@@ -30,7 +37,10 @@ let Self = class Prop {
 		this.default = spec.default;
 
 		if (typeof spec.default === "function" && this.props) {
-			// Create a computed prop so signals can auto-track dependencies at runtime
+			// Always create a computed prop for function defaults.
+			// The Computed auto-tracks dependencies at runtime — if the function
+			// has no reactive dependencies, it simply evaluates once and never
+			// re-evaluates (negligible overhead for correctness).
 			let defaultProp = "default" + name.replace(/^\w/, c => c.toUpperCase());
 			this.props.add(defaultProp, {
 				get: spec.default,
@@ -98,9 +108,43 @@ let Self = class Prop {
 	}
 
 	/**
+	 * Subscriber for Computed signals (spec.get and spec.convert).
+	 * Updates element.props cache, reflects to attributes if opted in,
+	 * and fires propchange events.
+	 */
+	#onComputedChange (element, source, newValue, oldValue) {
+		element.props[this.name] = newValue;
+
+		// Reflect to attribute if this computed prop opts in
+		if (this.toAttribute) {
+			let attributeValue = this.stringify(newValue);
+			let oldAttributeValue = element.getAttribute(this.toAttribute);
+			if (oldAttributeValue !== attributeValue) {
+				element.ignoredAttributes.add(this.toAttribute);
+				if (attributeValue === null) {
+					element.removeAttribute(this.toAttribute);
+				}
+				else {
+					element.setAttribute(this.toAttribute, attributeValue);
+				}
+				element.ignoredAttributes.delete(this.toAttribute);
+			}
+		}
+
+		this.changed(element, {
+			element,
+			source,
+			parsedValue: newValue,
+			oldInternalValue: oldValue,
+		});
+	}
+
+	/**
 	 * Get or lazily create the Signal for this prop on a given element.
-	 * Non-computed props get a plain Signal; computed props (with spec.get)
-	 * get a Computed signal that auto-tracks dependencies.
+	 * - Computed props (spec.get): Computed signal that auto-tracks dependencies
+	 * - Props with spec.convert: two-signal architecture (raw Signal + Computed)
+	 *   so convert re-runs when its dependencies change
+	 * - Plain props: plain Signal
 	 * @param {HTMLElement} element
 	 * @returns {Signal}
 	 */
@@ -110,17 +154,26 @@ let Self = class Prop {
 		if (!signal) {
 			if (this.spec.get) {
 				signal = new Computed(() => this.spec.get.call(element));
-
-				// Computed props recompute via the signal chain, not via set(),
-				// so they need a subscriber to fire propchange events
 				signal.subscribe((newValue, oldValue) => {
-					element.props[this.name] = newValue;
-					this.changed(element, {
-						element,
-						source: "get",
-						parsedValue: newValue,
-						oldInternalValue: oldValue,
-					});
+					this.#onComputedChange(element, "get", newValue, oldValue);
+				});
+			}
+			else if (this.spec.convert) {
+				// Two-signal pattern: raw holds pre-convert value,
+				// Computed applies convert and auto-tracks its dependencies
+				let rawSignal = new Signal(undefined);
+				rawSignal.equals = (a, b) => this.equals(a, b);
+				this.#rawSignals.set(element, rawSignal);
+
+				signal = new Computed(() => {
+					let raw = rawSignal.value;
+					if (raw === undefined || raw === null) {
+						return raw;
+					}
+					return this.spec.convert.call(element, raw);
+				});
+				signal.subscribe((newValue, oldValue) => {
+					this.#onComputedChange(element, "convert", newValue, oldValue);
 				});
 			}
 			else {
@@ -217,7 +270,10 @@ let Self = class Prop {
 
 	set (element, value, { source, name, oldValue } = {}) {
 		let signal = this.getSignal(element);
-		let oldInternalValue = signal.value;
+		let rawSignal = this.#rawSignals.get(element);
+
+		// For convert props, compare against the raw (pre-convert) value
+		let oldInternalValue = rawSignal ? rawSignal.value : signal.value;
 
 		let attributeName = name;
 		let parsedValue;
@@ -234,7 +290,10 @@ let Self = class Prop {
 			return;
 		}
 
-		if (this.spec.convert) {
+		// For convert props, the Computed applies convert automatically —
+		// don't apply it here. For non-convert props with spec.convert
+		// (shouldn't happen, but defensive), apply inline.
+		if (this.spec.convert && !rawSignal) {
 			parsedValue = this.spec.convert.call(element, parsedValue);
 		}
 
@@ -242,51 +301,53 @@ let Self = class Prop {
 			return;
 		}
 
-		// Update both signal and element.props
-		element.props[this.name] = parsedValue;
+		if (rawSignal) {
+			// For convert props: write to raw signal, which marks the Computed
+			// dirty. The Computed subscriber (#onComputedChange) handles
+			// element.props update, reflection, and events.
+			rawSignal.value = parsedValue;
+		}
+		else {
+			// For plain props: update signal, element.props, reflect, and fire events
+			signal.value = parsedValue;
+			element.props[this.name] = parsedValue;
 
-		let change = {
-			element,
-			source,
-			value,
-			parsedValue,
-			oldInternalValue,
-			attributeName: name,
-		};
+			let change = {
+				element,
+				source,
+				value,
+				parsedValue,
+				oldInternalValue,
+				attributeName: name,
+			};
 
-		if (source === "property") {
-			// Reflect to attribute?
-			if (this.toAttribute) {
-				let attributeName = this.toAttribute;
-				let attributeValue = this.stringify(parsedValue);
-				let oldAttributeValue = element.getAttribute(attributeName);
+			if (source === "property") {
+				if (this.toAttribute) {
+					let attributeName = this.toAttribute;
+					let attributeValue = this.stringify(parsedValue);
+					let oldAttributeValue = element.getAttribute(attributeName);
 
-				if (oldAttributeValue !== attributeValue) {
-					// TODO what if another prop is reflected *from* this attribute?
-					element.ignoredAttributes.add(this.toAttribute);
+					if (oldAttributeValue !== attributeValue) {
+						element.ignoredAttributes.add(this.toAttribute);
 
-					Object.assign(change, { attributeName, attributeValue, oldAttributeValue });
-					this.applyChange(element, { ...change, source: "attribute" });
+						Object.assign(change, { attributeName, attributeValue, oldAttributeValue });
+						this.applyChange(element, { ...change, source: "attribute" });
 
-					element.ignoredAttributes.delete(attributeName);
+						element.ignoredAttributes.delete(attributeName);
+					}
 				}
 			}
-		}
-		else if (source === "attribute") {
-			Object.assign(change, {
-				attributeName,
-				attributeValue: value,
-				oldAttributeValue: oldValue,
-			});
-		}
+			else if (source === "attribute") {
+				Object.assign(change, {
+					attributeName,
+					attributeValue: value,
+					oldAttributeValue: oldValue,
+				});
+			}
 
-		// Set signal value (will notify computed dependents automatically)
-		// We set this after change handling above so reflection happens before propagation
-		signal.value = parsedValue;
-
-		// Fire propchange events (but not for computed props — those fire via signal subscriber)
-		if (!this.spec.get) {
-			this.changed(element, change);
+			if (!this.spec.get) {
+				this.changed(element, change);
+			}
 		}
 	}
 
