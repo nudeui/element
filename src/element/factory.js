@@ -2,7 +2,8 @@
  * Factory for NudeElement base classes with custom params
  */
 
-import extensible, { symbols, addPlugins } from "../extensible.js";
+import { symbols, addPlugins } from "xtensible";
+import { api, $hook, hooksCommon } from "xtensible/plugins";
 import members from "./members.js";
 
 /**
@@ -23,10 +24,10 @@ export default function (Super = HTMLElement, plugins = []) {
 			this.constructed();
 		}
 
-		static symbols = symbols.known;
+		static symbols = symbols;
 
 		static {
-			addPlugins(this, extensible, members, plugins);
+			addPlugins(this, api, $hook, hooksCommon, members, plugins);
 		}
 	};
 }

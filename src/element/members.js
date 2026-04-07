@@ -1,21 +1,6 @@
-import { getSuperMethod } from "../util/super.js";
+import { getSuperMethod } from "xtensible/util";
 
 const provides = {
-	// Called by the constructor
-	constructed () {
-		// super.constructed()
-		getSuperMethod(this, provides.constructed)?.call(this);
-
-		this.constructor.setup(); // Last resort
-		this.constructor.$hook("constructor-static");
-		this.$hook("constructor");
-
-		// We use a microtask so that this executes after the subclass constructor has run as well
-		Promise.resolve().then(() => {
-			this.$hook("constructed", undefined, { once: true });
-		});
-	},
-
 	connectedCallback () {
 		// super.connectedCallback()
 		getSuperMethod(this, provides.connectedCallback)?.call(this);
