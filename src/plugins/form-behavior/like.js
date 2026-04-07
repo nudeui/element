@@ -1,4 +1,4 @@
-import symbols from "../../symbols.js";
+import { symbols } from "xtensible";
 import { resolveValue } from "../../util/resolve-value.js";
 import { getRole } from "./util/role.js";
 import base, { formBehavior } from "./base.js";

@@ -1,5 +1,5 @@
-import { defineOwnProperty } from "../../extensible.js";
-import symbols from "../../symbols.js";
+import { symbols } from "xtensible";
+import { defineOwnProperty } from "xtensible/util";
 
 import internalsPlugin from "../internals/index.js";
 

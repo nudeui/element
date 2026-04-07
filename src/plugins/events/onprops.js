@@ -3,8 +3,8 @@
  */
 import propsPlugin from "../props/index.js";
 import base from "./base.js";
-import symbols from "../../symbols.js";
-import { defineOwnProperty } from "../../extensible.js";
+import { symbols } from "xtensible";
+import { defineOwnProperty } from "xtensible/util";
 
 const { eventProps } = symbols.new;
 

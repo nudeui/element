@@ -1,4 +1,4 @@
-import Hooks from "../../../hooks.js";
+import { Hooks } from "xtensible";
 
 export default class Slots {
 	hooks = new Hooks();

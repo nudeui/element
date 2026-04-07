@@ -3,7 +3,7 @@
  * Events that fire when a specific prop changes
  */
 
-import symbols from "../../symbols.js";
+import { symbols } from "xtensible";
 import base, { events } from "./base.js";
 import { props } from "../props/index.js";
 
