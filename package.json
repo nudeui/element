@@ -62,6 +62,6 @@
 		"typedoc-plugin-rename-defaults": "^0.7.3"
 	},
 	"dependencies": {
-		"xtensible": "^0.0.1"
+		"xtensible": "^0.0.2"
 	}
 }
