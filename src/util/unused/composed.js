@@ -1,4 +1,4 @@
-import symbols from "../../symbols.js";
+import { symbols } from "xtensible";
 
 let { composed, constituents } = symbols.known;
 

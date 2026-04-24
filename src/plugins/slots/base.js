@@ -1,7 +1,7 @@
-import symbols from "../../symbols.js";
+import { symbols } from "xtensible";
+import { defineOwnProperty } from "xtensible/util";
 import Slots from "./util/slots.js";
 import SlotController from "./util/slot-controller.js";
-import { defineOwnProperty } from "../../extensible.js";
 
 export const { slots } = symbols.known;
 

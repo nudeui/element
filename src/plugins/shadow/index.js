@@ -2,7 +2,8 @@
  * Provide access to an element's shadow root through a symbol property (even when it’s closed)
  */
 
-import { symbols, getSuperMethod } from "../../extensible.js";
+import { symbols } from "xtensible";
+import { getSuperMethod } from "xtensible/util";
 import { defineLazyProperty } from "../../util/lazy.js";
 import { getOwnValue } from "../../util/get-own-value.js";
 

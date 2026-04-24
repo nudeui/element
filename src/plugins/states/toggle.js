@@ -1,4 +1,4 @@
-import symbols from "../../symbols.js";
+import { symbols } from "xtensible";
 import internalsPlugin from "../internals/index.js";
 
 const { internals } = symbols.known;

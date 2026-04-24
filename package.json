@@ -60,5 +60,8 @@
 		"release-it": "^19.2.4",
 		"typedoc": "^0.28.18",
 		"typedoc-plugin-rename-defaults": "^0.7.3"
+	},
+	"dependencies": {
+		"xtensible": "^0.0.2"
 	}
 }

@@ -5,7 +5,7 @@
  */
 
 import base, { slots } from "./base.js";
-import symbols from "../../symbols.js";
+import { symbols } from "xtensible";
 import SlotObserver from "./util/slot-observer.js";
 
 SlotObserver.hooks.add("observe", function ({ moOptions }) {

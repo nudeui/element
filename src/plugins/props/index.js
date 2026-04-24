@@ -1,7 +1,7 @@
 import Props from "./util/Props.js";
-import symbols from "../../symbols.js";
+import { symbols } from "xtensible";
+import { defineOwnProperty } from "xtensible/util";
 import { defineLazyProperty } from "../../util/lazy.js";
-import { defineOwnProperty } from "../../extensible.js";
 
 export const { props } = symbols.known;
 

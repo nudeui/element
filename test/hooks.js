@@ -1,4 +1,5 @@
-import base, { addPlugin } from "../src/extensible.js";
+import { addPlugin } from "xtensible";
+import { $hook, hooksCommon } from "xtensible/plugins";
 
 export default {
 	name: "hooks",
@@ -32,7 +33,7 @@ export default {
 		}
 		class C extends B {}
 		class D extends C {}
-		addPlugin(B, base);
+		addPlugin(B, $hook, hooksCommon);
 
 		Object.assign(this.data, { A, B, C, D });
 	},
