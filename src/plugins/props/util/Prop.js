@@ -17,8 +17,9 @@ let Self = class Prop {
 	#signals = new WeakMap();
 
 	/**
-	 * Per-element raw (pre-convert) signal storage.
-	 * Only used for props with spec.convert.
+	 * Backing store for the user-supplied value, kept separate from the
+	 * Computed so writes can sever the convert/default fallthrough and a
+	 * write of `undefined` can re-engage it.
 	 * @type {WeakMap<HTMLElement, Signal>}
 	 */
 	#rawSignals = new WeakMap();
@@ -28,6 +29,18 @@ let Self = class Prop {
 			return spec;
 		}
 
+		// Sugar `defaultProp` into a function default so it reuses the
+		// auto-tracked default-fallthrough path. Explicit `default` wins.
+		if (spec.defaultProp && spec.default === undefined) {
+			let defaultPropName = spec.defaultProp;
+			spec = {
+				...spec,
+				default () {
+					return this[defaultPropName];
+				},
+			};
+		}
+
 		this.name = name;
 		this.spec = spec;
 		this.props = props;
@@ -35,26 +48,6 @@ let Self = class Prop {
 		this.type = types.resolve(spec.type);
 
 		this.default = spec.default;
-
-		if (typeof spec.default === "function" && this.props) {
-			// Always create a computed prop for function defaults.
-			// The Computed auto-tracks dependencies at runtime — if the function
-			// has no reactive dependencies, it simply evaluates once and never
-			// re-evaluates (negligible overhead for correctness).
-			let defaultProp = "default" + name.replace(/^\w/, c => c.toUpperCase());
-			this.props.add(defaultProp, {
-				get: spec.default,
-			});
-			this.default = this.props.get(defaultProp);
-		}
-
-		if (spec.defaultProp) {
-			Object.defineProperty(this, "default", {
-				get: () => this.props.get(spec.defaultProp),
-				configurable: true,
-				enumerable: true,
-			});
-		}
 
 		// Computed properties are not reflected by default
 		this.reflect = spec.reflect ?? !this.spec.get;
@@ -72,10 +65,6 @@ let Self = class Prop {
 	get toAttribute () {
 		let reflectTo = typeof this.reflect === "object" ? this.reflect.to : this.reflect;
 		return reflectTo === true ? this.name : typeof reflectTo === "string" ? reflectTo : null;
-	}
-
-	get defaultProp () {
-		return this.default instanceof Prop ? this.default : null;
 	}
 
 	// Just calls equals() by default but can be overridden
@@ -108,14 +97,14 @@ let Self = class Prop {
 	}
 
 	/**
-	 * Subscriber for Computed signals (spec.get and spec.convert).
+	 * Subscriber for Computed signals (spec.get, spec.convert, spec.default).
 	 * Updates element.props cache, reflects to attributes if opted in,
 	 * and fires propchange events.
 	 */
 	#onComputedChange (element, source, newValue, oldValue) {
 		element.props[this.name] = newValue;
 
-		// Reflect to attribute if this computed prop opts in
+		// Reflect to attribute if this prop opts in
 		if (this.toAttribute) {
 			let attributeValue = this.stringify(newValue);
 			let oldAttributeValue = element.getAttribute(this.toAttribute);
@@ -141,10 +130,11 @@ let Self = class Prop {
 
 	/**
 	 * Get or lazily create the Signal for this prop on a given element.
-	 * - Computed props (spec.get): Computed signal that auto-tracks dependencies
-	 * - Props with spec.convert: two-signal architecture (raw Signal + Computed)
-	 *   so convert re-runs when its dependencies change
-	 * - Plain props: plain Signal
+	 * - Computed props (spec.get): Computed that auto-tracks dependencies
+	 * - Props with default or convert: raw Signal + Computed wrapper,
+	 *   so the default / convert re-runs when its deps change and writes
+	 *   can sever / restore the fallthrough
+	 * - Plain props (no default, no convert, no get): plain Signal
 	 * @param {HTMLElement} element
 	 * @returns {Signal}
 	 */
@@ -158,22 +148,38 @@ let Self = class Prop {
 					this.#onComputedChange(element, "get", newValue, oldValue);
 				});
 			}
-			else if (this.spec.convert) {
-				// Two-signal pattern: raw holds pre-convert value,
-				// Computed applies convert and auto-tracks its dependencies
+			else if (this.spec.convert || this.spec.default !== undefined) {
+				// Raw Signal holds the user-set value; Computed wraps it to apply
+				// convert and/or fall through to the default. Auto-tracks deps.
 				let rawSignal = new Signal(undefined);
 				rawSignal.equals = (a, b) => this.equals(a, b);
 				this.#rawSignals.set(element, rawSignal);
 
+				let source = this.spec.convert ? "convert" : "default";
 				signal = new Computed(() => {
-					let raw = rawSignal.value;
-					if (raw === undefined || raw === null) {
-						return raw;
+					let value = rawSignal.value;
+					if (value === undefined && this.spec.default !== undefined) {
+						value = resolveValue(this.spec.default, [element, element]);
+						if (value != undefined) {
+							try {
+								value = this.parse(value);
+							}
+							catch (e) {
+								console.warn(
+									`Failed to parse default value ${value} for prop ${this.name}. Original error was:`,
+									e,
+								);
+								return null;
+							}
+						}
 					}
-					return this.spec.convert.call(element, raw);
+					if (value != undefined && this.spec.convert) {
+						value = this.spec.convert.call(element, value);
+					}
+					return value;
 				});
 				signal.subscribe((newValue, oldValue) => {
-					this.#onComputedChange(element, "convert", newValue, oldValue);
+					this.#onComputedChange(element, source, newValue, oldValue);
 				});
 			}
 			else {
@@ -190,10 +196,6 @@ let Self = class Prop {
 	}
 
 	initializeFor (element) {
-		// Ensure signal exists for this element
-		this.getSignal(element);
-
-		// Handle any properties already set before initialization
 		let name = this.name;
 
 		if (Object.hasOwn(element, name)) {
@@ -203,9 +205,15 @@ let Self = class Prop {
 			delete element[name]; // Deleting the data property will uncover the accessor
 			element[name] = value; // Invoking the accessor means the value doesn't skip parsing
 		}
-		else if (element.props[name] === undefined && !this.defaultProp) {
-			// Is not set and its default is not another prop
-			this.changed(element, { source: "default", element });
+		else if (element.props[name] === undefined) {
+			let signal = this.getSignal(element);
+			if (signal instanceof Computed) {
+				// Force first compute so the subscriber emits the initial propchange
+				signal.value;
+			}
+			else {
+				this.changed(element, { source: "default", element });
+			}
 		}
 
 		this.#initialized = true;
@@ -239,41 +247,15 @@ let Self = class Prop {
 	get (element) {
 		let signal = this.getSignal(element);
 		// Reading signal.value auto-tracks if called from within a Computed
-		let value = signal.value;
-
-		if (value === undefined || value === null) {
-			if (this.default !== undefined) {
-				if (this.defaultProp) {
-					value = this.defaultProp.get(element);
-				}
-				else {
-					value = resolveValue(this.default, [element, element]);
-				}
-
-				try {
-					return this.parse(value);
-				}
-				catch (e) {
-					console.warn(
-						"Failed to parse default value",
-						value,
-						`for prop ${this.name}. Original error was: `,
-						e,
-					);
-					return null;
-				}
-			}
-		}
-
-		return value;
+		return signal.value;
 	}
 
 	set (element, value, { source, name, oldValue } = {}) {
 		let signal = this.getSignal(element);
 		let rawSignal = this.#rawSignals.get(element);
 
-		// For convert props, compare against the raw (pre-convert) value
-		let oldInternalValue = rawSignal ? rawSignal.value : signal.value;
+		// For Computed-backed props, compare against the raw user-set value
+		let oldInternalValue = (rawSignal ?? signal).value;
 
 		let attributeName = name;
 		let parsedValue;
@@ -290,21 +272,14 @@ let Self = class Prop {
 			return;
 		}
 
-		// For convert props, the Computed applies convert automatically —
-		// don't apply it here. For non-convert props with spec.convert
-		// (shouldn't happen, but defensive), apply inline.
-		if (this.spec.convert && !rawSignal) {
-			parsedValue = this.spec.convert.call(element, parsedValue);
-		}
-
 		if (this.equals(parsedValue, oldInternalValue)) {
 			return;
 		}
 
 		if (rawSignal) {
-			// For convert props: write to raw signal, which marks the Computed
-			// dirty. The Computed subscriber (#onComputedChange) handles
-			// element.props update, reflection, and events.
+			// Computed-backed: write to the raw signal. The Computed recomputes,
+			// and its subscriber (#onComputedChange) handles element.props,
+			// reflection, and events.
 			rawSignal.value = parsedValue;
 		}
 		else {
