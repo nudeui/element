@@ -97,7 +97,7 @@ let Self = class Prop {
 	}
 
 	/**
-	 * Subscriber for Computed signals (spec.get, spec.convert, default).
+	 * Subscriber for Computed signals (spec.get, spec.convert, spec.default).
 	 * Updates element.props cache, reflects to attributes if opted in,
 	 * and fires propchange events.
 	 */
