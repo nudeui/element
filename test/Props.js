@@ -1,4 +1,5 @@
 import { default as Props } from "../src/plugins/props/util/Props.js";
+import FakeElement from "./util/FakeElement.js";
 
 export default {
 	name: "Props class",
@@ -84,6 +85,69 @@ export default {
 						};
 					},
 					expect: [],
+				},
+			],
+		},
+		{
+			name: "Runtime behavior",
+			tests: [
+				{
+					name: "Pre-set attributes parse on mount",
+					async run ({ props, value }) {
+						let { Class } = await FakeElement.from(props);
+						let el = new Class();
+						el.setAttribute("prop", value);
+						el.mount();
+						return el.prop;
+					},
+					tests: [
+						{
+							name: "Pre-set attribute coerces into the typed property",
+							arg: {
+								props: { prop: { type: Number, reflect: true } },
+								value: "55",
+							},
+							expect: 55,
+						},
+						{
+							name: "Post-mount setAttribute updates the property (issue #98)",
+							skip: true,
+							async run () {
+								let { el } = await FakeElement.from(
+									{ prop: { type: Number, reflect: true } },
+									[el => (el.prop = 42), el => el.setAttribute("prop", "100")],
+								);
+								return el.prop;
+							},
+							expect: 100,
+						},
+					],
+				},
+				{
+					name: "Disconnect / reconnect lifecycle",
+					tests: [
+						{
+							name: "Queued propchange events drain on reconnect (case C from PR #91)",
+							skip: true,
+							async run () {
+								let { el } = await FakeElement.from({
+									v: { type: Number, default: 0 },
+								});
+								let names = [];
+								el.addEventListener("propchange", e => names.push(e.name));
+
+								el.isConnected = false;
+								el.v = 5;
+								// Flush the Computed microtask while disconnected so
+								// firePropChangeEvent enters its queueing branch.
+								await Promise.resolve();
+								el.isConnected = true;
+
+								return names;
+							},
+							expect: ["v"],
+						},
+					],
 				},
 			],
 		},

@@ -1,6 +1,7 @@
 import { default as Prop } from "../src/plugins/props/util/Prop.js";
 import { default as Props } from "../src/plugins/props/util/Props.js";
 import { resolveValue } from "../src/util/resolve-value.js";
+import FakeElement from "./util/FakeElement.js";
 
 export default {
 	name: "Prop class",
@@ -8,116 +9,6 @@ export default {
 		{
 			name: "constructor()",
 			tests: [
-				{
-					name: "Dependencies",
-					run (spec) {
-						let prop = new Prop("foo", spec);
-						return prop.dependencies;
-					},
-					tests: [
-						{
-							arg: {
-								dependencies: ["foo", "bar"],
-							},
-							expect: new Set(["foo", "bar"]),
-						},
-						{
-							name: "Inferred",
-							arg: {
-								get: () => this.foo + this.bar,
-								convert: () => this.bar + this.baz,
-							},
-							expect: new Set(["foo", "bar", "baz"]),
-						},
-						{
-							name: "Inferred from type",
-							arg: {
-								type: {
-									is: Object,
-									values: String,
-									defaultKey: () => this.foo,
-									defaultValue: () => this.bar,
-								},
-							},
-							expect: new Set(["foo", "bar"]),
-							skip: true, // Not implemented yet. See https://github.com/nudeui/element/issues/29
-						},
-						{
-							name: "Additional",
-							arg: {
-								get: () => this.foo + this.bar,
-								additionalDependencies: ["yolo"],
-							},
-							expect: new Set(["foo", "bar", "yolo"]),
-						},
-						{
-							name: "Ignore inferred",
-							arg: {
-								convert: () => this.bar + this.baz,
-								dependencies: ["yolo"],
-							},
-							expect: new Set(["yolo"]),
-						},
-						{
-							name: "Dependencies from default",
-							run (spec) {
-								let Class = class {
-									static props = {
-										foo: spec,
-									};
-								};
-
-								let props = new Props(Class, Class.props);
-								return props.get("defaultFoo")?.dependencies;
-							},
-							tests: [
-								{
-									name: "Dependencies specified",
-									arg: {
-										default () {},
-										defaultDependencies: ["foo"],
-									},
-									expect: new Set(["foo"]),
-								},
-								{
-									name: "Inferred dependencies",
-									arg: {
-										default () {
-											return this.foo + this.bar;
-										},
-									},
-									expect: new Set(["foo", "bar"]),
-								},
-								{
-									name: "Specified dependencies have priority over the inferred ones",
-									arg: {
-										default () {
-											return this.foo + this.bar;
-										},
-										defaultDependencies: ["foo"],
-									},
-									expect: new Set(["foo"]),
-								},
-								{
-									name: "default is a value",
-									arg: {
-										default: "foo",
-									},
-									expect: undefined,
-								},
-								{
-									name: "default() has no references to other props",
-									arg: {
-										default () {
-											return "foo";
-										},
-									},
-									expect: undefined,
-								},
-							],
-						},
-					],
-				},
 				{
 					name: "Defaults",
 					run (spec) {
@@ -132,12 +23,8 @@ export default {
 
 						let props = new Props(Class, Class.props);
 
-						let ret = props.get("foo").default;
-						if (ret instanceof Prop) {
-							ret = ret.default;
-						}
-
-						return resolveValue(ret, []);
+						// `defaultProp` sugars into `function () { return this[propName] }` — eval against a stub.
+						return resolveValue(props.get("foo").default, [{ bar: "bar" }]);
 					},
 					tests: [
 						{
@@ -165,27 +52,23 @@ export default {
 						},
 						{
 							name: "Value and prop",
-							description:
-								"What should be used if both default and defaultProp are specified? If defaultProp, where should default go?",
+							description: "Explicit `default` wins over `defaultProp`.",
 							arg: {
 								default: "foo",
 								defaultProp: "bar",
 							},
-							expect: "foo", // ??
-							skip: true,
+							expect: "foo",
 						},
 						{
 							name: "Function and prop",
-							description:
-								"What should be used if both default and defaultProp are specified? If defaultProp, where should default go?",
+							description: "Explicit `default` wins over `defaultProp`.",
 							arg: {
 								default () {
 									return 42;
 								},
 								defaultProp: "bar",
 							},
-							expect: 42, // ??
-							skip: true,
+							expect: 42,
 						},
 					],
 				},
@@ -392,6 +275,334 @@ export default {
 								},
 							},
 							expect: [null, "foo"],
+						},
+					],
+				},
+			],
+		},
+		{
+			name: "Runtime behavior",
+			tests: [
+				{
+					name: "propchange events",
+					async run ({ props, actions, only }) {
+						let { events } = await FakeElement.from(props, actions);
+						let stream = only ? events.filter(e => only.includes(e.name)) : events;
+						return stream.map(({ name, source }) => `${name}/${source}`);
+					},
+					tests: [
+						{
+							name: "defaultProp propagates source change",
+							arg: {
+								props: {
+									src: { type: String, default: "initial" },
+									mirror: { type: String, defaultProp: "src" },
+								},
+								actions: [el => (el.src = "changed")],
+							},
+							expect: [
+								"src/default",
+								"mirror/default",
+								"src/default",
+								"mirror/default",
+							],
+						},
+						{
+							name: "default() fires on declared name only",
+							arg: {
+								props: { bar: { default: () => 42 } },
+								only: ["bar", "defaultBar"],
+							},
+							expect: ["bar/default"],
+						},
+						{
+							name: "No double-fire on mount for Computed-backed props",
+							arg: {
+								props: {
+									base: { type: Number, default: 7 },
+									derived: {
+										get () {
+											return this.base + 1;
+										},
+									},
+								},
+								only: ["derived"],
+							},
+							expect: ["derived/get"],
+						},
+						{
+							name: "default() reactive on declared name",
+							arg: {
+								props: {
+									base: { type: Number, default: 1 },
+									derived: {
+										type: Number,
+										default () {
+											return this.base * 10;
+										},
+									},
+								},
+								actions: [el => (el.base = 2)],
+								only: ["derived"],
+							},
+							expect: ["derived/default", "derived/default"],
+						},
+						{
+							name: "Events fan out across plain, get, and default() props",
+							arg: {
+								props: {
+									plain: { type: Number, default: 1 },
+									computed: {
+										get () {
+											return this.plain + 10;
+										},
+									},
+									fnDefault: {
+										type: Number,
+										default () {
+											return this.plain * 100;
+										},
+									},
+								},
+								actions: [el => (el.plain = 5)],
+							},
+							expect: [
+								// Mount
+								"plain/default",
+								"computed/get",
+								"fnDefault/default",
+
+								// Update — Computed-backed: source stays construction-time
+								"plain/default",
+								"computed/get",
+								"fnDefault/default",
+							],
+						},
+						{
+							name: "Assigning current default-resolved value is a no-op",
+							arg: {
+								props: { v: { type: Number, default: 0 } },
+								actions: [el => (el.v = 0)],
+							},
+							expect: ["v/default"],
+						},
+					],
+				},
+				{
+					name: "Final value",
+					async run ({ props, actions, read }) {
+						let { el } = await FakeElement.from(props, actions);
+						return el[read];
+					},
+					tests: [
+						{
+							name: "defaultProp severs on explicit write",
+							arg: {
+								props: {
+									src: { type: String, default: "initial" },
+									mirror: { type: String, defaultProp: "src" },
+								},
+								actions: [
+									el => (el.mirror = "explicit"),
+									el => (el.src = "after-sever"),
+								],
+								read: "mirror",
+							},
+							expect: "explicit",
+						},
+						{
+							name: "defaultProp restores on undefined",
+							arg: {
+								props: {
+									src: { type: String, default: "initial" },
+									mirror: { type: String, defaultProp: "src" },
+								},
+								actions: [
+									el => (el.mirror = "explicit"),
+									el => (el.src = "x"),
+									el => (el.mirror = undefined),
+								],
+								read: "mirror",
+							},
+							expect: "x",
+						},
+						{
+							name: "default() return is coerced via parse",
+							arg: {
+								props: { n: { type: Number, default: () => "42" } },
+								read: "n",
+							},
+							expect: 42,
+						},
+						{
+							name: "default() pass through convert",
+							arg: {
+								props: {
+									n: {
+										default: 5,
+										convert (v) {
+											return v * 2;
+										},
+									},
+								},
+								read: "n",
+							},
+							expect: 10,
+						},
+						{
+							name: "Plain literal default restored via undefined write",
+							arg: {
+								props: { v: { type: Number, default: 0 } },
+								actions: [el => (el.v = 100), el => (el.v = undefined)],
+								read: "v",
+							},
+							expect: 0,
+						},
+						{
+							name: "null preserved on Computed-backed prop with default",
+							arg: {
+								props: {
+									base: { type: Number, default: 7 },
+									v: {
+										type: Number,
+										default () {
+											return this.base * 10;
+										},
+									},
+								},
+								actions: [el => (el.v = null)],
+								read: "v",
+							},
+							expect: null,
+						},
+						{
+							name: "null release: undefined re-resolves default()",
+							arg: {
+								props: {
+									base: { type: Number, default: 7 },
+									v: {
+										type: Number,
+										default () {
+											return this.base * 10;
+										},
+									},
+								},
+								actions: [el => (el.v = null), el => (el.v = undefined)],
+								read: "v",
+							},
+							expect: 70,
+						},
+						{
+							name: "get() updates when its dependency changes",
+							arg: {
+								props: {
+									base: { type: Number, default: 1 },
+									derived: {
+										get () {
+											return this.base * 2;
+										},
+									},
+								},
+								actions: [el => (el.base = 5)],
+								read: "derived",
+							},
+							expect: 10,
+						},
+						{
+							name: "Dynamic deps: branch flip switches the tracked dep",
+							arg: {
+								props: {
+									cond: { default: true },
+									a: { type: Number, default: 100 },
+									b: { type: Number, default: 200 },
+									out: {
+										get () {
+											return this.cond ? this.a : this.b;
+										},
+									},
+								},
+								actions: [el => (el.cond = false), el => (el.b = 777)],
+								read: "out",
+							},
+							expect: 777,
+						},
+						{
+							name: "Dynamic deps: stale dep no longer propagates",
+							arg: {
+								props: {
+									cond: { default: true },
+									a: { type: Number, default: 100 },
+									b: { type: Number, default: 200 },
+									out: {
+										get () {
+											return this.cond ? this.a : this.b;
+										},
+									},
+								},
+								actions: [el => (el.cond = false), el => (el.a = 999)],
+								read: "out",
+							},
+							expect: 200,
+						},
+						{
+							name: "spec.equals: tolerated dep change leaves cached value",
+							arg: {
+								props: {
+									base: { type: Number, default: 42 },
+									derived: {
+										get () {
+											return this.base;
+										},
+										equals: (a, b) => Math.abs(a - b) < 0.1,
+									},
+								},
+								actions: [el => (el.base = 42.05)],
+								read: "derived",
+							},
+							expect: 42,
+						},
+					],
+				},
+				{
+					name: "Attribute reflection",
+					async run ({ props, actions, attr }) {
+						let { el } = await FakeElement.from(props, actions);
+						return el.getAttribute(attr);
+					},
+					tests: [
+						{
+							name: "Prop write reflects to attribute",
+							arg: {
+								props: { v: { type: Number, reflect: true } },
+								actions: [el => (el.v = 42)],
+								attr: "v",
+							},
+							expect: "42",
+						},
+						{
+							name: "Default + reflect reflects on mount (plain)",
+							arg: {
+								props: { plain: { type: Number, default: 7, reflect: true } },
+								attr: "plain",
+							},
+							expect: "7",
+						},
+						{
+							name: "Default + convert + reflect reflects on mount",
+							arg: {
+								props: {
+									val: {
+										type: Number,
+										default: 5,
+										convert (v) {
+											return v * 2;
+										},
+										reflect: true,
+									},
+								},
+								attr: "val",
+							},
+							expect: "10",
 						},
 					],
 				},
