@@ -48,9 +48,18 @@ export class Signal extends EventTarget {
 	#value;
 	#subscribers = new Set();
 
-	constructor (value) {
+	/**
+	 * @param {*} value - Initial value.
+	 * @param {object} [options]
+	 * @param {(a: *, b: *) => boolean} [options.equals] - Custom equality
+	 *   check. Set as an instance override of the default `===` method.
+	 */
+	constructor (value, { equals } = {}) {
 		super();
 		this.#value = value;
+		if (equals) {
+			this.equals = equals;
+		}
 	}
 
 	get value () {
@@ -108,9 +117,10 @@ export class Computed extends Signal {
 	/**
 	 * @param {Function} fn - Compute function. All Signal `.value` reads
 	 *   inside this function are auto-tracked as dependencies.
+	 * @param {object} [options] - Forwarded to `Signal` (e.g. `equals`).
 	 */
-	constructor (fn) {
-		super(undefined);
+	constructor (fn, options) {
+		super(undefined, options);
 		this.#fn = fn;
 	}
 

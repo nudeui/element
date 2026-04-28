@@ -544,6 +544,23 @@ export default {
 							},
 							expect: 200,
 						},
+						{
+							name: "spec.equals: tolerated dep change leaves cached value",
+							arg: {
+								props: {
+									base: { type: Number, default: 42 },
+									derived: {
+										get () {
+											return this.base;
+										},
+										equals: (a, b) => Math.abs(a - b) < 0.1,
+									},
+								},
+								actions: [el => (el.base = 42.05)],
+								read: "derived",
+							},
+							expect: 42,
+						},
 					],
 				},
 				{

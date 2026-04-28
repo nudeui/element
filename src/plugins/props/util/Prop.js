@@ -142,8 +142,11 @@ let Self = class Prop {
 		let signal = this.#signals.get(element);
 
 		if (!signal) {
+			// Delegate equality to the prop's type-aware equality.
+			let options = { equals: (a, b) => this.equals(a, b) };
+
 			if (this.spec.get) {
-				signal = new Computed(() => this.spec.get.call(element));
+				signal = new Computed(() => this.spec.get.call(element), options);
 				signal.subscribe((newValue, oldValue) => {
 					this.#onComputedChange(element, "get", newValue, oldValue);
 				});
@@ -151,8 +154,7 @@ let Self = class Prop {
 			else if (this.spec.convert || this.spec.default !== undefined) {
 				// Raw Signal holds the user-set value; Computed wraps it to apply
 				// convert and/or fall through to the default. Auto-tracks deps.
-				let rawSignal = new Signal(undefined);
-				rawSignal.equals = (a, b) => this.equals(a, b);
+				let rawSignal = new Signal(undefined, options);
 				this.#rawSignals.set(element, rawSignal);
 
 				let source = this.spec.convert ? "convert" : "default";
@@ -177,17 +179,14 @@ let Self = class Prop {
 						value = this.spec.convert.call(element, value);
 					}
 					return value;
-				});
+				}, options);
 				signal.subscribe((newValue, oldValue) => {
 					this.#onComputedChange(element, source, newValue, oldValue);
 				});
 			}
 			else {
-				signal = new Signal(undefined);
+				signal = new Signal(undefined, options);
 			}
-
-			// Delegate equality to the prop's type-aware equality
-			signal.equals = (a, b) => this.equals(a, b);
 
 			this.#signals.set(element, signal);
 		}
