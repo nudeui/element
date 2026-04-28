@@ -67,7 +67,7 @@ export default {
 									};
 								};
 
-								let props = new Props(Class);
+								let props = new Props(Class, Class.props);
 								return props.get("defaultFoo")?.dependencies;
 							},
 							tests: [
@@ -130,7 +130,7 @@ export default {
 							};
 						};
 
-						let props = new Props(Class);
+						let props = new Props(Class, Class.props);
 
 						let ret = props.get("foo").default;
 						if (ret instanceof Prop) {

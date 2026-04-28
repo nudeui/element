@@ -6,7 +6,7 @@ export default {
 		{
 			name: "Class with a static props property",
 			run (Class) {
-				let props = new Props(Class);
+				let props = new Props(Class, Class.props);
 				return [...props.keys()];
 			},
 			arg: class {
@@ -24,7 +24,7 @@ export default {
 					static props = {};
 				};
 
-				let props = new Props(Class);
+				let props = new Props(Class, Class.props);
 				props.add(...args);
 
 				return [...props.keys()];
@@ -43,45 +43,9 @@ export default {
 			],
 		},
 		{
-			name: "Props.add()",
-			tests: [
-				{
-					name: "Class.props is an object literal",
-					description: "Class.props should have a new property with the given name",
-					run (name) {
-						let Class = class {
-							static props = {};
-						};
-
-						Props.add(Class, name, {});
-
-						return Class.props;
-					},
-					arg: "foo",
-					expect: { foo: {} },
-				},
-				{
-					name: "Class.props is an instance of Props",
-					description: "Class.props should have a new prop with the given name",
-					run (name) {
-						let Class = class {
-							static props = {};
-						};
-
-						Class.props = new Props(Class);
-						Props.add(Class, name, {});
-
-						return Class.props.get(name).name;
-					},
-					arg: "foo",
-					expect: "foo",
-				},
-			],
-		},
-		{
 			name: "observedAttributes()",
 			run (Class) {
-				let props = new Props(Class);
+				let props = new Props(Class, Class.props);
 				return props.observedAttributes;
 			},
 			tests: [
