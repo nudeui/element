@@ -54,6 +54,10 @@ export default class Props extends Map {
 		}
 	}
 
+	/**
+	 * Called from Prop#changed when a value settles. Coalesces into the
+	 * dispatch queue; dispatch happens in #drainFor on the next microtask.
+	 */
 	propChanged (element, prop, change) {
 		let map = this.#eventDispatchQueue.get(element);
 		if (!map) {
