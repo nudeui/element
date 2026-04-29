@@ -109,8 +109,7 @@ export default {
 							expect: 55,
 						},
 						{
-							name: "Post-mount setAttribute updates the property (issue #98)",
-							skip: true,
+							name: "Post-mount setAttribute updates the property",
 							async run () {
 								let el = new (FakeElement.with({
 									prop: { type: Number, reflect: true },
