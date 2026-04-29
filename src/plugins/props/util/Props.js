@@ -199,7 +199,7 @@ export default class Props extends Map {
 		}
 
 		if (changedProps.size > 0) {
-			element.propsChangedCallback?.(changedProps);
+			element.propChangedCallback?.(changedProps);
 		}
 
 		if (remaining) {

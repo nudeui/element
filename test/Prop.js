@@ -551,11 +551,11 @@ export default {
 					],
 				},
 				{
-					name: "propsChangedCallback bulk semantics",
+					name: "propChangedCallback bulk semantics",
 					async run ({ props, actions = [] }) {
 						let Class = FakeElement.with(props);
 						let calls = [];
-						Class.prototype.propsChangedCallback = function (changedProperties) {
+						Class.prototype.propChangedCallback = function (changedProperties) {
 							calls.push(
 								[...changedProperties].map(([name, payload]) => ({
 									name,
@@ -650,7 +650,7 @@ export default {
 						Class.props.get("v").eventNames = ["change"];
 
 						let calls = [];
-						Class.prototype.propsChangedCallback = function (changedProperties) {
+						Class.prototype.propChangedCallback = function (changedProperties) {
 							calls.push(
 								[...changedProperties].map(([name, payload]) => ({
 									name,
@@ -679,7 +679,7 @@ export default {
 							"propchange/42",
 							"change/42",
 						],
-						// propsChangedCallback: one entry per prop per drain, regardless of how
+						// propChangedCallback: one entry per prop per drain, regardless of how
 						// many shortcut event names fired.
 						calls: [
 							[{ name: "v", old: undefined }],
