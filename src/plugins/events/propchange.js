@@ -6,6 +6,7 @@
 import { symbols } from "xtensible";
 import base, { events } from "./base.js";
 import { props } from "../props/index.js";
+import PropChangeEvent from "../props/util/PropChangeEvent.js";
 
 const { propchange } = symbols.new;
 
@@ -46,10 +47,12 @@ const hooks = {
 			let value = this[propName];
 
 			if (value !== undefined) {
-				this.constructor[props].firePropChangeEvent(this, eventName, {
-					name: propName,
-					prop: this.constructor[props].get(propName),
-				});
+				this.dispatchEvent(
+					new PropChangeEvent(eventName, {
+						name: propName,
+						prop: this.constructor[props].get(propName),
+					}),
+				);
 			}
 		}
 	},

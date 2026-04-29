@@ -2,6 +2,10 @@ import Prop from "./Prop.js";
 import PropChangeEvent from "./PropChangeEvent.js";
 
 export default class Props extends Map {
+	#eventDispatchQueue = new WeakMap();
+	#pendingElements = new Set();
+	#drainScheduled = false;
+
 	/**
 	 *
 	 * @param {HTMLElement} Class The class to define props for
@@ -50,35 +54,168 @@ export default class Props extends Map {
 		}
 	}
 
-	eventDispatchQueue = new WeakMap();
-
-	/**
-	 * Called when a prop value changes. Fires propchange events.
-	 * Dependency propagation is handled automatically by signals.
-	 */
 	propChanged (element, prop, change) {
-		// Fire propchange event
-		let eventNames = ["propchange", ...(prop.eventNames ?? [])];
-		for (let eventName of eventNames) {
-			this.firePropChangeEvent(element, eventName, {
-				name: prop.name,
-				prop,
-				detail: change,
-			});
+		let map = this.#eventDispatchQueue.get(element);
+		if (!map) {
+			map = new Map();
+			this.#eventDispatchQueue.set(element, map);
+		}
+
+		let existing = map.get(prop.name);
+		if (existing) {
+			// Coalesce: latest parsedValue/source wins, but old values stay pinned
+			// to the first write so the payload spans the full first→last delta.
+			let { oldInternalValue, oldAttributeValue } = existing.detail;
+			Object.assign(existing.detail, change);
+			existing.detail.oldInternalValue = oldInternalValue;
+			existing.detail.oldAttributeValue = oldAttributeValue;
+		}
+		else {
+			// Capture the old attribute value before any coalesced reflection overwrites it.
+			let detail = { ...change };
+			if (prop.toAttribute && detail.source !== "attribute") {
+				detail.attributeName = prop.toAttribute;
+				detail.oldAttributeValue = element.getAttribute?.(prop.toAttribute) ?? null;
+			}
+
+			map.set(prop.name, { name: prop.name, prop, detail });
+		}
+
+		this.#pendingElements.add(element);
+		this.#scheduleDrain();
+	}
+
+	#scheduleDrain () {
+		if (this.#drainScheduled) {
+			return;
+		}
+
+		this.#drainScheduled = true;
+		queueMicrotask(() => {
+			this.#drainScheduled = false;
+			this.#drain();
+		});
+	}
+
+	#drain () {
+		// Snapshot and clear: events queued by handlers (incl. on other
+		// elements) run on the next microtask, not in this drain.
+		let elements = [...this.#pendingElements];
+		this.#pendingElements.clear();
+
+		let i = 0;
+		try {
+			for (; i < elements.length; i++) {
+				this.#drainFor(elements[i]);
+			}
+		}
+		finally {
+			// If a #drainFor threw, re-queue the survivors so an unrelated
+			// future write isn't required to surface their pending events.
+			for (let j = i + 1; j < elements.length; j++) {
+				this.#pendingElements.add(elements[j]);
+			}
+
+			if (this.#pendingElements.size > 0) {
+				this.#scheduleDrain();
+			}
 		}
 	}
 
-	firePropChangeEvent (element, eventName, eventProps) {
-		let event = new PropChangeEvent(eventName, eventProps);
+	#drainFor (element) {
+		if (!element.isConnected) {
+			// Queue stays intact; `connected()` drains it on (re)connect.
+			return;
+		}
 
-		if (element.isConnected && eventProps.prop.initialized) {
-			element.dispatchEvent?.(event);
+		let map = this.#eventDispatchQueue.get(element);
+		if (!map) {
+			return;
 		}
-		else {
-			let queue = this.eventDispatchQueue.get(element) ?? [];
-			queue.push(event);
-			this.eventDispatchQueue.set(element, queue);
+
+		// Reflect first so propchange handlers see settled DOM.
+		for (let [, payload] of map) {
+			let { prop, detail } = payload;
+			if (!prop.toAttribute || detail.source === "attribute") {
+				continue;
+			}
+
+			// Read from the signal, not from `detail.parsedValue`: an external
+			// setAttribute since the payload was queued may have updated the signal.
+			let value = prop.stringify(prop.getSignal(element).value);
+			let current = element.getAttribute?.(prop.toAttribute);
+			if (current === value) {
+				continue;
+			}
+
+			element.ignoredAttributes.add(prop.toAttribute);
+			if (value === null) {
+				element.removeAttribute?.(prop.toAttribute);
+			}
+			else {
+				element.setAttribute?.(prop.toAttribute, value);
+			}
+
+			element.ignoredAttributes.delete(prop.toAttribute);
 		}
+
+		// Detach the queue before dispatch: re-entrant writes from event
+		// handlers must accumulate for the next drain, not this one.
+		let entries = [...map];
+		this.#eventDispatchQueue.delete(element);
+
+		let remaining;
+		let changedProps = new Map();
+		for (let [key, payload] of entries) {
+			// Plain Signals don't dedupe coalesced round-trips on their own;
+			// mirror Signal equality here.
+			let { prop, detail } = payload;
+			if (prop.equals(detail.parsedValue, detail.oldInternalValue)) {
+				continue;
+			}
+
+			// Hold pre-init payloads back until `initializeFor` has set #initialized,
+			// so the first dispatch carries the post-mount value.
+			if (!prop.initialized) {
+				(remaining ??= new Map()).set(key, payload);
+				continue;
+			}
+
+			changedProps.set(prop.name, payload);
+
+			// Materialize attributeValue now that reflection has settled the DOM.
+			if (detail.attributeName) {
+				detail.attributeValue = element.getAttribute?.(detail.attributeName) ?? null;
+			}
+
+			// One payload, one dispatch per registered event name.
+			for (let name of ["propchange", ...(prop.eventNames ?? [])]) {
+				element.dispatchEvent?.(new PropChangeEvent(name, payload));
+			}
+		}
+
+		if (changedProps.size > 0) {
+			element.propsChangedCallback?.(changedProps);
+		}
+
+		if (remaining) {
+			// Newer payloads queued by dispatch handlers win; only fill the gaps.
+			let current = this.#eventDispatchQueue.get(element);
+			if (current) {
+				for (let [key, payload] of remaining) {
+					if (!current.has(key)) {
+						current.set(key, payload);
+					}
+				}
+			}
+			else {
+				this.#eventDispatchQueue.set(element, remaining);
+			}
+		}
+	}
+
+	connected (element) {
+		this.#drainFor(element);
 	}
 
 	initializeFor (element) {
@@ -97,15 +234,7 @@ export default class Props extends Map {
 			prop.initializeFor(element);
 		}
 
-		// Dispatch any events that were queued
-		let queue = this.eventDispatchQueue.get(element);
-
-		if (queue) {
-			for (let event of queue) {
-				element.dispatchEvent?.(event);
-			}
-
-			this.eventDispatchQueue.delete(element);
-		}
+		// Every prop is now initialized; release any payloads that were held back.
+		this.#drainFor(element);
 	}
 }

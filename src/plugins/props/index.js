@@ -29,16 +29,14 @@ const hooks = {
 		}
 	},
 
-	constructor () {
-		if (this.propChangedCallback && this.constructor[props]) {
-			this.addEventListener("propchange", this.propChangedCallback);
-		}
-	},
-
 	first_constructor_static,
 
 	constructed () {
 		this.constructor[props].initializeFor(this);
+	},
+
+	connected () {
+		this.constructor[props].connected(this);
 	},
 };
 

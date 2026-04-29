@@ -1,5 +1,5 @@
 import { default as Props } from "../src/plugins/props/util/Props.js";
-import FakeElement from "./util/FakeElement.js";
+import FakeElement, { flush } from "./util/FakeElement.js";
 
 export default {
 	name: "Props class",
@@ -94,8 +94,7 @@ export default {
 				{
 					name: "Pre-set attributes parse on mount",
 					async run ({ props, value }) {
-						let { Class } = await FakeElement.from(props);
-						let el = new Class();
+						let el = new (FakeElement.with(props))();
 						el.setAttribute("prop", value);
 						el.mount();
 						return el.prop;
@@ -113,10 +112,11 @@ export default {
 							name: "Post-mount setAttribute updates the property (issue #98)",
 							skip: true,
 							async run () {
-								let { el } = await FakeElement.from(
-									{ prop: { type: Number, reflect: true } },
-									[el => (el.prop = 42), el => el.setAttribute("prop", "100")],
-								);
+								let el = new (FakeElement.with({
+									prop: { type: Number, reflect: true },
+								}))();
+								el.mount();
+								el.setAttribute("prop", "100");
 								return el.prop;
 							},
 							expect: 100,
@@ -127,25 +127,52 @@ export default {
 					name: "Disconnect / reconnect lifecycle",
 					tests: [
 						{
-							name: "Queued propchange events drain on reconnect (case C from PR #91)",
-							skip: true,
+							name: "Queued propchange events drain on reconnect",
 							async run () {
-								let { el } = await FakeElement.from({
+								let el = new (FakeElement.with({
 									v: { type: Number, default: 0 },
-								});
+								}))();
+								el.mount();
 								let names = [];
 								el.addEventListener("propchange", e => names.push(e.name));
 
 								el.isConnected = false;
 								el.v = 5;
 								// Flush the Computed microtask while disconnected so
-								// firePropChangeEvent enters its queueing branch.
-								await Promise.resolve();
+								// the queueing branch runs.
+								await flush();
 								el.isConnected = true;
 
 								return names;
 							},
 							expect: ["v"],
+						},
+						{
+							name: "Reconnect drains queued events without replaying mount events",
+							async run () {
+								let el = new (FakeElement.with({
+									v: { type: Number, default: 0 },
+								}))();
+								let events = [];
+								el.addEventListener("propchange", e => events.push(e));
+								el.mount();
+								// Mount event for the default-resolved 0.
+								let mountCount = events.length;
+
+								el.isConnected = false;
+								el.v = 5;
+								await flush();
+								let afterDisconnect = events.length;
+
+								el.isConnected = true;
+								await flush();
+								let afterReconnect = events.length;
+
+								return { mountCount, afterDisconnect, afterReconnect };
+							},
+							// Disconnected drain bails — payload waits in queue. Reconnect
+							// dispatches the post-disconnect payload, NOT the already-fired mount.
+							expect: { mountCount: 1, afterDisconnect: 1, afterReconnect: 2 },
 						},
 					],
 				},

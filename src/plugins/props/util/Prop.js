@@ -96,29 +96,8 @@ let Self = class Prop {
 		return types.parse(value, this.type);
 	}
 
-	/**
-	 * Subscriber for Computed signals (spec.get, spec.convert, spec.default).
-	 * Updates element.props cache, reflects to attributes if opted in,
-	 * and fires propchange events.
-	 */
 	#onComputedChange (element, source, newValue, oldValue) {
 		element.props[this.name] = newValue;
-
-		// Reflect to attribute if this prop opts in
-		if (this.toAttribute) {
-			let attributeValue = this.stringify(newValue);
-			let oldAttributeValue = element.getAttribute(this.toAttribute);
-			if (oldAttributeValue !== attributeValue) {
-				element.ignoredAttributes.add(this.toAttribute);
-				if (attributeValue === null) {
-					element.removeAttribute(this.toAttribute);
-				}
-				else {
-					element.setAttribute(this.toAttribute, attributeValue);
-				}
-				element.ignoredAttributes.delete(this.toAttribute);
-			}
-		}
 
 		this.changed(element, {
 			element,
@@ -207,12 +186,10 @@ let Self = class Prop {
 		else if (element.props[name] === undefined) {
 			let signal = this.getSignal(element);
 			if (signal instanceof Computed) {
-				// Force first compute so the subscriber emits the initial propchange
+				// Force first compute so the subscriber emits the initial propchange.
 				signal.value;
 			}
-			else {
-				this.changed(element, { source: "default", element });
-			}
+			// Plain Signals start at undefined: nothing to fire about at mount.
 		}
 
 		this.#initialized = true;
@@ -256,7 +233,6 @@ let Self = class Prop {
 		// For Computed-backed props, compare against the raw user-set value
 		let oldInternalValue = (rawSignal ?? signal).value;
 
-		let attributeName = name;
 		let parsedValue;
 
 		try {
@@ -276,13 +252,10 @@ let Self = class Prop {
 		}
 
 		if (rawSignal) {
-			// Computed-backed: write to the raw signal. The Computed recomputes,
-			// and its subscriber (#onComputedChange) handles element.props,
-			// reflection, and events.
+			// Recompute fires #onComputedChange, which routes through `changed`.
 			rawSignal.value = parsedValue;
 		}
 		else {
-			// For plain props: update signal, element.props, reflect, and fire events
 			signal.value = parsedValue;
 			element.props[this.name] = parsedValue;
 
@@ -292,28 +265,11 @@ let Self = class Prop {
 				value,
 				parsedValue,
 				oldInternalValue,
-				attributeName: name,
 			};
 
-			if (source === "property") {
-				if (this.toAttribute) {
-					let attributeName = this.toAttribute;
-					let attributeValue = this.stringify(parsedValue);
-					let oldAttributeValue = element.getAttribute(attributeName);
-
-					if (oldAttributeValue !== attributeValue) {
-						element.ignoredAttributes.add(this.toAttribute);
-
-						Object.assign(change, { attributeName, attributeValue, oldAttributeValue });
-						this.applyChange(element, { ...change, source: "attribute" });
-
-						element.ignoredAttributes.delete(attributeName);
-					}
-				}
-			}
-			else if (source === "attribute") {
+			if (source === "attribute") {
 				Object.assign(change, {
-					attributeName,
+					attributeName: name,
 					attributeValue: value,
 					oldAttributeValue: oldValue,
 				});
