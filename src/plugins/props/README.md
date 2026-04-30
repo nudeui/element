@@ -190,7 +190,7 @@ class MyElement extends NudeElement {
 el.addEventListener("propchange", e => { /* … */ });
 ```
 
-The event detail includes `source` (`"property"`, `"attribute"`, `"default"`, `"convert"`, or `"get"`), `parsedValue`, `oldInternalValue`, and (when applicable) `attributeName`, `attributeValue`, `oldAttributeValue`.
+The event detail includes `source` (`"property"`, `"attribute"`, `"default"`, `"convert"`, `"get"`, or `"initial"` — for shortcut events re-fired on first connect to catch late-bound listeners), `parsedValue`, `oldInternalValue`, and (when applicable) `attributeName`, `attributeValue`, `oldAttributeValue`.
 
 ### Per-drain: `propsupdate` event and `updated()` callback
 

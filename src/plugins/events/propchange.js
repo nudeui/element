@@ -49,14 +49,25 @@ const hooks = {
 			let propName = this.constructor[propchange][eventName];
 			let value = this[propName];
 
-			if (value !== undefined) {
-				this.dispatchEvent(
-					new PropChangeEvent(eventName, {
-						name: propName,
-						prop: this.constructor[props].get(propName),
-					}),
-				);
+			if (value === undefined) {
+				continue;
 			}
+
+			let prop = this.constructor[props].get(propName);
+			let detail = {
+				element: this,
+				source: "initial",
+				parsedValue: value,
+				oldInternalValue: undefined,
+			};
+
+			if (prop.toAttribute) {
+				detail.attributeName = prop.toAttribute;
+				detail.attributeValue = this.getAttribute?.(prop.toAttribute) ?? null;
+				detail.oldAttributeValue = null;
+			}
+
+			this.dispatchEvent(new PropChangeEvent(eventName, { name: propName, prop, detail }));
 		}
 	},
 };
