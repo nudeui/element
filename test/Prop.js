@@ -797,6 +797,18 @@ export default {
 					expect: { aThrew: true, bSeen: true },
 				},
 				{
+					name: "propsupdate event exposes changedProps Map directly",
+					async run () {
+						let el = new (FakeElement.with({ v: { type: Number, default: 0 } }))();
+						let seen;
+						el.addEventListener("propsupdate", e => (seen = e.changedProps));
+						el.mount();
+						await flush();
+						return seen instanceof Map && seen.has("v");
+					},
+					expect: true,
+				},
+				{
 					name: "Final value",
 					async run ({ props, actions = [], read }) {
 						let el = new (FakeElement.with(props))();

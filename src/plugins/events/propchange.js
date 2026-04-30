@@ -41,7 +41,10 @@ const hooks = {
 	},
 
 	first_connected () {
-		// Often propchange events have already fired by the time the event handlers are added
+		// `onprops.constructed` attaches listeners *after* `props.constructed`'s
+		// synchronous drain — without this re-fire, late-bound `on*` handlers
+		// miss the initial dispatch. Duplication for pre-connect listeners is
+		// the tradeoff.
 		for (let eventName in this.constructor[propchange]) {
 			let propName = this.constructor[propchange][eventName];
 			let value = this[propName];

@@ -1,5 +1,6 @@
 import Prop from "./Prop.js";
 import PropChangeEvent from "./PropChangeEvent.js";
+import PropsUpdateEvent from "./PropsUpdateEvent.js";
 
 export default class Props extends Map {
 	#eventDispatchQueue = new WeakMap();
@@ -178,8 +179,8 @@ export default class Props extends Map {
 				continue;
 			}
 
-			// Hold pre-init payloads back until `initializeFor` has set #initialized,
-			// so the first dispatch carries the post-mount value.
+			// `initializeFor` is the only thing that flips `prop.initialized`,
+			// and it calls `#drainFor` itself — re-queueing here would loop.
 			if (!prop.initialized) {
 				(remaining ??= new Map()).set(key, payload);
 				continue;
@@ -192,15 +193,14 @@ export default class Props extends Map {
 				detail.attributeValue = element.getAttribute?.(detail.attributeName) ?? null;
 			}
 
-			// One payload, one dispatch per registered event name.
+			// EventTarget isolates listener throws — siblings stay safe without try/catch.
 			for (let name of ["propchange", ...(prop.eventNames ?? [])]) {
 				element.dispatchEvent?.(new PropChangeEvent(name, payload));
 			}
 		}
 
 		if (changedProps.size > 0) {
-			// Bulk event fires last in the cycle, after every per-prop propchange.
-			element.dispatchEvent?.(new CustomEvent("propsupdate", { detail: changedProps }));
+			element.dispatchEvent?.(new PropsUpdateEvent(changedProps));
 		}
 
 		if (remaining) {

@@ -168,10 +168,10 @@ By default, `reflect` is `true` **unless** `get` is also specified, in which cas
 
 There are two layers of observability for prop changes, both first-class:
 
-| Granularity      | Event         | Auto-wired callback             |
-| ---------------- | ------------- | ------------------------------- |
-| Per prop         | `propchange`  | `propChangedCallback(event)`    |
-| Per drain (bulk) | `propsupdate` | `updated(changedProperties)`    |
+| Granularity      | Event         | Auto-wired callback          |
+| ---------------- | ------------- | ---------------------------- |
+| Per prop         | `propchange`  | `propChangedCallback(event)` |
+| Per drain (bulk) | `propsupdate` | `updated(changedProps)`      |
 
 Sync writes are coalesced into a single drain on the next microtask, so `el.x = 1; el.x = 2; el.x = 3` produces one `propchange` event with `parsedValue: 3`. `oldInternalValue` is pinned to the pre-write value, so the event reports the full first→last delta.
 
@@ -198,8 +198,8 @@ Fires once at the end of every drain cycle, after every per-prop `propchange`. T
 
 ```js
 class MyElement extends NudeElement {
-	updated (changedProperties) {
-		for (let [name, payload] of changedProperties) {
+	updated (changedProps) {
+		for (let [name, payload] of changedProps) {
 			console.log(name, "→", payload.detail.parsedValue);
 		}
 	}
@@ -207,7 +207,7 @@ class MyElement extends NudeElement {
 
 // External listeners:
 el.addEventListener("propsupdate", e => {
-	for (let [name, payload] of e.detail) { /* … */ }
+	for (let [name, payload] of e.changedProps) { /* … */ }
 });
 ```
 

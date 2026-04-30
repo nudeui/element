@@ -41,10 +41,10 @@ const hooks = {
 			this.addEventListener("propchange", this.propChangedCallback);
 		}
 
-		// Bulk callback: auto-wire to the propsupdate event, unwrap detail
-		// so it receives the changed-properties Map directly.
+		// Bulk callback: auto-wire to the propsupdate event, unwrap so it
+		// receives the changed-props Map directly.
 		if (this.updated) {
-			this.addEventListener("propsupdate", e => this.updated(e.detail));
+			this.addEventListener("propsupdate", e => this.updated(e.changedProps));
 		}
 	},
 
