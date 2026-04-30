@@ -30,7 +30,7 @@ export default class FakeElement extends EventTarget {
 			this.addEventListener("propchange", this.propChangedCallback);
 		}
 		if (this.updated) {
-			this.addEventListener("propsupdate", e => this.updated(e.detail));
+			this.addEventListener("propsupdate", e => this.updated(e.changedProps));
 		}
 	}
 
