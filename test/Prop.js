@@ -1,4 +1,4 @@
-/* global process */
+import process from "node:process";
 import { default as Prop } from "../src/plugins/props/util/Prop.js";
 import { default as Props } from "../src/plugins/props/util/Props.js";
 import { resolveValue } from "../src/util/resolve-value.js";
