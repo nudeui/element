@@ -410,6 +410,14 @@ export default {
 						},
 						{
 							name: "Round-trip back to the initial value on a plain Signal fires no event",
+							async run ({ props, actions }) {
+								let el = new (FakeElement.with(props))();
+								let count = 0;
+								el.addEventListener("propchange", () => count++);
+								el.mount();
+								await apply(el, actions);
+								return count;
+							},
 							arg: {
 								props: { v: { type: Number } },
 								actions: [
@@ -418,9 +426,8 @@ export default {
 										el.v = undefined;
 									},
 								],
-								only: ["v"],
 							},
-							expect: [],
+							expect: 0,
 						},
 					],
 				},
