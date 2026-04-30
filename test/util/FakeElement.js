@@ -23,6 +23,17 @@ export default class FakeElement extends EventTarget {
 	props = {};
 	#attrs = new Map();
 
+	constructor () {
+		super();
+		// Stand in for the plugin's `constructor` hook auto-wiring.
+		if (this.propChangedCallback) {
+			this.addEventListener("propchange", this.propChangedCallback);
+		}
+		if (this.updated) {
+			this.addEventListener("propsupdate", e => this.updated(e.detail));
+		}
+	}
+
 	#connected = false;
 	get isConnected () {
 		return this.#connected;

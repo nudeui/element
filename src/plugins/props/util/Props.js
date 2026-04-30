@@ -199,7 +199,8 @@ export default class Props extends Map {
 		}
 
 		if (changedProps.size > 0) {
-			element.propChangedCallback?.(changedProps);
+			// Bulk event fires last in the cycle, after every per-prop propchange.
+			element.dispatchEvent?.(new CustomEvent("propsupdate", { detail: changedProps }));
 		}
 
 		if (remaining) {

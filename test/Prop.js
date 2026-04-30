@@ -551,11 +551,12 @@ export default {
 					],
 				},
 				{
-					name: "propChangedCallback bulk semantics",
+					name: "updated() bulk semantics",
 					async run ({ props, actions = [] }) {
 						let Class = FakeElement.with(props);
+
 						let calls = [];
-						Class.prototype.propChangedCallback = function (changedProperties) {
+						Class.prototype.updated = function (changedProperties) {
 							calls.push(
 								[...changedProperties].map(([name, payload]) => ({
 									name,
@@ -564,6 +565,7 @@ export default {
 								})),
 							);
 						};
+
 						let el = new Class();
 						el.mount();
 						await apply(el, actions);
@@ -650,7 +652,7 @@ export default {
 						Class.props.get("v").eventNames = ["change"];
 
 						let calls = [];
-						Class.prototype.propChangedCallback = function (changedProperties) {
+						Class.prototype.updated = function (changedProperties) {
 							calls.push(
 								[...changedProperties].map(([name, payload]) => ({
 									name,
@@ -679,13 +681,66 @@ export default {
 							"propchange/42",
 							"change/42",
 						],
-						// propChangedCallback: one entry per prop per drain, regardless of how
+						// updated(): one entry per prop per drain, regardless of how
 						// many shortcut event names fired.
 						calls: [
 							[{ name: "v", old: undefined }],
 							[{ name: "v", old: 0 }],
 						],
 					},
+				},
+				{
+					name: "propChangedCallback auto-wires as a per-prop propchange listener",
+					async run () {
+						let Class = FakeElement.with({
+							a: { type: Number, default: 0 },
+							b: { type: Number, default: 0 },
+						});
+						let calls = [];
+						Class.prototype.propChangedCallback = function (event) {
+							calls.push(`${event.name}/${event.detail.parsedValue}`);
+						};
+
+						let el = new Class();
+						el.mount();
+						await apply(el, el => {
+							el.a = 5;
+							el.b = 7;
+						});
+						return calls;
+					},
+					// One call per dispatched propchange event: mount × 2, update × 2.
+					expect: ["a/0", "b/0", "a/5", "b/7"],
+				},
+				{
+					name: "propsupdate fires after every propchange in the same drain",
+					async run () {
+						let Class = FakeElement.with({
+							a: { type: Number, default: 0 },
+							b: { type: Number, default: 0 },
+						});
+						let order = [];
+						let el = new Class();
+						el.addEventListener("propchange", e => order.push(`propchange/${e.name}`));
+						el.addEventListener("propsupdate", () => order.push("propsupdate"));
+
+						el.mount();
+						await apply(el, el => {
+							el.a = 5;
+							el.b = 7;
+						});
+						return order;
+					},
+					expect: [
+						// Mount drain.
+						"propchange/a",
+						"propchange/b",
+						"propsupdate",
+						// Update drain.
+						"propchange/a",
+						"propchange/b",
+						"propsupdate",
+					],
 				},
 				{
 					name: "Throw in one element's drain doesn't strand siblings in the same microtask",

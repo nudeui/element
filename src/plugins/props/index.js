@@ -31,6 +31,23 @@ const hooks = {
 
 	first_constructor_static,
 
+	constructor () {
+		if (!this.constructor[props]) {
+			return;
+		}
+
+		// Per-prop callback: auto-wire to propchange events.
+		if (this.propChangedCallback) {
+			this.addEventListener("propchange", this.propChangedCallback);
+		}
+
+		// Bulk callback: auto-wire to the propsupdate event, unwrap detail
+		// so it receives the changed-properties Map directly.
+		if (this.updated) {
+			this.addEventListener("propsupdate", e => this.updated(e.detail));
+		}
+	},
+
 	constructed () {
 		this.constructor[props].initializeFor(this);
 	},
