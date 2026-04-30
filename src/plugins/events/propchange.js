@@ -6,6 +6,7 @@
 import { symbols } from "xtensible";
 import base, { events } from "./base.js";
 import { props } from "../props/index.js";
+import PropChangeEvent from "../props/util/PropChangeEvent.js";
 
 const { propchange } = symbols.new;
 
@@ -40,17 +41,33 @@ const hooks = {
 	},
 
 	first_connected () {
-		// Often propchange events have already fired by the time the event handlers are added
+		// `onprops.constructed` attaches listeners *after* `props.constructed`'s
+		// synchronous drain — without this re-fire, late-bound `on*` handlers
+		// miss the initial dispatch. Duplication for pre-connect listeners is
+		// the tradeoff.
 		for (let eventName in this.constructor[propchange]) {
 			let propName = this.constructor[propchange][eventName];
 			let value = this[propName];
 
-			if (value !== undefined) {
-				this.constructor[props].firePropChangeEvent(this, eventName, {
-					name: propName,
-					prop: this.constructor[props].get(propName),
-				});
+			if (value === undefined) {
+				continue;
 			}
+
+			let prop = this.constructor[props].get(propName);
+			let detail = {
+				element: this,
+				source: "initial",
+				parsedValue: value,
+				oldInternalValue: undefined,
+			};
+
+			if (prop.toAttribute) {
+				detail.attributeName = prop.toAttribute;
+				detail.attributeValue = this.getAttribute?.(prop.toAttribute) ?? null;
+				detail.oldAttributeValue = null;
+			}
+
+			this.dispatchEvent(new PropChangeEvent(eventName, { name: propName, prop, detail }));
 		}
 	},
 };

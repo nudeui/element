@@ -1,7 +1,8 @@
+import process from "node:process";
 import { default as Prop } from "../src/plugins/props/util/Prop.js";
 import { default as Props } from "../src/plugins/props/util/Props.js";
 import { resolveValue } from "../src/util/resolve-value.js";
-import FakeElement from "./util/FakeElement.js";
+import FakeElement, { apply, flush } from "./util/FakeElement.js";
 
 export default {
 	name: "Prop class",
@@ -285,8 +286,16 @@ export default {
 			tests: [
 				{
 					name: "propchange events",
-					async run ({ props, actions, only }) {
-						let { events } = await FakeElement.from(props, actions);
+					async run ({ props, actions = [], only }) {
+						let el = new (FakeElement.with(props))();
+
+						let events = [];
+						el.addEventListener("propchange", e =>
+							events.push({ name: e.name, source: e.detail?.source }));
+
+						el.mount();
+						await apply(el, actions);
+
 						let stream = only ? events.filter(e => only.includes(e.name)) : events;
 						return stream.map(({ name, source }) => `${name}/${source}`);
 					},
@@ -298,7 +307,7 @@ export default {
 									src: { type: String, default: "initial" },
 									mirror: { type: String, defaultProp: "src" },
 								},
-								actions: [el => (el.src = "changed")],
+								actions: el => (el.src = "changed"),
 							},
 							expect: [
 								"src/default",
@@ -311,7 +320,6 @@ export default {
 							name: "default() fires on declared name only",
 							arg: {
 								props: { bar: { default: () => 42 } },
-								only: ["bar", "defaultBar"],
 							},
 							expect: ["bar/default"],
 						},
@@ -342,13 +350,14 @@ export default {
 										},
 									},
 								},
-								actions: [el => (el.base = 2)],
+								actions: el => (el.base = 2),
 								only: ["derived"],
 							},
 							expect: ["derived/default", "derived/default"],
 						},
 						{
-							name: "Events fan out across plain, get, and default() props",
+							name: "Mount and update both fan out across plain, get, and default() props",
+							description: "Computed-backed source stays at construction-time on update.",
 							arg: {
 								props: {
 									plain: { type: Number, default: 1 },
@@ -364,15 +373,12 @@ export default {
 										},
 									},
 								},
-								actions: [el => (el.plain = 5)],
+								actions: el => (el.plain = 5),
 							},
 							expect: [
-								// Mount
 								"plain/default",
 								"computed/get",
 								"fnDefault/default",
-
-								// Update — Computed-backed: source stays construction-time
 								"plain/default",
 								"computed/get",
 								"fnDefault/default",
@@ -382,16 +388,432 @@ export default {
 							name: "Assigning current default-resolved value is a no-op",
 							arg: {
 								props: { v: { type: Number, default: 0 } },
-								actions: [el => (el.v = 0)],
+								actions: el => (el.v = 0),
 							},
 							expect: ["v/default"],
+						},
+						{
+							name: "Sync writes to a plain Signal coalesce to a single event with the settled value",
+							arg: {
+								props: { v: { type: Number } },
+								actions: [
+									el => {
+										el.v = 1;
+										el.v = 3;
+										el.v = 42;
+									},
+								],
+								only: ["v"],
+							},
+							// No mount event: plain Signal initial undefined ≡ oldInternalValue.
+							expect: ["v/property"],
+						},
+						{
+							name: "Round-trip back to the initial value on a plain Signal fires no event",
+							async run ({ props, actions }) {
+								let el = new (FakeElement.with(props))();
+								let count = 0;
+								el.addEventListener("propchange", () => count++);
+								el.mount();
+								await apply(el, actions);
+								return count;
+							},
+							arg: {
+								props: { v: { type: Number } },
+								actions: [
+									el => {
+										el.v = 5;
+										el.v = undefined;
+									},
+								],
+							},
+							expect: 0,
 						},
 					],
 				},
 				{
+					name: "Handler observes post-cascade values for sibling Computeds",
+					async run () {
+						let el = new (FakeElement.with({
+							a: { type: Number, default: 0 },
+							b: {
+								type: Number,
+								get () {
+									return this.a + 1;
+								},
+							},
+							c: {
+								type: Number,
+								get () {
+									return this.a * 2;
+								},
+							},
+						}))();
+						el.mount();
+
+						// Listener attached after mount, so mount events stay out.
+						let snapshots = [];
+						el.addEventListener("propchange", e =>
+							snapshots.push({ name: e.name, b: el.b, c: el.c }));
+
+						await apply(el, el => (el.a = 5));
+						return snapshots;
+					},
+					expect: [
+						{ name: "a", b: 6, c: 10 },
+						{ name: "b", b: 6, c: 10 },
+						{ name: "c", b: 6, c: 10 },
+					],
+				},
+				{
+					name: "Attribute reflection deferral — write log",
+					async run ({ props, actions = [] }) {
+						let el = new (FakeElement.with(props))();
+
+						let writes = [];
+						let original = el.setAttribute.bind(el);
+						el.setAttribute = (name, value) => {
+							writes.push([name, value]);
+							return original(name, value);
+						};
+
+						el.mount();
+						await apply(el, actions);
+						return writes;
+					},
+					tests: [
+						{
+							name: "Sync writes produce a single attribute write of the settled value",
+							arg: {
+								props: { v: { type: Number, reflect: true } },
+								actions: [
+									el => {
+										el.v = 1;
+										el.v = 3;
+										el.v = 42;
+									},
+								],
+							},
+							// One write of the settled value; intermediates are coalesced away.
+							expect: [["v", "42"]],
+						},
+						{
+							name: "Reflection writes go to reflect.to alias, not the prop name",
+							arg: {
+								props: {
+									v: {
+										type: Number,
+										default: 7,
+										reflect: { to: "data-v" },
+									},
+								},
+								actions: el => (el.v = 42),
+							},
+							// Mount + update both write to data-v; "v" is never touched.
+							expect: [
+								["data-v", "7"],
+								["data-v", "42"],
+							],
+						},
+					],
+				},
+				{
+					name: "Attribute reflection deferral — settled state",
+					async run ({ props, actions, attr }) {
+						let el = new (FakeElement.with(props))();
+						el.mount();
+						await apply(el, actions);
+
+						return [el.v, el.getAttribute(attr)];
+					},
+					tests: [
+						{
+							name: "External setAttribute wins over pending reflection",
+							arg: {
+								props: { v: { type: Number, reflect: true, default: 0 } },
+								actions: [
+									el => {
+										el.v = 5;
+										el.setAttribute("v", "99");
+									},
+								],
+								attr: "v",
+							},
+							expect: [99, "99"],
+						},
+						{
+							name: "Property write after setAttribute drains the latest property value",
+							arg: {
+								props: { v: { type: Number, reflect: true, default: 0 } },
+								actions: [
+									el => {
+										el.setAttribute("v", "99");
+										el.v = 5;
+									},
+								],
+								attr: "v",
+							},
+							expect: [5, "5"],
+						},
+					],
+				},
+				{
+					name: "updated() bulk semantics",
+					async run ({ props, actions = [] }) {
+						let Class = FakeElement.with(props);
+
+						let calls = [];
+						Class.prototype.updated = function (changedProperties) {
+							calls.push(
+								[...changedProperties].map(([name, payload]) => ({
+									name,
+									old: payload.detail?.oldInternalValue,
+									value: this[name],
+								})),
+							);
+						};
+
+						let el = new Class();
+						el.mount();
+						await apply(el, actions);
+						return calls;
+					},
+					tests: [
+						{
+							name: "Multi-prop cascade fires one call with all settled changes",
+							arg: {
+								props: {
+									a: { type: Number, default: 0 },
+									b: {
+										type: Number,
+										get () {
+											return this.a + 1;
+										},
+									},
+									c: {
+										type: Number,
+										get () {
+											return this.a * 2;
+										},
+									},
+								},
+								actions: el => (el.a = 5),
+							},
+							// First call: mount settle. Second: el.a = 5 cascade.
+							expect: [
+								[
+									{ name: "a", old: undefined, value: 0 },
+									{ name: "b", old: undefined, value: 1 },
+									{ name: "c", old: undefined, value: 0 },
+								],
+								[
+									{ name: "a", old: 0, value: 5 },
+									{ name: "b", old: 1, value: 6 },
+									{ name: "c", old: 0, value: 10 },
+								],
+							],
+						},
+						{
+							name: "Coalesced sync writes on a Computed-backed prop produce one call with first→last delta",
+							arg: {
+								props: { v: { type: Number, default: 0 } },
+								actions: [
+									el => {
+										el.v = 1;
+										el.v = 3;
+										el.v = 42;
+									},
+								],
+							},
+							expect: [
+								[{ name: "v", old: undefined, value: 0 }],
+								[{ name: "v", old: 0, value: 42 }],
+							],
+						},
+						{
+							name: "Coalesced sync writes on a plain Signal preserve the first-write old value",
+							// Plain-Signal path: no default, no convert, no get.
+							// oldInternalValue flows through Prop.set, not the Computed subscriber.
+							arg: {
+								props: { v: { type: Number } },
+								actions: [
+									el => {
+										el.v = 1;
+										el.v = 50;
+										el.v = 99;
+									},
+								],
+							},
+							// No mount call: plain Signal initial undefined ≡ post-mount value.
+							expect: [
+								[{ name: "v", old: undefined, value: 99 }],
+							],
+						},
+					],
+				},
+				{
+					name: "Shortcut event names dispatch alongside propchange from the same payload",
+					async run () {
+						let Class = FakeElement.with({ v: { type: Number, default: 0 } });
+						// Simulate a propchange shortcut (propchange.js#first_constructor_static).
+						Class.props.get("v").eventNames = ["change"];
+
+						let calls = [];
+						Class.prototype.updated = function (changedProperties) {
+							calls.push(
+								[...changedProperties].map(([name, payload]) => ({
+									name,
+									old: payload.detail?.oldInternalValue,
+								})),
+							);
+						};
+
+						let el = new Class();
+						let events = [];
+						for (let name of ["propchange", "change"]) {
+							el.addEventListener(name, e =>
+								events.push(`${name}/${e.detail.parsedValue}`));
+						}
+
+						el.mount();
+						await apply(el, el => (el.v = 42));
+
+						return { events, calls };
+					},
+					expect: {
+						// Mount fires both names; update fires both names. Same payload each time.
+						events: [
+							"propchange/0",
+							"change/0",
+							"propchange/42",
+							"change/42",
+						],
+						// updated(): one entry per prop per drain, regardless of how
+						// many shortcut event names fired.
+						calls: [
+							[{ name: "v", old: undefined }],
+							[{ name: "v", old: 0 }],
+						],
+					},
+				},
+				{
+					name: "propChangedCallback auto-wires as a per-prop propchange listener",
+					async run () {
+						let Class = FakeElement.with({
+							a: { type: Number, default: 0 },
+							b: { type: Number, default: 0 },
+						});
+						let calls = [];
+						Class.prototype.propChangedCallback = function (event) {
+							calls.push(`${event.name}/${event.detail.parsedValue}`);
+						};
+
+						let el = new Class();
+						el.mount();
+						await apply(el, el => {
+							el.a = 5;
+							el.b = 7;
+						});
+						return calls;
+					},
+					// One call per dispatched propchange event: mount × 2, update × 2.
+					expect: ["a/0", "b/0", "a/5", "b/7"],
+				},
+				{
+					name: "propsupdate fires after every propchange in the same drain",
+					async run () {
+						let Class = FakeElement.with({
+							a: { type: Number, default: 0 },
+							b: { type: Number, default: 0 },
+						});
+						let order = [];
+						let el = new Class();
+						el.addEventListener("propchange", e => order.push(`propchange/${e.name}`));
+						el.addEventListener("propsupdate", () => order.push("propsupdate"));
+
+						el.mount();
+						await apply(el, el => {
+							el.a = 5;
+							el.b = 7;
+						});
+						return order;
+					},
+					expect: [
+						// Mount drain.
+						"propchange/a",
+						"propchange/b",
+						"propsupdate",
+						// Update drain.
+						"propchange/a",
+						"propchange/b",
+						"propsupdate",
+					],
+				},
+				{
+					name: "Throw in one element's drain doesn't strand siblings in the same microtask",
+					async run () {
+						let Class = FakeElement.with({ v: { type: Number, default: 0 } });
+
+						let a = new Class();
+						a.mount();
+						let b = new Class();
+						b.mount();
+						await flush();
+
+						// Patch a.dispatchEvent to throw on its first call inside the
+						// microtask drain. b's drainFor runs in the same #drain loop;
+						// the try/finally in #drain must re-queue it so it eventually
+						// dispatches its own propchange.
+						let aOriginalDispatch = a.dispatchEvent.bind(a);
+						let aThrew = false;
+						a.dispatchEvent = function (event) {
+							if (!aThrew) {
+								aThrew = true;
+								throw new Error("boom");
+							}
+							return aOriginalDispatch(event);
+						};
+
+						let bSeen = false;
+						b.addEventListener("propchange", () => (bSeen = true));
+
+						// Suppress the queueMicrotask rethrow.
+						let prev = process.listeners("uncaughtException");
+						process.removeAllListeners("uncaughtException");
+						process.on("uncaughtException", () => {});
+						try {
+							a.v = 5;
+							b.v = 6;
+							await flush(2);
+						}
+						finally {
+							process.removeAllListeners("uncaughtException");
+							for (let h of prev) {
+								process.on("uncaughtException", h);
+							}
+						}
+						return { aThrew, bSeen };
+					},
+					expect: { aThrew: true, bSeen: true },
+				},
+				{
+					name: "propsupdate event exposes changedProps Map directly",
+					async run () {
+						let el = new (FakeElement.with({ v: { type: Number, default: 0 } }))();
+						let seen;
+						el.addEventListener("propsupdate", e => (seen = e.changedProps));
+						el.mount();
+						await flush();
+						return seen instanceof Map && seen.has("v");
+					},
+					expect: true,
+				},
+				{
 					name: "Final value",
-					async run ({ props, actions, read }) {
-						let { el } = await FakeElement.from(props, actions);
+					async run ({ props, actions = [], read }) {
+						let el = new (FakeElement.with(props))();
+						el.mount();
+						await apply(el, actions);
 						return el[read];
 					},
 					tests: [
@@ -470,7 +892,7 @@ export default {
 										},
 									},
 								},
-								actions: [el => (el.v = null)],
+								actions: el => (el.v = null),
 								read: "v",
 							},
 							expect: null,
@@ -503,7 +925,7 @@ export default {
 										},
 									},
 								},
-								actions: [el => (el.base = 5)],
+								actions: el => (el.base = 5),
 								read: "derived",
 							},
 							expect: 10,
@@ -556,7 +978,7 @@ export default {
 										equals: (a, b) => Math.abs(a - b) < 0.1,
 									},
 								},
-								actions: [el => (el.base = 42.05)],
+								actions: el => (el.base = 42.05),
 								read: "derived",
 							},
 							expect: 42,
@@ -565,8 +987,10 @@ export default {
 				},
 				{
 					name: "Attribute reflection",
-					async run ({ props, actions, attr }) {
-						let { el } = await FakeElement.from(props, actions);
+					async run ({ props, actions = [], attr }) {
+						let el = new (FakeElement.with(props))();
+						el.mount();
+						await apply(el, actions);
 						return el.getAttribute(attr);
 					},
 					tests: [
@@ -574,7 +998,7 @@ export default {
 							name: "Prop write reflects to attribute",
 							arg: {
 								props: { v: { type: Number, reflect: true } },
-								actions: [el => (el.v = 42)],
+								actions: el => (el.v = 42),
 								attr: "v",
 							},
 							expect: "42",

@@ -29,16 +29,31 @@ const hooks = {
 		}
 	},
 
+	first_constructor_static,
+
 	constructor () {
-		if (this.propChangedCallback && this.constructor[props]) {
+		if (!this.constructor[props]) {
+			return;
+		}
+
+		// Per-prop callback: auto-wire to propchange events.
+		if (this.propChangedCallback) {
 			this.addEventListener("propchange", this.propChangedCallback);
+		}
+
+		// Bulk callback: auto-wire to the propsupdate event, unwrap so it
+		// receives the changed-props Map directly.
+		if (this.updated) {
+			this.addEventListener("propsupdate", e => this.updated(e.changedProps));
 		}
 	},
 
-	first_constructor_static,
-
 	constructed () {
 		this.constructor[props].initializeFor(this);
+	},
+
+	connected () {
+		this.constructor[props].connected(this);
 	},
 };
 
