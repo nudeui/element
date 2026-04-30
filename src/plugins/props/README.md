@@ -163,3 +163,62 @@ The `reflect` property takes the following values:
     - `to`: If `true`, reflect to the attribute with the same name as the prop. If a string, reflect to the attribute with the given name.
 
 By default, `reflect` is `true` **unless** `get` is also specified, in which case it defaults to `false`.
+
+## Observing changes
+
+There are two layers of observability for prop changes, both first-class:
+
+| Granularity      | Event         | Auto-wired callback             |
+| ---------------- | ------------- | ------------------------------- |
+| Per prop         | `propchange`  | `propChangedCallback(event)`    |
+| Per drain (bulk) | `propsupdate` | `updated(changedProperties)`    |
+
+Sync writes are coalesced into a single drain on the next microtask, so `el.x = 1; el.x = 2; el.x = 3` produces one `propchange` event with `parsedValue: 3`. `oldInternalValue` is pinned to the pre-write value, so the event reports the full first→last delta.
+
+### Per-prop: `propchange` event and `propChangedCallback`
+
+Fires once per changed prop after the value settles.
+
+```js
+class MyElement extends NudeElement {
+	propChangedCallback (event) {
+		console.log(event.name, event.detail.parsedValue);
+	}
+}
+
+// External listeners work the same way:
+el.addEventListener("propchange", e => { /* … */ });
+```
+
+The event detail includes `source` (`"property"`, `"attribute"`, `"default"`, `"convert"`, or `"get"`), `parsedValue`, `oldInternalValue`, and (when applicable) `attributeName`, `attributeValue`, `oldAttributeValue`.
+
+### Per-drain: `propsupdate` event and `updated()` callback
+
+Fires once at the end of every drain cycle, after every per-prop `propchange`. The Map's values are full **payloads** (`{ name, prop, detail }`) — same shape as the `propchange` event itself.
+
+```js
+class MyElement extends NudeElement {
+	updated (changedProperties) {
+		for (let [name, payload] of changedProperties) {
+			console.log(name, "→", payload.detail.parsedValue);
+		}
+	}
+}
+
+// External listeners:
+el.addEventListener("propsupdate", e => {
+	for (let [name, payload] of e.detail) { /* … */ }
+});
+```
+
+Use this for work you only want to run once per cycle (re-rendering a sub-tree, persisting to storage, computing derived state across multiple props).
+
+### Cycle ordering
+
+Within a single drain:
+
+1. **Attribute reflection** — settled signal values written to attributes.
+2. **`propchange` events** — one per changed prop. Custom shortcut events (registered via the `events` plugin's `propchange:` option) also fire here from the same payload.
+3. **`propsupdate` event** + `updated()` callback — last, with the full Map.
+
+Handlers in step 3 see the fully-settled DOM and can read any prop's post-cascade value via `this[name]`.
