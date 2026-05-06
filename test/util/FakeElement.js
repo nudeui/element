@@ -57,25 +57,15 @@ export default class FakeElement extends EventTarget {
 	}
 
 	setAttribute (name, value) {
-		let old = this.#attrs.get(name) ?? null;
-		let str = String(value);
-		if (old === str) {
-			return;
-		}
-
-		this.#attrs.set(name, str);
-		// Stand in for the real `attributeChangedCallback`.
-		this.constructor.props?.attributeChanged(this, name, old);
+		let oldValue = this.#attrs.get(name) ?? null;
+		this.#attrs.set(name, String(value));
+		this.constructor.props?.attributeChanged(this, name, oldValue);
 	}
 
 	removeAttribute (name) {
-		let old = this.#attrs.get(name) ?? null;
-		if (old === null) {
-			return;
-		}
-
+		let oldValue = this.#attrs.get(name) ?? null;
 		this.#attrs.delete(name);
-		this.constructor.props?.attributeChanged(this, name, old);
+		this.constructor.props?.attributeChanged(this, name, oldValue);
 	}
 
 	mount () {
@@ -117,7 +107,7 @@ export default class FakeElement extends EventTarget {
 
 		for (let action of actions) {
 			action(el);
-			await flush(1);
+			await flush();
 		}
 
 		return { Class, el, events };
