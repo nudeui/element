@@ -121,12 +121,15 @@ let Self = class Prop {
 			}
 		}
 
-		this.changed(element, {
-			element,
-			source,
-			parsedValue: newValue,
-			oldInternalValue: oldValue,
-		});
+		// Gate event on value change (the Computed uses forceNotify).
+		if (!this.equals(newValue, oldValue)) {
+			this.changed(element, {
+				element,
+				source,
+				parsedValue: newValue,
+				oldInternalValue: oldValue,
+			});
+		}
 	}
 
 	/**
@@ -143,8 +146,9 @@ let Self = class Prop {
 		let signal = this.#signals.get(element);
 
 		if (!signal) {
-			// Delegate equality to the prop's type-aware equality.
-			let options = { equals: (a, b) => this.equals(a, b) };
+			// `forceNotify` so explicit user writes still reach the subscriber when
+			// the Computed dedupes against a cached default-resolved value (#105).
+			let options = { equals: (a, b) => this.equals(a, b), forceNotify: true };
 
 			if (this.spec.get) {
 				signal = new Computed(() => this.spec.get.call(element), options);
