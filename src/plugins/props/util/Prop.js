@@ -121,7 +121,7 @@ let Self = class Prop {
 			}
 		}
 
-		// Gate event on value change (the Computed uses forceNotify).
+		// Gate event on value change (the Computed uses force).
 		if (this.equals(newValue, oldValue)) {
 			return;
 		}
@@ -151,7 +151,7 @@ let Self = class Prop {
 			// Delegate equality to the prop's type-aware equality.
 			// Explicit user writes still reach the subscriber when
 			// the Computed dedupes against a cached default-resolved value (#105).
-			let options = { equals: (a, b) => this.equals(a, b), forceNotify: true };
+			let options = { equals: (a, b) => this.equals(a, b), force: true };
 
 			if (this.spec.get) {
 				signal = new Computed(() => this.spec.get.call(element), options);
