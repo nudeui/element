@@ -163,3 +163,5 @@ The `reflect` property takes the following values:
     - `to`: If `true`, reflect to the attribute with the same name as the prop. If a string, reflect to the attribute with the given name.
 
 By default, `reflect` is `true` **unless** `get` is also specified, in which case it defaults to `false`.
+
+**Defaults are not reflected to attributes** — only user-set values are.

@@ -104,8 +104,9 @@ let Self = class Prop {
 	#onComputedChange (element, source, newValue, oldValue) {
 		element.props[this.name] = newValue;
 
-		// Reflect to attribute if this prop opts in
-		if (this.toAttribute) {
+		// Skip reflection for default values: synthesized attributes would
+		// clobber programmatic writes that landed before initializeFor (#105).
+		if (this.toAttribute && source !== "default") {
 			let attributeValue = this.stringify(newValue);
 			let oldAttributeValue = element.getAttribute(this.toAttribute);
 			if (oldAttributeValue !== attributeValue) {
@@ -157,7 +158,6 @@ let Self = class Prop {
 				let rawSignal = new Signal(undefined, options);
 				this.#rawSignals.set(element, rawSignal);
 
-				let source = this.spec.convert ? "convert" : "default";
 				signal = new Computed(() => {
 					let value = rawSignal.value;
 					if (value === undefined && this.spec.default !== undefined) {
@@ -181,6 +181,13 @@ let Self = class Prop {
 					return value;
 				}, options);
 				signal.subscribe((newValue, oldValue) => {
+					let source =
+						rawSignal.value === undefined
+							? "default"
+							: this.spec.convert
+								? "convert"
+								: "property";
+
 					this.#onComputedChange(element, source, newValue, oldValue);
 				});
 			}
