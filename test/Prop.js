@@ -303,7 +303,7 @@ export default {
 							expect: [
 								"src/default",
 								"mirror/default",
-								"src/default",
+								"src/property",
 								"mirror/default",
 							],
 						},
@@ -372,8 +372,8 @@ export default {
 								"computed/get",
 								"fnDefault/default",
 
-								// Update — Computed-backed: source stays construction-time
-								"plain/default",
+								// Update — source now reports the value's actual origin
+								"plain/property",
 								"computed/get",
 								"fnDefault/default",
 							],
@@ -580,15 +580,15 @@ export default {
 							expect: "42",
 						},
 						{
-							name: "Default + reflect reflects on mount (plain)",
+							name: "Default does NOT reflect on mount (plain)",
 							arg: {
 								props: { plain: { type: Number, default: 7, reflect: true } },
 								attr: "plain",
 							},
-							expect: "7",
+							expect: null,
 						},
 						{
-							name: "Default + convert + reflect reflects on mount",
+							name: "Default does NOT reflect on mount (with convert)",
 							arg: {
 								props: {
 									val: {
@@ -602,7 +602,7 @@ export default {
 								},
 								attr: "val",
 							},
-							expect: "10",
+							expect: null,
 						},
 					],
 				},
