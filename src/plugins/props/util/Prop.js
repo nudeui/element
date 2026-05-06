@@ -97,9 +97,10 @@ let Self = class Prop {
 	}
 
 	/**
-	 * Subscriber for Computed signals (spec.get, spec.convert, spec.default).
-	 * Updates element.props cache, reflects to attributes if opted in,
-	 * and fires propchange events.
+	 * Side-effect handler for Computed-backed props (spec.get, spec.convert, spec.default).
+	 * Fires on first compute, user write, and tracked dep change. Updates the
+	 * element.props cache, reflects to the attribute if opted in, and dispatches
+	 * the propchange event.
 	 */
 	#onComputedChange (element, source, newValue, oldValue) {
 		element.props[this.name] = newValue;
@@ -130,8 +131,8 @@ let Self = class Prop {
 		this.changed(element, {
 			element,
 			source,
-			parsedValue: newValue,
-			oldInternalValue: oldValue,
+			value: newValue,
+			oldValue,
 		});
 	}
 
@@ -220,9 +221,7 @@ let Self = class Prop {
 				// Force first compute so the subscriber emits the initial propchange
 				signal.value;
 			}
-			else {
-				this.changed(element, { source: "default", element });
-			}
+			// Plain Signals start at undefined: nothing to fire about at mount.
 		}
 
 		this.#initialized = true;
@@ -259,14 +258,13 @@ let Self = class Prop {
 		return signal.value;
 	}
 
-	set (element, value, { source, name, oldValue } = {}) {
+	set (element, value, { source, name, oldAttributeValue } = {}) {
 		let signal = this.getSignal(element);
 		let rawSignal = this.#rawSignals.get(element);
 
 		// For Computed-backed props, compare against the raw user-set value
-		let oldInternalValue = (rawSignal ?? signal).value;
+		let oldValue = (rawSignal ?? signal).value;
 
-		let attributeName = name;
 		let parsedValue;
 
 		try {
@@ -288,7 +286,7 @@ let Self = class Prop {
 			parsedValue = undefined;
 		}
 
-		if (this.equals(parsedValue, oldInternalValue)) {
+		if (this.equals(parsedValue, oldValue)) {
 			return;
 		}
 
@@ -306,10 +304,8 @@ let Self = class Prop {
 			let change = {
 				element,
 				source,
-				value,
-				parsedValue,
-				oldInternalValue,
-				attributeName: name,
+				value: parsedValue,
+				oldValue,
 			};
 
 			if (source === "property") {
@@ -319,7 +315,7 @@ let Self = class Prop {
 					let oldAttributeValue = element.getAttribute(attributeName);
 
 					if (oldAttributeValue !== attributeValue) {
-						element.ignoredAttributes.add(this.toAttribute);
+						element.ignoredAttributes.add(attributeName);
 
 						Object.assign(change, { attributeName, attributeValue, oldAttributeValue });
 						this.applyChange(element, { ...change, source: "attribute" });
@@ -330,9 +326,9 @@ let Self = class Prop {
 			}
 			else if (source === "attribute") {
 				Object.assign(change, {
-					attributeName,
+					attributeName: name,
 					attributeValue: value,
-					oldAttributeValue: oldValue,
+					oldAttributeValue,
 				});
 			}
 
