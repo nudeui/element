@@ -73,15 +73,16 @@ export class Signal extends EventTarget {
 	}
 
 	set value (v) {
-		let same = this.equals(v, this.#value);
-		if (same && !this.#force) {
+		if (this.equals(v, this.#value)) {
+			if (!this.#force) {
+				return;
+			}
+			this.#notify(this.#value);
 			return;
 		}
 
 		let old = this.#value;
-		if (!same) {
-			this.#value = v;
-		}
+		this.#value = v;
 		this.#notify(old);
 	}
 
