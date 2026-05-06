@@ -74,10 +74,9 @@ export class Signal extends EventTarget {
 
 	set value (v) {
 		if (this.equals(v, this.#value)) {
-			if (!this.#force) {
-				return;
+			if (this.#force) {
+				this.#notify(this.#value);
 			}
-			this.#notify(this.#value);
 			return;
 		}
 
