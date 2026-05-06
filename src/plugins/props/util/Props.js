@@ -1,7 +1,12 @@
 import Prop from "./Prop.js";
 import PropChangeEvent from "./PropChangeEvent.js";
+import PropsChangeEvent from "./PropsChangeEvent.js";
 
 export default class Props extends Map {
+	#eventDispatchQueue = new WeakMap();
+	#pendingElements = new Set();
+	#drainScheduled = false;
+
 	/**
 	 *
 	 * @param {HTMLElement} Class The class to define props for
@@ -46,39 +51,103 @@ export default class Props extends Map {
 		let propsFromAttribute = [...this.values()].filter(spec => spec.fromAttribute === name);
 
 		for (let prop of propsFromAttribute) {
-			prop.set(element, element.getAttribute(name), { source: "attribute", name, oldValue });
-		}
-	}
-
-	eventDispatchQueue = new WeakMap();
-
-	/**
-	 * Called when a prop value changes. Fires propchange events.
-	 * Dependency propagation is handled automatically by signals.
-	 */
-	propChanged (element, prop, change) {
-		// Fire propchange event
-		let eventNames = ["propchange", ...(prop.eventNames ?? [])];
-		for (let eventName of eventNames) {
-			this.firePropChangeEvent(element, eventName, {
-				name: prop.name,
-				prop,
-				detail: change,
+			prop.set(element, element.getAttribute(name), {
+				source: "attribute",
+				name,
+				oldAttributeValue: oldValue,
 			});
 		}
 	}
 
-	firePropChangeEvent (element, eventName, eventProps) {
-		let event = new PropChangeEvent(eventName, eventProps);
+	/**
+	 * Called from Prop#changed when a value settles. Coalesces into the
+	 * dispatch queue; dispatch happens in #drainFor on the next microtask.
+	 */
+	propChanged (element, prop, change) {
+		let map = this.#eventDispatchQueue.get(element);
+		if (!map) {
+			map = new Map();
+			this.#eventDispatchQueue.set(element, map);
+		}
 
-		if (element.isConnected && eventProps.prop.initialized) {
-			element.dispatchEvent?.(event);
+		let existing = map.get(prop.name);
+		if (existing) {
+			// Coalesce: latest value/source wins, but old values stay pinned
+			// to the first write so the payload spans the full first→last delta.
+			let { oldValue, oldAttributeValue } = existing.detail;
+			Object.assign(existing.detail, change, { oldValue, oldAttributeValue });
 		}
 		else {
-			let queue = this.eventDispatchQueue.get(element) ?? [];
-			queue.push(event);
-			this.eventDispatchQueue.set(element, queue);
+			map.set(prop.name, { name: prop.name, prop, detail: { ...change } });
 		}
+
+		this.#pendingElements.add(element);
+		this.#scheduleDrain();
+	}
+
+	#scheduleDrain () {
+		if (this.#drainScheduled) {
+			return;
+		}
+
+		this.#drainScheduled = true;
+		queueMicrotask(() => {
+			this.#drainScheduled = false;
+			this.#drain();
+		});
+	}
+
+	#drain () {
+		// Snapshot and clear: events queued by handlers (incl. on other
+		// elements) run on the next microtask, not in this drain.
+		let elements = [...this.#pendingElements];
+		this.#pendingElements.clear();
+
+		for (let element of elements) {
+			this.#drainFor(element);
+		}
+	}
+
+	#drainFor (element) {
+		if (!element.isConnected) {
+			// Queue stays intact; `connected()` drains it on (re)connect.
+			return;
+		}
+
+		let map = this.#eventDispatchQueue.get(element);
+		if (!map) {
+			return;
+		}
+
+		// Detach the queue before dispatch: re-entrant writes from event
+		// handlers must accumulate for the next drain, not this one.
+		let entries = [...map];
+		this.#eventDispatchQueue.delete(element);
+
+		let changedProps = new Map();
+		for (let [, payload] of entries) {
+			// Plain Signals don't dedupe coalesced round-trips on their own;
+			// mirror Signal equality here.
+			let { prop, detail } = payload;
+			if (prop.equals(detail.value, detail.oldValue)) {
+				continue;
+			}
+
+			changedProps.set(prop.name, detail.oldValue);
+
+			// EventTarget isolates listener throws — siblings stay safe without try/catch.
+			for (let name of ["propchange", ...(prop.eventNames ?? [])]) {
+				element.dispatchEvent(new PropChangeEvent(name, payload));
+			}
+		}
+
+		if (changedProps.size > 0) {
+			element.dispatchEvent(new PropsChangeEvent("propschange", { changedProps }));
+		}
+	}
+
+	connected (element) {
+		this.#drainFor(element);
 	}
 
 	initializeFor (element) {
@@ -97,15 +166,7 @@ export default class Props extends Map {
 			prop.initializeFor(element);
 		}
 
-		// Dispatch any events that were queued
-		let queue = this.eventDispatchQueue.get(element);
-
-		if (queue) {
-			for (let event of queue) {
-				element.dispatchEvent?.(event);
-			}
-
-			this.eventDispatchQueue.delete(element);
-		}
+		// Drain synchronously so callers see initial state without waiting for the microtask.
+		this.#drainFor(element);
 	}
 }

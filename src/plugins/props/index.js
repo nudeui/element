@@ -30,8 +30,18 @@ const hooks = {
 	},
 
 	constructor () {
-		if (this.propChangedCallback && this.constructor[props]) {
+		if (!this.constructor[props]) {
+			return;
+		}
+
+		// Per-prop callback: auto-wire to propchange events.
+		if (this.propChangedCallback) {
 			this.addEventListener("propchange", this.propChangedCallback);
+		}
+
+		// Bulk callback: auto-wire to the propschange event.
+		if (this.updated) {
+			this.addEventListener("propschange", this.updated);
 		}
 	},
 
@@ -39,6 +49,10 @@ const hooks = {
 
 	constructed () {
 		this.constructor[props].initializeFor(this);
+	},
+
+	connected () {
+		this.constructor[props].connected(this);
 	},
 };
 

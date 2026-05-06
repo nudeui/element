@@ -41,7 +41,10 @@ const hooks = {
 	},
 
 	first_connected () {
-		// Often propchange events have already fired by the time the event handlers are added
+		// Don't remove: re-fires initial propchange for on*= attribute handlers,
+		// which onprops attaches *after* the initial dispatch. Without this,
+		// shortcut handlers declared in HTML never see the initial event.
+		// Pre-connect imperative listeners receive the event twice.
 		for (let eventName in this.constructor[propchange]) {
 			let propName = this.constructor[propchange][eventName];
 			let value = this[propName];
