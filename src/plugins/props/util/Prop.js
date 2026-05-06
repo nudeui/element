@@ -122,14 +122,16 @@ let Self = class Prop {
 		}
 
 		// Gate event on value change (the Computed uses forceNotify).
-		if (!this.equals(newValue, oldValue)) {
-			this.changed(element, {
-				element,
-				source,
-				parsedValue: newValue,
-				oldInternalValue: oldValue,
-			});
+		if (this.equals(newValue, oldValue)) {
+			return;
 		}
+
+		this.changed(element, {
+			element,
+			source,
+			parsedValue: newValue,
+			oldInternalValue: oldValue,
+		});
 	}
 
 	/**
