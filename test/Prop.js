@@ -372,7 +372,7 @@ export default {
 								"computed/get",
 								"fnDefault/default",
 
-								// Update — source now reports the value's actual origin
+								// Update
 								"plain/property",
 								"computed/get",
 								"fnDefault/default",
