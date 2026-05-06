@@ -54,7 +54,7 @@ export class Signal extends EventTarget {
 	 * @param {object} [options]
 	 * @param {(a: *, b: *) => boolean} [options.equals] - Custom equality
 	 *   check. Set as an instance override of the default `===` method.
-	 * @param {boolean} [options.forceNotify] - If true, subscribers fire on
+	 * @param {boolean} [options.forceNotify=false] - If true, subscribers fire on
 	 *   every write, even when `equals` reports no change. The cached value
 	 *   still respects `equals` (no-op writes don't update it).
 	 */
