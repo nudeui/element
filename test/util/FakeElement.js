@@ -7,12 +7,12 @@ export async function flush (ticks = 1) {
 	}
 }
 
-/** Apply each action to el in sequence, flushing between each. Single function is fine too. */
-export async function apply (el, actions, ticks = 1) {
+/** Apply each action to element in sequence, flushing between each. Single function is fine too. */
+export async function apply (element, actions, ticks = 1) {
 	actions = Array.isArray(actions) ? actions : [actions];
 
 	for (let action of actions) {
-		action(el);
+		action(element);
 		await flush(ticks);
 	}
 }
