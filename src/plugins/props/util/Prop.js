@@ -165,6 +165,7 @@ let Self = class Prop {
 				let rawSignal = new Signal(undefined, options);
 				this.#rawSignals.set(element, rawSignal);
 
+				let source = this.spec.convert ? "convert" : "property";
 				signal = new Computed(() => {
 					let value = rawSignal.value;
 					if (value === undefined && this.spec.default !== undefined) {
@@ -188,14 +189,8 @@ let Self = class Prop {
 					return value;
 				}, options);
 				signal.subscribe((newValue, oldValue) => {
-					let source =
-						rawSignal.value === undefined
-							? "default"
-							: this.spec.convert
-								? "convert"
-								: "property";
-
-					this.#onComputedChange(element, source, newValue, oldValue);
+					let newSource = rawSignal.value === undefined ? "default" : source;
+					this.#onComputedChange(element, newSource, newValue, oldValue);
 				});
 			}
 			else {
