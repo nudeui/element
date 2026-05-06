@@ -278,6 +278,13 @@ let Self = class Prop {
 			return;
 		}
 
+		// removeAttribute() arrives as null; collapse to undefined so the prop
+		// reverts to its natural empty state (default, if any, otherwise just
+		// undefined). Property writes of null remain a legitimate user value.
+		if (source === "attribute" && parsedValue === null) {
+			parsedValue = undefined;
+		}
+
 		if (this.equals(parsedValue, oldInternalValue)) {
 			return;
 		}
