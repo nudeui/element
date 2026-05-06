@@ -105,10 +105,10 @@ let Self = class Prop {
 	#onComputedChange (element, source, newValue, oldValue) {
 		element.props[this.name] = newValue;
 
-		// Skip reflection for default values: synthesized attributes would
-		// clobber programmatic writes that landed before initializeFor (#105).
-		if (this.toAttribute && source !== "default") {
-			let attributeValue = this.stringify(newValue);
+		// `null` for defaults: don't synthesize an attribute (would clobber pre-mount
+		// writes — #105) and clear any stale attribute left over from a prior write.
+		if (this.toAttribute) {
+			let attributeValue = source === "default" ? null : this.stringify(newValue);
 			let oldAttributeValue = element.getAttribute(this.toAttribute);
 			if (oldAttributeValue !== attributeValue) {
 				element.ignoredAttributes.add(this.toAttribute);

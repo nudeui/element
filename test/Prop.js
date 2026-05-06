@@ -963,6 +963,18 @@ export default {
 							},
 							expect: "5",
 						},
+						{
+							name: "Restoring the default clears the previously-reflected attribute",
+							arg: {
+								props: { v: { type: Number, reflect: true, default: 5 } },
+								actions: [
+									el => (el.v = 6),
+									el => (el.v = undefined),
+								],
+								attr: "v",
+							},
+							expect: null,
+						},
 					],
 				},
 			],

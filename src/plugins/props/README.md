@@ -166,6 +166,8 @@ By default, `reflect` is `true` **unless** `get` is also specified, in which cas
 
 **Defaults are not reflected to attributes** — only user-set values are.
 
+**Restoring the default after a prior write:** both `el.prop = undefined` and `el.removeAttribute(name)` restore the default value **and** clear any previously-reflected attribute.
+
 ## Observing changes
 
 There are two layers of observability for prop changes, both first-class:
