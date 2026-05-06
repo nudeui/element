@@ -146,7 +146,8 @@ let Self = class Prop {
 		let signal = this.#signals.get(element);
 
 		if (!signal) {
-			// `forceNotify` so explicit user writes still reach the subscriber when
+			// Delegate equality to the prop's type-aware equality.
+			// Explicit user writes still reach the subscriber when
 			// the Computed dedupes against a cached default-resolved value (#105).
 			let options = { equals: (a, b) => this.equals(a, b), forceNotify: true };
 
