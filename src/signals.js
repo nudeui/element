@@ -47,16 +47,21 @@ function flushDirty () {
 export class Signal extends EventTarget {
 	#value;
 	#subscribers = new Set();
+	#notifyOnEquals;
 
 	/**
 	 * @param {*} value - Initial value.
 	 * @param {object} [options]
 	 * @param {(a: *, b: *) => boolean} [options.equals] - Custom equality
 	 *   check. Set as an instance override of the default `===` method.
+	 * @param {boolean} [options.notifyOnEquals=false] - If true, subscribers are
+	 *   notified on every write, even when `equals` reports no change. The cached
+	 *   value still respects `equals` (no-op writes don't update it).
 	 */
-	constructor (value, { equals } = {}) {
+	constructor (value, { equals, notifyOnEquals = false } = {}) {
 		super();
 		this.#value = value;
+		this.#notifyOnEquals = notifyOnEquals;
 		if (equals) {
 			this.equals = equals;
 		}
@@ -69,6 +74,9 @@ export class Signal extends EventTarget {
 
 	set value (v) {
 		if (this.equals(v, this.#value)) {
+			if (this.#notifyOnEquals) {
+				this.#notify(this.#value);
+			}
 			return;
 		}
 
@@ -187,17 +195,8 @@ export class Computed extends Signal {
 			}));
 		}
 
-		// Check if value actually changed, and if so, notify subscribers.
-		// Temporarily suspend tracking so the internal read doesn't
-		// register this Computed as a dependency of an outer Computed.
-		let prev2 = tracking;
-		tracking = null;
-		let old = super.value;
-		tracking = prev2;
-
-		if (!this.equals(value, old)) {
-			// Use Signal.prototype.value setter directly (bypasses no-op Computed setter)
-			Object.getOwnPropertyDescriptor(Signal.prototype, "value").set.call(this, value);
-		}
+		// Delegate the equals/notifyOnEquals decision to the Signal setter.
+		// Use Signal.prototype.value setter directly (bypasses no-op Computed setter).
+		Object.getOwnPropertyDescriptor(Signal.prototype, "value").set.call(this, value);
 	}
 }

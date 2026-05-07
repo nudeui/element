@@ -106,7 +106,9 @@ let Self = class Prop {
 
 		// Reflect to attribute if this prop opts in
 		if (this.toAttribute) {
-			let attributeValue = this.stringify(newValue);
+			// Don't synthesize attributes for defaults (it would clobber pre-mount writes; see #105).
+			// Clear any stale attribute left over from a prior write.
+			let attributeValue = source === "default" ? null : this.stringify(newValue);
 			let oldAttributeValue = element.getAttribute(this.toAttribute);
 			if (oldAttributeValue !== attributeValue) {
 				element.ignoredAttributes.add(this.toAttribute);
@@ -118,6 +120,11 @@ let Self = class Prop {
 				}
 				element.ignoredAttributes.delete(this.toAttribute);
 			}
+		}
+
+		// Gate event on value change (the Computed uses notifyOnEquals).
+		if (this.equals(newValue, oldValue)) {
+			return;
 		}
 
 		this.changed(element, {
@@ -143,7 +150,9 @@ let Self = class Prop {
 
 		if (!signal) {
 			// Delegate equality to the prop's type-aware equality.
-			let options = { equals: (a, b) => this.equals(a, b) };
+			// Explicit user writes still reach the subscriber when
+			// the Computed dedupes against a cached default-resolved value (#105).
+			let options = { equals: (a, b) => this.equals(a, b), notifyOnEquals: true };
 
 			if (this.spec.get) {
 				signal = new Computed(() => this.spec.get.call(element), options);
@@ -157,7 +166,7 @@ let Self = class Prop {
 				let rawSignal = new Signal(undefined, options);
 				this.#rawSignals.set(element, rawSignal);
 
-				let source = this.spec.convert ? "convert" : "default";
+				let source = this.spec.convert ? "convert" : "property";
 				signal = new Computed(() => {
 					let value = rawSignal.value;
 					if (value === undefined && this.spec.default !== undefined) {
@@ -181,7 +190,8 @@ let Self = class Prop {
 					return value;
 				}, options);
 				signal.subscribe((newValue, oldValue) => {
-					this.#onComputedChange(element, source, newValue, oldValue);
+					let newSource = rawSignal.value === undefined ? "default" : source;
+					this.#onComputedChange(element, newSource, newValue, oldValue);
 				});
 			}
 			else {
@@ -269,6 +279,13 @@ let Self = class Prop {
 				e,
 			);
 			return;
+		}
+
+		// removeAttribute() arrives as null; collapse to undefined so the prop
+		// reverts to its natural empty state (default, if any, otherwise just
+		// undefined). Property writes of null remain a legitimate user value.
+		if (source === "attribute" && parsedValue === null) {
+			parsedValue = undefined;
 		}
 
 		if (this.equals(parsedValue, oldInternalValue)) {
