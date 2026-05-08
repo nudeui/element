@@ -47,21 +47,16 @@ function flushDirty () {
 export class Signal extends EventTarget {
 	#value;
 	#subscribers = new Set();
-	#notifyOnEquals;
 
 	/**
 	 * @param {*} value - Initial value.
 	 * @param {object} [options]
 	 * @param {(a: *, b: *) => boolean} [options.equals] - Custom equality
 	 *   check. Set as an instance override of the default `===` method.
-	 * @param {boolean} [options.notifyOnEquals=false] - If true, subscribers are
-	 *   notified on every write, even when `equals` reports no change. The cached
-	 *   value still respects `equals` (no-op writes don't update it).
 	 */
-	constructor (value, { equals, notifyOnEquals = false } = {}) {
+	constructor (value, { equals } = {}) {
 		super();
 		this.#value = value;
-		this.#notifyOnEquals = notifyOnEquals;
 		if (equals) {
 			this.equals = equals;
 		}
@@ -74,9 +69,6 @@ export class Signal extends EventTarget {
 
 	set value (v) {
 		if (this.equals(v, this.#value)) {
-			if (this.#notifyOnEquals) {
-				this.#notify(this.#value);
-			}
 			return;
 		}
 
@@ -195,8 +187,7 @@ export class Computed extends Signal {
 			}));
 		}
 
-		// Delegate the equals/notifyOnEquals decision to the Signal setter.
-		// Use Signal.prototype.value setter directly (bypasses no-op Computed setter).
+		// Bypass Computed's read-only setter; Signal#set handles the equals dedupe.
 		Object.getOwnPropertyDescriptor(Signal.prototype, "value").set.call(this, value);
 	}
 }

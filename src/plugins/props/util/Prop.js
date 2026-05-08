@@ -104,28 +104,9 @@ let Self = class Prop {
 	#onComputedChange (element, source, newValue, oldValue) {
 		element.props[this.name] = newValue;
 
-		// Reflect to attribute if this prop opts in
-		if (this.toAttribute) {
-			// Don't synthesize attributes for defaults (it would clobber pre-mount writes; see #105).
-			// Clear any stale attribute left over from a prior write.
-			let attributeValue = source === "default" ? null : this.stringify(newValue);
-			let oldAttributeValue = element.getAttribute(this.toAttribute);
-			if (oldAttributeValue !== attributeValue) {
-				element.ignoredAttributes.add(this.toAttribute);
-				if (attributeValue === null) {
-					element.removeAttribute(this.toAttribute);
-				}
-				else {
-					element.setAttribute(this.toAttribute, attributeValue);
-				}
-				element.ignoredAttributes.delete(this.toAttribute);
-			}
-		}
-
-		// Gate event on value change (the Computed uses notifyOnEquals).
-		if (this.equals(newValue, oldValue)) {
-			return;
-		}
+		// Defaults don't synthesize attributes (would clobber pre-mount writes; see #105);
+		// passing `null` clears any stale attribute left from a prior user write.
+		this.#reflect(element, source === "default" ? null : newValue);
 
 		this.changed(element, {
 			element,
@@ -133,6 +114,30 @@ let Self = class Prop {
 			parsedValue: newValue,
 			oldInternalValue: oldValue,
 		});
+	}
+
+	/**
+	 * The single reflection site, called from both user writes (`prop.set`) and
+	 * dep-driven recomputes (`#onComputedChange`). Mirrors pre-signals' shape
+	 * where `set()` was the one place attribute reflection happened.
+	 *
+	 * @param {HTMLElement} element
+	 * @param {*} value - Post-convert value to reflect; `null` removes the attribute.
+	 */
+	#reflect (element, value) {
+		if (!this.toAttribute) {
+			return;
+		}
+
+		let attributeName = this.toAttribute;
+		let attributeValue = this.stringify(value);
+		if (element.getAttribute(attributeName) === attributeValue) {
+			return;
+		}
+
+		element.ignoredAttributes.add(attributeName);
+		this.applyChange(element, { source: "attribute", attributeName, attributeValue });
+		element.ignoredAttributes.delete(attributeName);
 	}
 
 	/**
@@ -150,9 +155,7 @@ let Self = class Prop {
 
 		if (!signal) {
 			// Delegate equality to the prop's type-aware equality.
-			// Explicit user writes still reach the subscriber when
-			// the Computed dedupes against a cached default-resolved value (#105).
-			let options = { equals: (a, b) => this.equals(a, b), notifyOnEquals: true };
+			let options = { equals: (a, b) => this.equals(a, b) };
 
 			if (this.spec.get) {
 				signal = new Computed(() => this.spec.get.call(element), options);
@@ -294,9 +297,24 @@ let Self = class Prop {
 
 		if (rawSignal) {
 			// Computed-backed: write to the raw signal. The Computed recomputes,
-			// and its subscriber (#onComputedChange) handles element.props,
-			// reflection, and events.
+			// and its subscriber (#onComputedChange) handles element.props and events.
 			rawSignal.value = parsedValue;
+
+			// Why reflect here too, when the subscriber already calls `#reflect`?
+			// - The Computed dedupes recomputes whose new value equals its
+			//   cached value. `el.v = 5` when the default resolves to 5 produces
+			//   no subscriber fire, so reflection from `#onComputedChange` is
+			//   skipped (#105).
+			// - We can't read `signal.value` to get the post-convert form: that
+			//   would force a sync recompute, fire subscribers immediately, and
+			//   split multi-prop dep cascades across two propchange drains.
+			// So apply `spec.convert` manually and call `#reflect` directly.
+			if (source === "property" && parsedValue !== undefined) {
+				this.#reflect(
+					element,
+					this.spec.convert ? this.spec.convert.call(element, parsedValue) : parsedValue,
+				);
+			}
 		}
 		else {
 			// For plain props: update signal, element.props, reflect, and fire events
@@ -347,7 +365,9 @@ let Self = class Prop {
 			if (element.setAttribute) {
 				let attributeName = change.attributeName ?? this.toAttribute;
 				let attributeValue =
-					change.attributeValue ?? change.element.getAttribute(attributeName);
+					change.attributeValue !== undefined
+						? change.attributeValue
+						: change.element.getAttribute(attributeName);
 
 				if (attributeValue === null) {
 					element.removeAttribute(attributeName);
