@@ -187,7 +187,6 @@ export class Computed extends Signal {
 			}));
 		}
 
-		// Bypass Computed's read-only setter; Signal#set handles the equals dedupe.
-		Object.getOwnPropertyDescriptor(Signal.prototype, "value").set.call(this, value);
+		super.value = value;
 	}
 }

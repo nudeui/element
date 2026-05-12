@@ -98,15 +98,10 @@ let Self = class Prop {
 
 	/**
 	 * Subscriber for Computed signals (spec.get, spec.convert, spec.default).
-	 * Updates element.props cache, reflects to attributes if opted in,
-	 * and fires propchange events.
+	 * Updates element.props cache and fires propchange events.
 	 */
 	#onComputedChange (element, source, newValue, oldValue) {
 		element.props[this.name] = newValue;
-
-		// Defaults don't synthesize attributes (would clobber pre-mount writes; see #105);
-		// passing `null` clears any stale attribute left from a prior user write.
-		this.#reflect(element, source === "default" ? null : newValue);
 
 		this.changed(element, {
 			element,
@@ -114,30 +109,6 @@ let Self = class Prop {
 			parsedValue: newValue,
 			oldInternalValue: oldValue,
 		});
-	}
-
-	/**
-	 * The single reflection site, called from both user writes (`prop.set`) and
-	 * dep-driven recomputes (`#onComputedChange`). Mirrors pre-signals' shape
-	 * where `set()` was the one place attribute reflection happened.
-	 *
-	 * @param {HTMLElement} element
-	 * @param {*} value - Post-convert value to reflect; `null` removes the attribute.
-	 */
-	#reflect (element, value) {
-		if (!this.toAttribute) {
-			return;
-		}
-
-		let attributeName = this.toAttribute;
-		let attributeValue = this.stringify(value);
-		if (element.getAttribute(attributeName) === attributeValue) {
-			return;
-		}
-
-		element.ignoredAttributes.add(attributeName);
-		this.applyChange(element, { source: "attribute", attributeName, attributeValue });
-		element.ignoredAttributes.delete(attributeName);
 	}
 
 	/**
@@ -168,6 +139,37 @@ let Self = class Prop {
 				// convert and/or fall through to the default. Auto-tracks deps.
 				let rawSignal = new Signal(undefined, options);
 				this.#rawSignals.set(element, rawSignal);
+
+				// Reflect to attribute (if this prop opts in) when the raw user-set value changes
+				rawSignal.subscribe(value => {
+					if (!this.toAttribute) {
+						return;
+					}
+
+					let attributeName = this.toAttribute;
+					let attributeValue;
+					if (value == null) {
+						attributeValue = null;
+					}
+					else {
+						let resolved = this.spec.convert
+							? this.spec.convert.call(element, value)
+							: value;
+						attributeValue = this.stringify(resolved);
+					}
+
+					if (element.getAttribute(attributeName) === attributeValue) {
+						return;
+					}
+
+					element.ignoredAttributes.add(attributeName);
+					this.applyChange(element, {
+						source: "attribute",
+						attributeName,
+						attributeValue,
+					});
+					element.ignoredAttributes.delete(attributeName);
+				});
 
 				let source = this.spec.convert ? "convert" : "property";
 				signal = new Computed(() => {
@@ -296,25 +298,9 @@ let Self = class Prop {
 		}
 
 		if (rawSignal) {
-			// Computed-backed: write to the raw signal. The Computed recomputes,
-			// and its subscriber (#onComputedChange) handles element.props and events.
+			// Computed-backed: write to the raw signal. Its subscribers handle
+			// reflection, element.props, and events.
 			rawSignal.value = parsedValue;
-
-			// Why reflect here too, when the subscriber already calls `#reflect`?
-			// - The Computed dedupes recomputes whose new value equals its
-			//   cached value. `el.v = 5` when the default resolves to 5 produces
-			//   no subscriber fire, so reflection from `#onComputedChange` is
-			//   skipped (#105).
-			// - We can't read `signal.value` to get the post-convert form: that
-			//   would force a sync recompute, fire subscribers immediately, and
-			//   split multi-prop dep cascades across two propchange drains.
-			// So apply `spec.convert` manually and call `#reflect` directly.
-			if (source === "property" && parsedValue !== undefined) {
-				this.#reflect(
-					element,
-					this.spec.convert ? this.spec.convert.call(element, parsedValue) : parsedValue,
-				);
-			}
 		}
 		else {
 			// For plain props: update signal, element.props, reflect, and fire events
