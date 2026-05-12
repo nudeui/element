@@ -146,17 +146,11 @@ let Self = class Prop {
 						return;
 					}
 
+					let resolved = this.spec.convert
+						? this.spec.convert.call(element, value)
+						: value;
 					let attributeName = this.toAttribute;
-					let attributeValue;
-					if (value == null) {
-						attributeValue = null;
-					}
-					else {
-						let resolved = this.spec.convert
-							? this.spec.convert.call(element, value)
-							: value;
-						attributeValue = this.stringify(resolved);
-					}
+					let attributeValue = this.stringify(resolved);
 
 					if (element.getAttribute(attributeName) === attributeValue) {
 						return;
@@ -189,7 +183,7 @@ let Self = class Prop {
 							}
 						}
 					}
-					if (value != undefined && this.spec.convert) {
+					if (this.spec.convert) {
 						value = this.spec.convert.call(element, value);
 					}
 					return value;
