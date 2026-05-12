@@ -165,3 +165,61 @@ The `reflect` property takes the following values:
 By default, `reflect` is `true` **unless** `get` is also specified, in which case it defaults to `false`.
 
 **Defaults are not reflected to attributes** — only user-set values are. Restoring the default (via `el.prop = undefined` or `removeAttribute`) clears any previously-reflected attribute.
+
+## Observing changes
+
+There are two layers of observability for prop changes, both first-class:
+
+| Granularity      | Event         | Auto-wired callback          |
+| ---------------- | ------------- | ---------------------------- |
+| Per prop         | `propchange`  | `propChangedCallback(event)` |
+| Per drain (bulk) | `propschange` | `updated(event)`             |
+
+Sync writes are coalesced into a single drain on the next microtask, so `el.x = 1; el.x = 2; el.x = 3` produces one `propchange` event with `value: 3`. `oldValue` is pinned to the pre-write value, so the event reports the full first→last delta.
+
+### Per-prop: `propchange` event and `propChangedCallback`
+
+Fires once per changed prop after the value settles.
+
+```js
+class MyElement extends NudeElement {
+	propChangedCallback (event) {
+		console.log(event.name, event.detail.value);
+	}
+}
+
+// External listeners work the same way:
+el.addEventListener("propchange", e => { /* … */ });
+```
+
+The event detail includes `source` (`"property"`, `"attribute"`, `"default"`, `"convert"`, `"get"`, or `"initial"` — for shortcut events re-fired on first connect to catch late-bound listeners), `value`, `oldValue`, and (when applicable) `attributeName`, `attributeValue`, `oldAttributeValue`.
+
+### Per-drain: `propschange` event and `updated()` callback
+
+Fires once at the end of every drain cycle, after every per-prop `propchange`. `event.changedProps` is `Map<name, oldValue>` — keys are the names of props that changed in this cycle, values are the previous value of each. Read the current value via `this[name]`.
+
+```js
+class MyElement extends NudeElement {
+	updated (event) {
+		for (let [name, oldValue] of event.changedProps) {
+			console.log(name, oldValue, "→", this[name]);
+		}
+	}
+}
+
+// External listeners receive the same event:
+el.addEventListener("propschange", e => {
+	for (let [name, oldValue] of e.changedProps) { /* … */ }
+});
+```
+
+Use this for work you only want to run once per cycle (re-rendering a sub-tree, persisting to storage, computing derived state across multiple props).
+
+### Cycle ordering
+
+Attribute reflection is synchronous with property writes, so the DOM is up to date before the drain runs. Within a single drain:
+
+1. **`propchange` events** — one per changed prop. Custom shortcut events (registered via the `events` plugin's `propchange:` option) also fire here from the same payload.
+2. **`propschange` event** + `updated()` callback — last, with the full Map.
+
+Handlers in step 2 see the fully-settled state and can read any prop's post-cascade value via `this[name]`.
