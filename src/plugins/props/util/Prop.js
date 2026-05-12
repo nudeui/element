@@ -141,29 +141,27 @@ let Self = class Prop {
 				this.#rawSignals.set(element, rawSignal);
 
 				// Reflect to attribute (if this prop opts in) when the raw user-set value changes
-				rawSignal.subscribe(value => {
-					if (!this.toAttribute) {
-						return;
-					}
+				let attributeName = this.toAttribute;
+				if (attributeName) {
+					rawSignal.subscribe(value => {
+						let resolved = this.spec.convert
+							? this.spec.convert.call(element, value)
+							: value;
+						let attributeValue = this.stringify(resolved);
 
-					let resolved = this.spec.convert
-						? this.spec.convert.call(element, value)
-						: value;
-					let attributeName = this.toAttribute;
-					let attributeValue = this.stringify(resolved);
+						if (element.getAttribute(attributeName) === attributeValue) {
+							return;
+						}
 
-					if (element.getAttribute(attributeName) === attributeValue) {
-						return;
-					}
-
-					element.ignoredAttributes.add(attributeName);
-					this.applyChange(element, {
-						source: "attribute",
-						attributeName,
-						attributeValue,
+						element.ignoredAttributes.add(attributeName);
+						this.applyChange(element, {
+							source: "attribute",
+							attributeName,
+							attributeValue,
+						});
+						element.ignoredAttributes.delete(attributeName);
 					});
-					element.ignoredAttributes.delete(attributeName);
-				});
+				}
 
 				let source = this.spec.convert ? "convert" : "property";
 				signal = new Computed(() => {
