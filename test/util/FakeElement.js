@@ -4,6 +4,9 @@ import Props from "../../src/plugins/props/util/Props.js";
 /** Same Symbol the props plugin uses for its per-class slot — get-symbols' shared registry. */
 const { props: propsSymbol } = symbols.known;
 
+/** Per-class observedAttributes snapshot, captured at FakeElement.with() time — mirrors customElements.define's one-time read. */
+const defined = Symbol("defined");
+
 /** Yield N microtasks so any queued work runs. */
 export async function flush (ticks = 1) {
 	for (let i = 0; i < ticks; i++) {
@@ -20,18 +23,6 @@ export async function apply (element, actions, ticks = 1) {
 		await flush(ticks);
 	}
 }
-
-/**
- * Per-class observedAttributes captured at FakeElement.with() time, like
- * customElements.define reads them once in the browser.
- *
- * With plugins, read via the plugin's static getter (the customElements.define
- * path); otherwise via the Props instance.
- *
- * setAttribute / removeAttribute consult this to decide whether to fire
- * attributeChanged.
- */
-const defined = new WeakMap();
 
 /** Minimal in-memory element for tests of Prop / Props. */
 export default class FakeElement extends EventTarget {
@@ -75,7 +66,7 @@ export default class FakeElement extends EventTarget {
 	setAttribute (name, value) {
 		let oldValue = this.#attrs.get(name) ?? null;
 		this.#attrs.set(name, String(value));
-		if (defined.get(this.constructor)?.includes(name)) {
+		if (this.constructor[defined]?.includes(name)) {
 			this.constructor.props?.attributeChanged(this, name, oldValue);
 		}
 	}
@@ -83,7 +74,7 @@ export default class FakeElement extends EventTarget {
 	removeAttribute (name) {
 		let oldValue = this.#attrs.get(name) ?? null;
 		this.#attrs.delete(name);
-		if (defined.get(this.constructor)?.includes(name)) {
+		if (this.constructor[defined]?.includes(name)) {
 			this.constructor.props?.attributeChanged(this, name, oldValue);
 		}
 	}
@@ -103,10 +94,8 @@ export default class FakeElement extends EventTarget {
 			Class[propsSymbol] = Class.props;
 		}
 
-		defined.set(
-			Class,
-			plugins.length ? Class.observedAttributes : Class.props.observedAttributes,
-		);
+		// Snapshot observedAttributes once at registration, like customElements.define.
+		Class[defined] = plugins.length ? Class.observedAttributes : Class.props.observedAttributes;
 
 		return Class;
 	}

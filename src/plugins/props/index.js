@@ -77,7 +77,7 @@ defineLazyProperty(provides, "ignoredAttributes", {
 
 const providesStatic = {
 	defineProps (def = this.props) {
-		if (def instanceof Props && def.Class === this) {
+		if ((def instanceof Props && def.Class === this) || this[props].size > 0) {
 			// Already defined
 			return null;
 		}
@@ -101,11 +101,10 @@ const providesStatic = {
 			return this[observedAttributes];
 		}
 
-		// Reserve the cache before firing setup() so re-entry from a setup hook
-		// reading Class.observedAttributes returns the in-flight list instead of
-		// recursing into setup().
+		// Reserve the cache before defineProps so a `define-props` hook that reads
+		// Class.observedAttributes returns the in-flight list instead of recursing.
 		this[observedAttributes] = [];
-		this.setup();
+		this.defineProps();
 
 		// FIXME how to combine with existing observedAttributes?
 		return (this[observedAttributes] = this[props].observedAttributes);
