@@ -4,6 +4,7 @@ import { defineOwnProperty } from "xtensible/util";
 import { defineLazyProperty } from "../../util/lazy.js";
 
 export const { props } = symbols.known;
+const { observedAttributes } = symbols.known;
 
 function first_constructor_static () {
 	// TODO how does this work if attributeChangedCallback is inherited?
@@ -12,14 +13,6 @@ function first_constructor_static () {
 		this.constructor[props].attributeChanged(this, name, oldValue, value);
 		_attributeChangedCallback?.call(this, name, oldValue, value);
 	};
-
-	// FIXME how to combine with existing observedAttributes?
-	if (!Object.hasOwn(this, "observedAttributes")) {
-		Object.defineProperty(this, "observedAttributes", {
-			get: () => this[props].observedAttributes,
-			configurable: true,
-		});
-	}
 }
 
 const hooks = {
@@ -102,6 +95,21 @@ const providesStatic = {
 	// 		return [...superProps, ...thisProps];
 	// 	},
 	// }),
+
+	get observedAttributes () {
+		if (Object.hasOwn(this, observedAttributes)) {
+			return this[observedAttributes];
+		}
+
+		// Reserve the cache before firing setup() so re-entry from a setup hook
+		// reading Class.observedAttributes returns the in-flight list instead of
+		// recursing into setup().
+		this[observedAttributes] = [];
+		this.setup();
+
+		// FIXME how to combine with existing observedAttributes?
+		return (this[observedAttributes] = this[props].observedAttributes);
+	},
 };
 
 defineOwnProperty(providesStatic, props, function () {

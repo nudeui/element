@@ -111,9 +111,18 @@ export default {
 						{
 							name: "Post-mount setAttribute updates the property",
 							async run () {
-								let el = new (FakeElement.with({
-									prop: { type: Number, reflect: true },
-								}))();
+								let { $hook, hooksCommon } = await import("xtensible/plugins");
+								let { default: propsPlugin } =
+									await import("../src/plugins/props/index.js");
+
+								let el = new (FakeElement.with(
+									{
+										prop: { type: Number, reflect: true },
+									},
+									$hook,
+									hooksCommon,
+									propsPlugin,
+								))();
 								el.mount();
 								el.setAttribute("prop", "100");
 								return el.prop;
