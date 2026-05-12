@@ -16,11 +16,15 @@ export default class FakeElement extends EventTarget {
 	}
 
 	setAttribute (name, value) {
+		let oldValue = this.#attrs.get(name) ?? null;
 		this.#attrs.set(name, String(value));
+		this.constructor.props?.attributeChanged(this, name, oldValue);
 	}
 
 	removeAttribute (name) {
+		let oldValue = this.#attrs.get(name) ?? null;
 		this.#attrs.delete(name);
+		this.constructor.props?.attributeChanged(this, name, oldValue);
 	}
 
 	mount () {

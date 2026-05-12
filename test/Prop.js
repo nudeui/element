@@ -303,7 +303,7 @@ export default {
 							expect: [
 								"src/default",
 								"mirror/default",
-								"src/default",
+								"src/property",
 								"mirror/default",
 							],
 						},
@@ -372,8 +372,8 @@ export default {
 								"computed/get",
 								"fnDefault/default",
 
-								// Update — Computed-backed: source stays construction-time
-								"plain/default",
+								// Update
+								"plain/property",
 								"computed/get",
 								"fnDefault/default",
 							],
@@ -561,6 +561,18 @@ export default {
 							},
 							expect: 42,
 						},
+						{
+							name: "removeAttribute restores default",
+							arg: {
+								props: { v: { type: Number, reflect: true, default: 5 } },
+								actions: [
+									el => el.setAttribute("v", "6"),
+									el => el.removeAttribute("v"),
+								],
+								read: "v",
+							},
+							expect: 5,
+						},
 					],
 				},
 				{
@@ -580,15 +592,15 @@ export default {
 							expect: "42",
 						},
 						{
-							name: "Default + reflect reflects on mount (plain)",
+							name: "Default does NOT reflect on mount (plain)",
 							arg: {
 								props: { plain: { type: Number, default: 7, reflect: true } },
 								attr: "plain",
 							},
-							expect: "7",
+							expect: null,
 						},
 						{
-							name: "Default + convert + reflect reflects on mount",
+							name: "Default does NOT reflect on mount (with convert)",
 							arg: {
 								props: {
 									val: {
@@ -602,7 +614,40 @@ export default {
 								},
 								attr: "val",
 							},
-							expect: "10",
+							expect: null,
+						},
+						{
+							name: "removeAttribute clears the reflected attribute",
+							arg: {
+								props: { v: { type: Number, reflect: true, default: 5 } },
+								actions: [
+									el => el.setAttribute("v", "6"),
+									el => el.removeAttribute("v"),
+								],
+								attr: "v",
+							},
+							expect: null,
+						},
+						{
+							name: "Explicit write equal to default still reflects",
+							arg: {
+								props: { v: { type: Number, reflect: true, default: 5 } },
+								actions: [el => (el.v = 5)],
+								attr: "v",
+							},
+							expect: "5",
+						},
+						{
+							name: "Restoring the default clears the previously-reflected attribute",
+							arg: {
+								props: { v: { type: Number, reflect: true, default: 5 } },
+								actions: [
+									el => (el.v = 6),
+									el => (el.v = undefined),
+								],
+								attr: "v",
+							},
+							expect: null,
 						},
 					],
 				},

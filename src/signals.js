@@ -187,17 +187,6 @@ export class Computed extends Signal {
 			}));
 		}
 
-		// Check if value actually changed, and if so, notify subscribers.
-		// Temporarily suspend tracking so the internal read doesn't
-		// register this Computed as a dependency of an outer Computed.
-		let prev2 = tracking;
-		tracking = null;
-		let old = super.value;
-		tracking = prev2;
-
-		if (!this.equals(value, old)) {
-			// Use Signal.prototype.value setter directly (bypasses no-op Computed setter)
-			Object.getOwnPropertyDescriptor(Signal.prototype, "value").set.call(this, value);
-		}
+		super.value = value;
 	}
 }

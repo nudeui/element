@@ -98,27 +98,10 @@ let Self = class Prop {
 
 	/**
 	 * Subscriber for Computed signals (spec.get, spec.convert, spec.default).
-	 * Updates element.props cache, reflects to attributes if opted in,
-	 * and fires propchange events.
+	 * Updates element.props cache and fires propchange events.
 	 */
 	#onComputedChange (element, source, newValue, oldValue) {
 		element.props[this.name] = newValue;
-
-		// Reflect to attribute if this prop opts in
-		if (this.toAttribute) {
-			let attributeValue = this.stringify(newValue);
-			let oldAttributeValue = element.getAttribute(this.toAttribute);
-			if (oldAttributeValue !== attributeValue) {
-				element.ignoredAttributes.add(this.toAttribute);
-				if (attributeValue === null) {
-					element.removeAttribute(this.toAttribute);
-				}
-				else {
-					element.setAttribute(this.toAttribute, attributeValue);
-				}
-				element.ignoredAttributes.delete(this.toAttribute);
-			}
-		}
 
 		this.changed(element, {
 			element,
@@ -157,7 +140,30 @@ let Self = class Prop {
 				let rawSignal = new Signal(undefined, options);
 				this.#rawSignals.set(element, rawSignal);
 
-				let source = this.spec.convert ? "convert" : "default";
+				// Reflect to attribute (if this prop opts in) when the raw user-set value changes
+				let attributeName = this.toAttribute;
+				if (attributeName) {
+					rawSignal.subscribe(value => {
+						let resolved = this.spec.convert
+							? this.spec.convert.call(element, value)
+							: value;
+						let attributeValue = this.stringify(resolved);
+
+						if (element.getAttribute(attributeName) === attributeValue) {
+							return;
+						}
+
+						element.ignoredAttributes.add(attributeName);
+						this.applyChange(element, {
+							source: "attribute",
+							attributeName,
+							attributeValue,
+						});
+						element.ignoredAttributes.delete(attributeName);
+					});
+				}
+
+				let source = this.spec.convert ? "convert" : "property";
 				signal = new Computed(() => {
 					let value = rawSignal.value;
 					if (value === undefined && this.spec.default !== undefined) {
@@ -175,13 +181,14 @@ let Self = class Prop {
 							}
 						}
 					}
-					if (value != undefined && this.spec.convert) {
+					if (this.spec.convert) {
 						value = this.spec.convert.call(element, value);
 					}
 					return value;
 				}, options);
 				signal.subscribe((newValue, oldValue) => {
-					this.#onComputedChange(element, source, newValue, oldValue);
+					let newSource = rawSignal.value === undefined ? "default" : source;
+					this.#onComputedChange(element, newSource, newValue, oldValue);
 				});
 			}
 			else {
@@ -271,14 +278,20 @@ let Self = class Prop {
 			return;
 		}
 
+		// removeAttribute() arrives as null; collapse to undefined so the prop
+		// reverts to its natural empty state (default, if any, otherwise just
+		// undefined). Property writes of null remain a legitimate user value.
+		if (source === "attribute" && parsedValue === null) {
+			parsedValue = undefined;
+		}
+
 		if (this.equals(parsedValue, oldInternalValue)) {
 			return;
 		}
 
 		if (rawSignal) {
-			// Computed-backed: write to the raw signal. The Computed recomputes,
-			// and its subscriber (#onComputedChange) handles element.props,
-			// reflection, and events.
+			// Computed-backed: write to the raw signal. Its subscribers handle
+			// reflection, element.props, and events.
 			rawSignal.value = parsedValue;
 		}
 		else {
@@ -330,7 +343,9 @@ let Self = class Prop {
 			if (element.setAttribute) {
 				let attributeName = change.attributeName ?? this.toAttribute;
 				let attributeValue =
-					change.attributeValue ?? change.element.getAttribute(attributeName);
+					change.attributeValue !== undefined
+						? change.attributeValue
+						: change.element.getAttribute(attributeName);
 
 				if (attributeValue === null) {
 					element.removeAttribute(attributeName);
