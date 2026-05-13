@@ -1,6 +1,6 @@
 import Props from "./util/Props.js";
 import { symbols } from "xtensible";
-import { defineOwnProperty } from "xtensible/util";
+import { defineOwnProperty, getSuperMethod } from "xtensible/util";
 import { defineLazyProperty } from "../../util/lazy.js";
 
 export const { props } = symbols.known;
@@ -41,11 +41,15 @@ const hooks = {
 };
 
 const provides = {
-	// ...composed({
-	// 	attributeChangedCallback (name, oldValue, value) {
-	// 		this.constructor[props].attributeChanged(this, name, oldValue, value);
-	// 	},
-	// }),
+	// Must be on the prototype chain by the time customElements.define runs:
+	// the spec only reads observedAttributes if attributeChangedCallback is non-null.
+	// https://html.spec.whatwg.org/multipage/custom-elements.html#element-definition
+	attributeChangedCallback (name, oldValue, value) {
+		// Same as super.attributeChangedCallback?.()
+		getSuperMethod(this, provides.attributeChangedCallback)?.call(this, name, oldValue, value);
+
+		this.constructor[props].attributeChanged(this, name, oldValue, value);
+	},
 };
 
 // Internal prop values
@@ -97,18 +101,6 @@ const providesStatic = {
 		// hook listener) gets the in-flight list instead of recursing.
 		this[observedAttributes] = [];
 		this.defineProps();
-
-		// Must land before customElements.define snapshots the prototype callbacks;
-		// a later patch is invisible to post-mount setAttribute reactions.
-		// https://html.spec.whatwg.org/multipage/custom-elements.html#element-definition
-		// TODO how does this work if attributeChangedCallback is inherited?
-		if (!Object.hasOwn(this.prototype, "attributeChangedCallback")) {
-			let _attributeChangedCallback = this.prototype.attributeChangedCallback;
-			this.prototype.attributeChangedCallback = function (name, oldValue, value) {
-				this.constructor[props].attributeChanged(this, name, oldValue, value);
-				_attributeChangedCallback?.call(this, name, oldValue, value);
-			};
-		}
 
 		// FIXME how to combine with existing observedAttributes?
 		return (this[observedAttributes] = this[props].observedAttributes);
