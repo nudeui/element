@@ -107,20 +107,26 @@ export default class FakeElement extends EventTarget {
 			};
 		}
 
-		// Snapshot at registration, mirroring customElements.define:
-		// 1. Read attributeChangedCallback from the prototype chain.
-		// 2. ONLY IF non-null, read observedAttributes from the constructor.
-		// https://html.spec.whatwg.org/multipage/custom-elements.html#element-definition
+		FakeElement.define(Class);
+		return Class;
+	}
+
+	/**
+	 * Snapshot lifecycleCallbacks + observedAttributes the way customElements.define does:
+	 * 1. Read attributeChangedCallback from the prototype chain.
+	 * 2. ONLY IF non-null, read observedAttributes from the constructor.
+	 * https://html.spec.whatwg.org/multipage/custom-elements.html#element-definition
+	 *
+	 * Re-callable so a test can swap a class's ACB and re-snapshot, modelling
+	 * a subclass that overrides attributeChangedCallback before registration.
+	 */
+	static define (Class) {
 		let callback = Class.prototype.attributeChangedCallback;
 		Class[definition] = {
 			observedAttributes: callback
-				? plugins.length
-					? Class.observedAttributes
-					: Class.props.observedAttributes
+				? (Class.observedAttributes ?? Class.props?.observedAttributes ?? [])
 				: [],
 			attributeChangedCallback: callback,
 		};
-
-		return Class;
 	}
 }
