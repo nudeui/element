@@ -121,6 +121,37 @@ export default {
 							expect: 100,
 						},
 						{
+							name: "Computeds reading a pre-upgrade prop pick up the user-set value, not the default",
+							async run () {
+								let Class = FakeElement.with({
+									base: { type: Number, default: 1 },
+									derived: {
+										type: Number,
+										get () {
+											return this.base * 10;
+										},
+									},
+								});
+								let el = new Class();
+								// Pre-upgrade: write `base` as a data property, shadowing
+								// the (not-yet-installed) accessor. This is what a parser
+								// or framework would do to an element instance whose
+								// `customElements.define` hasn't run yet.
+								Object.defineProperty(el, "base", {
+									value: "5", // string — verifies parse(Number) still runs.
+									writable: true,
+									configurable: true,
+									enumerable: true,
+								});
+								el.mount();
+								return { base: el.base, derived: el.derived };
+							},
+							// derived reads via `this.base` during its first compute, which
+							// goes through the accessor → Computed_base → rawSignal (=5).
+							// No default-fallback because rawSignal is defined.
+							expect: { base: 5, derived: 50 },
+						},
+						{
 							name: "Property set before upgrade is preserved on mount",
 							// Simulates writing to a custom element instance before its
 							// `customElements.define` upgrade installs the prop accessors
