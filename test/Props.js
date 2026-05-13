@@ -121,7 +121,7 @@ export default {
 							expect: 100,
 						},
 						{
-							name: "Computeds reading a pre-upgrade prop pick up the user-set value, not the default",
+							name: "Pre-upgrade prop value is readable on mount, both directly and via dependent Computeds",
 							async run () {
 								let Class = FakeElement.with({
 									base: { type: Number, default: 1 },
