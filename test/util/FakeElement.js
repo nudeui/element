@@ -4,8 +4,8 @@ import Props from "../../src/plugins/props/util/Props.js";
 /** Same Symbol the props plugin uses for its per-class slot — get-symbols' shared registry. */
 const { props: propsSymbol } = symbols.known;
 
-/** Per-class observedAttributes snapshot, captured at FakeElement.with() time — mirrors customElements.define's one-time read. */
-const defined = Symbol("defined");
+/** Per-class CustomElementDefinition snapshot, captured at FakeElement.with() time — mirrors customElements.define. */
+const definition = Symbol("definition");
 
 /** Yield N microtasks so any queued work runs. */
 export async function flush (ticks = 1) {
@@ -65,17 +65,23 @@ export default class FakeElement extends EventTarget {
 
 	setAttribute (name, value) {
 		let oldValue = this.#attrs.get(name) ?? null;
-		this.#attrs.set(name, String(value));
-		if (this.constructor[defined]?.includes(name)) {
-			this.constructor.props?.attributeChanged(this, name, oldValue);
+		value = String(value);
+		this.#attrs.set(name, value);
+
+		// Dispatch through the snapshotted attributeChangedCallback, like a real browser.
+		let def = this.constructor[definition];
+		if (def?.observedAttributes.includes(name)) {
+			def.attributeChangedCallback?.call(this, name, oldValue, value);
 		}
 	}
 
 	removeAttribute (name) {
 		let oldValue = this.#attrs.get(name) ?? null;
 		this.#attrs.delete(name);
-		if (this.constructor[defined]?.includes(name)) {
-			this.constructor.props?.attributeChanged(this, name, oldValue);
+
+		let def = this.constructor[definition];
+		if (def?.observedAttributes.includes(name)) {
+			def.attributeChangedCallback?.call(this, name, oldValue, null);
 		}
 	}
 
@@ -93,9 +99,21 @@ export default class FakeElement extends EventTarget {
 			addPlugins(Class, ...plugins);
 			Class[propsSymbol] = Class.props;
 		}
+		else {
+			// No plugins: simulate the registration-time install the props plugin
+			// would perform, so the ACB snapshot below has something to capture.
+			Class.prototype.attributeChangedCallback = function (name, value) {
+				this.constructor.props.attributeChanged(this, name, value);
+			};
+		}
 
-		// Snapshot observedAttributes once at registration, like customElements.define.
-		Class[defined] = plugins.length ? Class.observedAttributes : Class.props.observedAttributes;
+		// Snapshot at registration, like customElements.define builds a CustomElementDefinition.
+		Class[definition] = {
+			observedAttributes: plugins.length
+				? Class.observedAttributes
+				: Class.props.observedAttributes,
+			attributeChangedCallback: Class.prototype.attributeChangedCallback,
+		};
 
 		return Class;
 	}
