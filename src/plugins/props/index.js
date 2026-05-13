@@ -17,7 +17,9 @@ function first_constructor_static () {
 
 const hooks = {
 	setup () {
-		if (Object.hasOwn(this, "props")) {
+		// Skip if the static observedAttributes getter already ran the install —
+		// it's the registration-time path that fires before any instance exists.
+		if (Object.hasOwn(this, "props") && !Object.hasOwn(this, observedAttributes)) {
 			this.defineProps();
 		}
 	},
@@ -77,7 +79,7 @@ defineLazyProperty(provides, "ignoredAttributes", {
 
 const providesStatic = {
 	defineProps (def = this.props) {
-		if ((def instanceof Props && def.Class === this) || this[props].size > 0) {
+		if (def instanceof Props && def.Class === this) {
 			// Already defined
 			return null;
 		}
@@ -101,8 +103,9 @@ const providesStatic = {
 			return this[observedAttributes];
 		}
 
-		// Reserve the cache before defineProps so a `define-props` hook that reads
-		// Class.observedAttributes returns the in-flight list instead of recursing.
+		// Reserve the cache before defineProps so any consumer that reads
+		// Class.observedAttributes during the install (e.g., a define-props
+		// hook listener) gets the in-flight list instead of recursing.
 		this[observedAttributes] = [];
 		this.defineProps();
 

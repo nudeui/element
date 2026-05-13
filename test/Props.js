@@ -186,5 +186,23 @@ export default {
 				},
 			],
 		},
+		{
+			name: "Class.defineProps()",
+			tests: [
+				{
+					name: "Additive after observedAttributes has populated this[props]",
+					async run () {
+						let { $hook, hooksCommon } = await import("xtensible/plugins");
+						let { default: propsPlugin, props: propsSymbol } =
+							await import("../src/plugins/props/index.js");
+
+						let Class = FakeElement.with({ foo: {} }, $hook, hooksCommon, propsPlugin);
+						Class.defineProps({ bar: {} });
+						return [...Class[propsSymbol].keys()];
+					},
+					expect: ["foo", "bar"],
+				},
+			],
+		},
 	],
 };
