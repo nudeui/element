@@ -237,6 +237,10 @@ let Self = class Prop {
 		if (!this.spec.get || this.spec.set === true) {
 			descriptor.set = function (value) {
 				me.set(this, value, { source: "property" });
+				// Sync drain at the end of the user-visible write: every
+				// transitive Computed has settled at this point, so handlers
+				// see post-cascade values.
+				me.props.drain();
 			};
 		}
 		else if (this.spec.set) {
@@ -366,7 +370,7 @@ let Self = class Prop {
 		}
 	}
 
-	async changed (element, change) {
+	changed (element, change) {
 		this.spec.changed?.call(element, change);
 		this.props.propChanged(element, this, change);
 	}

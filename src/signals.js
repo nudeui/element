@@ -8,35 +8,40 @@ let tracking = null;
 
 /** @type {Set<Computed>} Computeds marked dirty, awaiting recomputation */
 let dirtyComputeds = new Set();
-let flushScheduled = false;
 
-/**
- * Schedule a microtask to recompute all dirty Computeds.
- * Uses a while-loop to handle cascades (computing B may dirty D).
- */
-function scheduleDirtyFlush () {
-	if (!flushScheduled) {
-		flushScheduled = true;
-		queueMicrotask(flushDirty);
-	}
-}
+/** Re-entrancy guard for `flushDirty`. Nested calls are absorbed by the outer one. */
+let flushing = false;
 
 const MAX_FLUSH_ITERATIONS = 100;
 
+/**
+ * Synchronously recompute all dirty Computeds in topological order.
+ * The outermost call drains any Computeds newly dirtied during the flush —
+ * nested calls (from Signal writes inside a subscriber) are no-ops.
+ */
 function flushDirty () {
-	flushScheduled = false;
-	let iterations = 0;
-	while (dirtyComputeds.size > 0) {
-		if (++iterations > MAX_FLUSH_ITERATIONS) {
-			console.warn("Signals: possible circular dependency detected, aborting flush after", MAX_FLUSH_ITERATIONS, "iterations");
+	if (flushing) {
+		return;
+	}
+
+	flushing = true;
+	try {
+		let iterations = 0;
+		while (dirtyComputeds.size > 0) {
+			if (++iterations > MAX_FLUSH_ITERATIONS) {
+				console.warn("Signals: possible circular dependency detected, aborting flush after", MAX_FLUSH_ITERATIONS, "iterations");
+				dirtyComputeds.clear();
+				break;
+			}
+			let batch = [...dirtyComputeds];
 			dirtyComputeds.clear();
-			break;
+			for (let computed of batch) {
+				computed.recomputeIfDirty();
+			}
 		}
-		let batch = [...dirtyComputeds];
-		dirtyComputeds.clear();
-		for (let computed of batch) {
-			computed.recomputeIfDirty();
-		}
+	}
+	finally {
+		flushing = false;
 	}
 }
 
@@ -75,6 +80,10 @@ export class Signal extends EventTarget {
 		let old = this.#value;
 		this.#value = v;
 		this.#notify(old);
+		// Drain any Computeds the notify just marked dirty. Sync flush keeps
+		// reads, propchange dispatch, and dependent recomputation all on the
+		// same tick as the originating write.
+		flushDirty();
 	}
 
 	/**
@@ -139,8 +148,8 @@ export class Computed extends Signal {
 	}
 
 	/**
-	 * Recompute if dirty. Called by the batch flush scheduler
-	 * and also available for eager evaluation.
+	 * Recompute if dirty. Called from the topological flush loop and also
+	 * available for eager evaluation when a reader reaches a dirty Computed.
 	 */
 	recomputeIfDirty () {
 		if (this.#dirty) {
@@ -177,13 +186,14 @@ export class Computed extends Signal {
 		this.#deps = deps;
 		this.#dirty = false;
 
-		// Subscribe to all discovered deps — mark dirty and schedule,
-		// don't recompute immediately (avoids glitches in diamond deps)
+		// Subscribe to all discovered deps. The subscriber just marks dirty
+		// and joins the flush set — the outer `flushDirty` (running because
+		// it was kicked off by the originating `Signal.value` write) sees
+		// the new entry on its next iteration and recomputes in order.
 		for (let dep of this.#deps) {
 			this.#unsubs.push(dep.subscribe(() => {
 				this.#dirty = true;
 				dirtyComputeds.add(this);
-				scheduleDirtyFlush();
 			}));
 		}
 
