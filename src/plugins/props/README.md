@@ -225,3 +225,9 @@ Attribute reflection is synchronous with property writes. Within a tick:
 2. **`propschange` event** + `updated()` callback fire once at end-of-tick, on the next microtask, with the full Map of every prop that changed across all sync writes in that tick.
 
 Net no-ops (a prop set away and back to its first-seen value within the tick) are dropped from step 2 but still produce step 1 events, the same way assigning to a native IDL property always fires the property setter even when the result is unchanged.
+
+### Disconnected elements (pause / resume)
+
+Change monitoring is **paused** while an element is disconnected and **resumed** on reconnect. Writes still land (signals update, Computeds recompute, reads stay consistent) — but both `propchange` and `propschange` dispatch is held until the element rejoins the DOM. On resume, each changed prop fires one coalesced `propchange` (`oldValue` pinned to the value before pause, `value` the current state), followed by one `propschange` covering the full delta.
+
+This is exposed as `props.pause(element)` / `props.resume(element)` so consumers can also batch a burst of writes manually — the `disconnectedCallback` / `connectedCallback` lifecycle hooks just wire to them.

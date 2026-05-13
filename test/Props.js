@@ -200,7 +200,7 @@ export default {
 							expect: { mountCount: 1, afterDisconnect: 1, afterReconnect: 2 },
 						},
 						{
-							name: "Multiple writes while disconnected each fire propchange on reconnect",
+							name: "Multiple writes while paused coalesce to one propchange per prop on resume",
 							async run () {
 								let el = new (FakeElement.with({
 									v: { type: Number, default: 0 },
@@ -219,14 +219,12 @@ export default {
 
 								return events;
 							},
-							// Three writes → three propchange events on reconnect, each carrying its
-							// own per-write `oldValue`/`value` pair. Sync-write semantics apply to
-							// the queued path too.
-							expect: [
-								{ value: 5, oldValue: 0 },
-								{ value: 10, oldValue: 5 },
-								{ value: 15, oldValue: 10 },
-							],
+							// Three writes while paused (disconnected) → one coalesced propchange
+							// on resume. The per-write semantics that apply to active elements
+							// (one event per write) are not useful while detached — there's no
+							// observer in real time anyway, and the consumer gets the same view
+							// either way (final value, pinned first-seen oldValue).
+							expect: [{ value: 15, oldValue: 0 }],
 						},
 						{
 							name: "Multiple writes while disconnected coalesce into one propschange on reconnect",
@@ -252,6 +250,32 @@ export default {
 							// Three disconnected writes accumulate into one propschange on reconnect,
 							// with `oldValue` pinned to the first-seen value (0) and current value 15.
 							expect: [[["v", 0]]],
+						},
+						{
+							name: "Manual pause()/resume() coalesces writes while the element stays connected",
+							async run () {
+								let Class = FakeElement.with({
+									v: { type: Number, default: 0 },
+								});
+								let el = new Class();
+								el.mount();
+								let events = [];
+								el.addEventListener("propchange", e =>
+									events.push({ value: e.detail.value, oldValue: e.detail.oldValue }));
+
+								Class.props.pause(el);
+								el.v = 5;
+								el.v = 10;
+								el.v = 15;
+								Class.props.resume(el);
+
+								return events;
+							},
+							// `pause` / `resume` is the underlying mechanism the lifecycle
+							// hooks use. Exposing it lets consumers batch a burst of writes
+							// without going through disconnect/reconnect — useful inside
+							// element methods that touch many props at once.
+							expect: [{ value: 15, oldValue: 0 }],
 						},
 					],
 				},
