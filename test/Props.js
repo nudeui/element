@@ -120,6 +120,32 @@ export default {
 							},
 							expect: 100,
 						},
+						{
+							name: "Property set before upgrade is preserved on mount",
+							// Simulates writing to a custom element instance before its
+							// `customElements.define` upgrade installs the prop accessors
+							// on the prototype: the value lands as an own data property and
+							// shadows the accessor. On mount, `Prop.initializeFor` notices
+							// `Object.hasOwn`, extracts the value, deletes the data property
+							// to expose the accessor, and re-assigns through the setter so
+							// the value passes through type parsing.
+							// See https://github.com/nudeui/element/issues/14
+							async run () {
+								let Class = FakeElement.with({
+									v: { type: Number, default: 0 },
+								});
+								let el = new Class();
+								Object.defineProperty(el, "v", {
+									value: "42", // String — verifies that parse(Number) runs.
+									writable: true,
+									configurable: true,
+									enumerable: true,
+								});
+								el.mount();
+								return el.v;
+							},
+							expect: 42,
+						},
 					],
 				},
 				{
@@ -172,6 +198,60 @@ export default {
 							// Disconnected drain bails — payload waits in queue. Reconnect
 							// dispatches the post-disconnect payload, NOT the already-fired mount.
 							expect: { mountCount: 1, afterDisconnect: 1, afterReconnect: 2 },
+						},
+						{
+							name: "Multiple writes while disconnected each fire propchange on reconnect",
+							async run () {
+								let el = new (FakeElement.with({
+									v: { type: Number, default: 0 },
+								}))();
+								el.mount();
+								let events = [];
+								el.addEventListener("propchange", e =>
+									events.push({ value: e.detail.value, oldValue: e.detail.oldValue }));
+
+								el.isConnected = false;
+								el.v = 5;
+								el.v = 10;
+								el.v = 15;
+								await flush();
+								el.isConnected = true;
+
+								return events;
+							},
+							// Three writes → three propchange events on reconnect, each carrying its
+							// own per-write `oldValue`/`value` pair. Sync-write semantics apply to
+							// the queued path too.
+							expect: [
+								{ value: 5, oldValue: 0 },
+								{ value: 10, oldValue: 5 },
+								{ value: 15, oldValue: 10 },
+							],
+						},
+						{
+							name: "Multiple writes while disconnected coalesce into one propschange on reconnect",
+							async run () {
+								let el = new (FakeElement.with({
+									v: { type: Number, default: 0 },
+								}))();
+								el.mount();
+								let calls = [];
+								el.addEventListener("propschange", e =>
+									calls.push([...e.changedProps]));
+
+								el.isConnected = false;
+								el.v = 5;
+								el.v = 10;
+								el.v = 15;
+								await flush();
+								el.isConnected = true;
+
+								return calls;
+							},
+							// Listener attached after mount, so mount's propschange is not captured.
+							// Three disconnected writes accumulate into one propschange on reconnect,
+							// with `oldValue` pinned to the first-seen value (0) and current value 15.
+							expect: [[["v", 0]]],
 						},
 					],
 				},
