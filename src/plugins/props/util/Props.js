@@ -12,11 +12,14 @@ export default class Props extends Map {
 	 */
 	#propchangeQueue = new WeakMap();
 
-	/** @type {Set<HTMLElement>} Elements with a pending sync drain. */
-	#pendingPropchangeElements = new Set();
-
-	/** Re-entrancy guard: nested `drain` calls are absorbed by the outer. */
-	#drainInProgress = false;
+	/**
+	 * Per-element re-entrancy guard for `drain`. Nested writes on the same
+	 * element (e.g. a propchange handler that writes back to its own prop)
+	 * fall back to the outer drain; writes on a *different* element get
+	 * their own drain, since their cascade and queue are independent.
+	 * @type {WeakSet<HTMLElement>}
+	 */
+	#draining = new WeakSet();
 
 	/**
 	 * Per-element propschange accumulator. Maps prop name → first-seen
@@ -83,7 +86,7 @@ export default class Props extends Map {
 			});
 		}
 
-		this.drain();
+		this.drain(element);
 	}
 
 	/**
@@ -99,7 +102,6 @@ export default class Props extends Map {
 			this.#propchangeQueue.set(element, queue);
 		}
 		queue.push({ name: prop.name, prop, detail: change });
-		this.#pendingPropchangeElements.add(element);
 
 		let map = this.#pendingChangedProps.get(element);
 		if (!map) {
@@ -116,31 +118,25 @@ export default class Props extends Map {
 	}
 
 	/**
-	 * Synchronously dispatch all queued `propchange` events for connected
-	 * elements. Re-entrant calls (from inside a propchange handler) are
-	 * absorbed by the outer drain, which keeps looping until handlers stop
-	 * queuing new events.
+	 * Synchronously dispatch this element's queued `propchange` events.
+	 * Loops until the queue is empty so re-entrant writes from handlers
+	 * surface in the same drain. Nested calls *on the same element* are
+	 * no-ops; nested calls on a different element get their own drain.
 	 */
-	drain () {
-		if (this.#drainInProgress) {
+	drain (element) {
+		if (this.#draining.has(element)) {
 			return;
 		}
 
-		this.#drainInProgress = true;
+		this.#draining.add(element);
 		try {
-			while (this.#pendingPropchangeElements.size > 0) {
-				let pending = [...this.#pendingPropchangeElements];
-				this.#pendingPropchangeElements.clear();
-				for (let element of pending) {
-					if (element.isConnected) {
-						this.#dispatchPropchanges(element);
-					}
-					// Disconnected: leave queue intact for `connected()` to drain on reconnect.
-				}
+			while (element.isConnected && this.#propchangeQueue.has(element)) {
+				this.#dispatchPropchanges(element);
 			}
+			// Disconnected: leave queue intact; `connected()` drains on reconnect.
 		}
 		finally {
-			this.#drainInProgress = false;
+			this.#draining.delete(element);
 		}
 	}
 
@@ -212,10 +208,7 @@ export default class Props extends Map {
 
 	connected (element) {
 		// Drain any propchange events that landed while disconnected.
-		if (this.#propchangeQueue.has(element)) {
-			this.#dispatchPropchanges(element);
-			this.#pendingPropchangeElements.delete(element);
-		}
+		this.drain(element);
 		// Fire any pending propschange summary now that the element is observable.
 		// Pull from the per-element accumulator directly — the element may not be
 		// in `#pendingPropschangeElements` if the deferred microtask already saw
@@ -244,7 +237,7 @@ export default class Props extends Map {
 
 		// Mount is a discrete event — drain both tiers synchronously so
 		// callers see the settled initial state without an extra await.
-		this.drain();
+		this.drain(element);
 		this.#dispatchPropschangeFor(element);
 	}
 }

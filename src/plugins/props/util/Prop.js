@@ -240,7 +240,7 @@ let Self = class Prop {
 				// Sync drain at the end of the user-visible write: every
 				// transitive Computed has settled at this point, so handlers
 				// see post-cascade values.
-				me.props.drain();
+				me.props.drain(this);
 			};
 		}
 		else if (this.spec.set) {
