@@ -23,6 +23,14 @@ export default {
 			expect: 42,
 		},
 		{
+			name: "Default is not reflected to the attribute on mount",
+			run () {
+				return this.data.element.getAttribute("plain");
+			},
+			arg: { props: { plain: { type: Number, default: 7, reflect: true } } },
+			expect: null,
+		},
+		{
 			name: "Post-mount setAttribute updates the property (issue #98)",
 			run () {
 				this.data.element.setAttribute("prop", "100");

@@ -47,6 +47,21 @@ export default {
 			expect: 42,
 		},
 		{
+			name: "Default passes through convert",
+			arg: {
+				props: {
+					n: {
+						default: 5,
+						convert (v) {
+							return v * 2;
+						},
+					},
+				},
+				read: "n",
+			},
+			expect: 10,
+		},
+		{
 			name: "Plain literal default restored via undefined write",
 			arg: {
 				props: { v: { type: Number, default: 42 } },
