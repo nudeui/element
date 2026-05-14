@@ -4,27 +4,48 @@ import PropsChangeEvent from "./PropsChangeEvent.js";
 
 export default class Props extends Map {
 	/**
-	 * Per-element coalescing buffer. Sync writes to the same prop overwrite the entry's
-	 * `value`/`source` (latest wins) while pinning `oldValue`/`oldAttributeValue` to the
-	 * first write — so the drained payload spans the full first→last delta. Drained and
-	 * cleared in `#drainFor`.
+	 * Per-element coalescing buffer: prop name → payload with the latest
+	 * value/source and the first-seen oldValue. While the element is active
+	 * (default), `drain` empties the queue immediately after the originating
+	 * write so handlers see one propchange per prop with post-cascade values.
+	 * While the element is paused (e.g. disconnected), writes accumulate so
+	 * resume dispatches one coalesced event per prop, with `oldValue` pinned
+	 * to the value before pause and `value` the final post-resume state.
 	 * @type {WeakMap<HTMLElement, Map<string, {name: string, prop: Prop, detail: object}>>}
 	 */
-	#eventDispatchQueue = new WeakMap();
+	#propchangeQueue = new WeakMap();
 
 	/**
-	 * Elements with queued events awaiting drain. Snapshotted and cleared at the top of
-	 * `#drain` so re-entrant writes (from handlers) accumulate for the *next* drain.
-	 * @type {Set<HTMLElement>}
+	 * Elements with change monitoring paused — propchange/propschange
+	 * dispatch is held until `resume`. Lifecycle wires `disconnected` →
+	 * `pause` and `connected` → `resume` so writes while detached coalesce
+	 * into a single per-prop event on reconnect.
+	 * @type {WeakSet<HTMLElement>}
 	 */
-	#pendingElements = new Set();
+	#paused = new WeakSet();
 
 	/**
-	 * Microtask-schedule guard. Set when a drain is queued, cleared when it runs —
-	 * collapses many `propChanged` calls in the same tick into one `queueMicrotask`.
-	 * @type {boolean}
+	 * Per-element re-entrancy guard for `drain`. Nested writes on the same
+	 * element (e.g. a propchange handler that writes back to its own prop)
+	 * fall back to the outer drain; writes on a *different* element get
+	 * their own drain, since their cascade and queue are independent.
+	 * @type {WeakSet<HTMLElement>}
 	 */
-	#drainScheduled = false;
+	#draining = new WeakSet();
+
+	/**
+	 * Per-element propschange accumulator. Maps prop name → first-seen
+	 * oldValue, pinned across all sync writes in the current tick (or pause
+	 * period) so the dispatched payload spans the full delta.
+	 * @type {WeakMap<HTMLElement, Map<string, *>>}
+	 */
+	#pendingChangedProps = new WeakMap();
+
+	/** @type {Set<HTMLElement>} Elements with a pending propschange dispatch. */
+	#pendingPropschangeElements = new Set();
+
+	/** Microtask-schedule guard for the propschange drain. */
+	#propschangeScheduled = false;
 
 	/**
 	 *
@@ -76,88 +97,138 @@ export default class Props extends Map {
 				oldAttributeValue: oldValue,
 			});
 		}
+
+		this.drain(element);
 	}
 
 	/**
-	 * Called from Prop#changed when a value settles. Coalesces into the
-	 * dispatch queue; dispatch happens in #drainFor on the next microtask.
+	 * Called from `Prop#changed` when a value settles. Coalesces into the
+	 * per-element propchange queue (latest value/source wins, oldValue
+	 * pinned to first-seen) and accumulates into the propschange summary.
+	 * For active elements, `drain` runs after the originating write and
+	 * dispatches before the next write can queue, so each write fires its
+	 * own event; for paused elements, writes coalesce until `resume`.
 	 */
 	propChanged (element, prop, change) {
-		let map = this.#eventDispatchQueue.get(element);
-		if (!map) {
-			map = new Map();
-			this.#eventDispatchQueue.set(element, map);
+		let queue = this.#propchangeQueue.get(element);
+		if (!queue) {
+			queue = new Map();
+			this.#propchangeQueue.set(element, queue);
 		}
-
-		let existing = map.get(prop.name);
+		let existing = queue.get(prop.name);
 		if (existing) {
-			// Coalesce: latest value/source wins, but old values stay pinned
-			// to the first write so the payload spans the full first→last delta.
+			// Coalesce. Pin oldValue (and oldAttributeValue, if any) to the
+			// first-seen pre-write value so the dispatched payload spans the
+			// full first→last delta.
 			let { oldValue, oldAttributeValue } = existing.detail;
-			Object.assign(existing.detail, change, { oldValue, oldAttributeValue });
+			existing.detail = { ...change, oldValue };
+			if (oldAttributeValue !== undefined) {
+				existing.detail.oldAttributeValue = oldAttributeValue;
+			}
 		}
 		else {
-			map.set(prop.name, { name: prop.name, prop, detail: { ...change } });
+			queue.set(prop.name, { name: prop.name, prop, detail: { ...change } });
 		}
 
-		this.#pendingElements.add(element);
-		this.#scheduleDrain();
-	}
-
-	#scheduleDrain () {
-		if (this.#drainScheduled) {
-			return;
-		}
-
-		this.#drainScheduled = true;
-		queueMicrotask(() => {
-			this.#drainScheduled = false;
-			this.#drain();
-		});
-	}
-
-	#drain () {
-		// Snapshot and clear: events queued by handlers (incl. on other
-		// elements) run on the next microtask, not in this drain.
-		let elements = [...this.#pendingElements];
-		this.#pendingElements.clear();
-
-		for (let element of elements) {
-			this.#drainFor(element);
-		}
-	}
-
-	#drainFor (element) {
-		if (!element.isConnected) {
-			// Queue stays intact; `connected()` drains it on (re)connect.
-			return;
-		}
-
-		let map = this.#eventDispatchQueue.get(element);
+		let map = this.#pendingChangedProps.get(element);
 		if (!map) {
+			map = new Map();
+			this.#pendingChangedProps.set(element, map);
+		}
+		if (!map.has(prop.name)) {
+			map.set(prop.name, change.oldValue);
+		}
+		this.#pendingPropschangeElements.add(element);
+		this.#schedulePropschange();
+	}
+
+	/**
+	 * Synchronously dispatch this element's queued `propchange` events.
+	 * Loops until the queue is empty so re-entrant writes from handlers
+	 * surface in the same drain. Nested calls *on the same element* are
+	 * no-ops. Paused elements skip entirely — `resume` will dispatch later.
+	 */
+	drain (element) {
+		if (this.#draining.has(element) || this.#paused.has(element)) {
 			return;
 		}
 
-		// Detach the queue before dispatch: re-entrant writes from event
-		// handlers must accumulate for the next drain, not this one.
-		let entries = [...map];
-		this.#eventDispatchQueue.delete(element);
+		this.#draining.add(element);
+		try {
+			while (this.#propchangeQueue.has(element)) {
+				this.#dispatchPropchanges(element);
+			}
+		}
+		finally {
+			this.#draining.delete(element);
+		}
+	}
 
-		let changedProps = new Map();
-		for (let [, payload] of entries) {
-			// Plain Signals don't dedupe coalesced round-trips on their own;
-			// mirror Signal equality here.
+	#dispatchPropchanges (element) {
+		let queue = this.#propchangeQueue.get(element);
+		if (!queue) {
+			return;
+		}
+
+		// Detach before dispatch so re-entrant writes from handlers land
+		// in a fresh queue and surface on the next drain iteration.
+		this.#propchangeQueue.delete(element);
+
+		for (let payload of queue.values()) {
 			let { prop, detail } = payload;
+			// Skip net no-ops — only possible when coalescing collapsed a
+			// round-trip back to the first-seen value (e.g. while paused).
 			if (prop.equals(detail.value, detail.oldValue)) {
 				continue;
 			}
-
-			changedProps.set(prop.name, detail.oldValue);
-
 			// EventTarget isolates listener throws — siblings stay safe without try/catch.
 			for (let name of ["propchange", ...(prop.eventNames ?? [])]) {
 				element.dispatchEvent(new PropChangeEvent(name, payload));
 			}
+		}
+	}
+
+	#schedulePropschange () {
+		if (this.#propschangeScheduled) {
+			return;
+		}
+		this.#propschangeScheduled = true;
+		queueMicrotask(() => {
+			this.#propschangeScheduled = false;
+			this.#drainPropschange();
+		});
+	}
+
+	#drainPropschange () {
+		let pending = [...this.#pendingPropschangeElements];
+		this.#pendingPropschangeElements.clear();
+		for (let element of pending) {
+			this.#dispatchPropschangeFor(element);
+		}
+	}
+
+	#dispatchPropschangeFor (element) {
+		if (this.#paused.has(element)) {
+			// Leave the accumulator intact. Don't re-add to pending — that
+			// would pin a strong reference to a detached element.
+			// `resume()` checks `#pendingChangedProps` directly.
+			return;
+		}
+
+		let map = this.#pendingChangedProps.get(element);
+		if (!map) {
+			return;
+		}
+		this.#pendingChangedProps.delete(element);
+
+		let changedProps = new Map();
+		for (let [name, oldValue] of map) {
+			let prop = this.get(name);
+			// Skip round-trips: prop is back at its first-seen old value, net no-op.
+			if (prop && prop.equals(element[name], oldValue)) {
+				continue;
+			}
+			changedProps.set(name, oldValue);
 		}
 
 		if (changedProps.size > 0) {
@@ -165,8 +236,36 @@ export default class Props extends Map {
 		}
 	}
 
+	/**
+	 * Hold propchange/propschange dispatch for this element. Writes still
+	 * land (signals update, Computeds recompute, reads stay consistent),
+	 * but events coalesce into the per-element queue and accumulator
+	 * instead of firing. Resume drains both as one settled snapshot.
+	 */
+	pause (element) {
+		this.#paused.add(element);
+	}
+
+	/**
+	 * Resume change monitoring and drain anything that accumulated while
+	 * paused: one coalesced propchange per changed prop, then the
+	 * propschange summary.
+	 */
+	resume (element) {
+		this.#paused.delete(element);
+		this.drain(element);
+		if (this.#pendingChangedProps.has(element)) {
+			this.#pendingPropschangeElements.delete(element);
+			this.#dispatchPropschangeFor(element);
+		}
+	}
+
 	connected (element) {
-		this.#drainFor(element);
+		this.resume(element);
+	}
+
+	disconnected (element) {
+		this.pause(element);
 	}
 
 	initializeFor (element) {
@@ -185,7 +284,9 @@ export default class Props extends Map {
 			prop.initializeFor(element);
 		}
 
-		// Drain synchronously so callers see initial state without waiting for the microtask.
-		this.#drainFor(element);
+		// Mount is a discrete event — drain both tiers synchronously so
+		// callers see the settled initial state without an extra await.
+		this.drain(element);
+		this.#dispatchPropschangeFor(element);
 	}
 }

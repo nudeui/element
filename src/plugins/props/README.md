@@ -175,7 +175,9 @@ There are two layers of observability for prop changes, both first-class:
 | Per prop         | `propchange`  | `propChangedCallback(event)` |
 | Per drain (bulk) | `propschange` | `updated(event)`             |
 
-Sync writes are coalesced into a single drain on the next microtask, so `el.x = 1; el.x = 2; el.x = 3` produces one `propchange` event with `value: 3`. `oldValue` is pinned to the pre-write value, so the event reports the full first→last delta.
+`propchange` events fire **synchronously** per write — `el.x = 1; el.x = 2; el.x = 3` produces three events, matching native IDL property semantics. Computed dependents settle before the originator's event fires, so handlers see post-cascade values via `this[name]`.
+
+Coalescing belongs to the per-drain tier: `propschange` and `updated()` fire once at end-of-tick (next microtask), summarizing the full delta across every sync write that happened in that tick. `oldValue` is pinned to the first-seen value, so a round-trip back to that value (e.g. `el.x = 5; el.x = 0` when `x` started at `0`) is dropped from the summary entirely.
 
 ### Per-prop: `propchange` event and `propChangedCallback`
 
@@ -217,9 +219,15 @@ Use this for work you only want to run once per cycle (re-rendering a sub-tree, 
 
 ### Cycle ordering
 
-Attribute reflection is synchronous with property writes, so the DOM is up to date before the drain runs. Within a single drain:
+Attribute reflection is synchronous with property writes. Within a tick:
 
-1. **`propchange` events** — one per changed prop. Custom shortcut events (registered via the `events` plugin's `propchange:` option) also fire here from the same payload.
-2. **`propschange` event** + `updated()` callback — last, with the full Map.
+1. **`propchange` events** fire synchronously per write, after every transitive Computed has settled — handlers always see post-cascade values via `this[name]`. Custom shortcut events (registered via the `events` plugin's `propchange:` option) fire from the same payload.
+2. **`propschange` event** + `updated()` callback fire once at end-of-tick, on the next microtask, with the full Map of every prop that changed across all sync writes in that tick.
 
-Handlers in step 2 see the fully-settled state and can read any prop's post-cascade value via `this[name]`.
+Net no-ops (a prop set away and back to its first-seen value within the tick) are dropped from step 2 but still produce step 1 events, the same way assigning to a native IDL property always fires the property setter even when the result is unchanged.
+
+### Disconnected elements (pause / resume)
+
+Change monitoring is **paused** while an element is disconnected and **resumed** on reconnect. Writes still land (signals update, Computeds recompute, reads stay consistent) — but both `propchange` and `propschange` dispatch is held until the element rejoins the DOM. On resume, each changed prop fires one coalesced `propchange` (`oldValue` pinned to the value before pause, `value` the current state), followed by one `propschange` covering the full delta.
+
+This is exposed as `props.pause(element)` / `props.resume(element)` so consumers can also batch a burst of writes manually — the `disconnectedCallback` / `connectedCallback` lifecycle hooks just wire to them.

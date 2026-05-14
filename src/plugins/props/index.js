@@ -38,6 +38,10 @@ const hooks = {
 	connected () {
 		this.constructor[props].connected(this);
 	},
+
+	disconnected () {
+		this.constructor[props].disconnected(this);
+	},
 };
 
 const provides = {

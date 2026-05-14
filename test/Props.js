@@ -127,6 +127,63 @@ export default {
 							},
 							expect: 100,
 						},
+						{
+							name: "Pre-upgrade prop value is readable on mount, both directly and via dependent Computeds",
+							async run () {
+								let Class = FakeElement.with({
+									base: { type: Number, default: 1 },
+									derived: {
+										type: Number,
+										get () {
+											return this.base * 10;
+										},
+									},
+								});
+								let el = new Class();
+								// Pre-upgrade: write `base` as a data property, shadowing
+								// the (not-yet-installed) accessor. This is what a parser
+								// or framework would do to an element instance whose
+								// `customElements.define` hasn't run yet.
+								Object.defineProperty(el, "base", {
+									value: "5", // string — verifies parse(Number) still runs.
+									writable: true,
+									configurable: true,
+									enumerable: true,
+								});
+								el.mount();
+								return { base: el.base, derived: el.derived };
+							},
+							// derived reads via `this.base` during its first compute, which
+							// goes through the accessor → Computed_base → rawSignal (=5).
+							// No default-fallback because rawSignal is defined.
+							expect: { base: 5, derived: 50 },
+						},
+						{
+							name: "Property set before upgrade is preserved on mount",
+							// Simulates writing to a custom element instance before its
+							// `customElements.define` upgrade installs the prop accessors
+							// on the prototype: the value lands as an own data property and
+							// shadows the accessor. On mount, `Prop.initializeFor` notices
+							// `Object.hasOwn`, extracts the value, deletes the data property
+							// to expose the accessor, and re-assigns through the setter so
+							// the value passes through type parsing.
+							// See https://github.com/nudeui/element/issues/14
+							async run () {
+								let Class = FakeElement.with({
+									v: { type: Number, default: 0 },
+								});
+								let el = new Class();
+								Object.defineProperty(el, "v", {
+									value: "42", // String — verifies that parse(Number) runs.
+									writable: true,
+									configurable: true,
+									enumerable: true,
+								});
+								el.mount();
+								return el.v;
+							},
+							expect: 42,
+						},
 					],
 				},
 				{
@@ -179,6 +236,84 @@ export default {
 							// Disconnected drain bails — payload waits in queue. Reconnect
 							// dispatches the post-disconnect payload, NOT the already-fired mount.
 							expect: { mountCount: 1, afterDisconnect: 1, afterReconnect: 2 },
+						},
+						{
+							name: "Multiple writes while paused coalesce to one propchange per prop on resume",
+							async run () {
+								let el = new (FakeElement.with({
+									v: { type: Number, default: 0 },
+								}))();
+								el.mount();
+								let events = [];
+								el.addEventListener("propchange", e =>
+									events.push({ value: e.detail.value, oldValue: e.detail.oldValue }));
+
+								el.isConnected = false;
+								el.v = 5;
+								el.v = 10;
+								el.v = 15;
+								await flush();
+								el.isConnected = true;
+
+								return events;
+							},
+							// Three writes while paused (disconnected) → one coalesced propchange
+							// on resume. The per-write semantics that apply to active elements
+							// (one event per write) are not useful while detached — there's no
+							// observer in real time anyway, and the consumer gets the same view
+							// either way (final value, pinned first-seen oldValue).
+							expect: [{ value: 15, oldValue: 0 }],
+						},
+						{
+							name: "Multiple writes while disconnected coalesce into one propschange on reconnect",
+							async run () {
+								let el = new (FakeElement.with({
+									v: { type: Number, default: 0 },
+								}))();
+								el.mount();
+								let calls = [];
+								el.addEventListener("propschange", e =>
+									calls.push([...e.changedProps]));
+
+								el.isConnected = false;
+								el.v = 5;
+								el.v = 10;
+								el.v = 15;
+								await flush();
+								el.isConnected = true;
+
+								return calls;
+							},
+							// Listener attached after mount, so mount's propschange is not captured.
+							// Three disconnected writes accumulate into one propschange on reconnect,
+							// with `oldValue` pinned to the first-seen value (0) and current value 15.
+							expect: [[["v", 0]]],
+						},
+						{
+							name: "Manual pause()/resume() coalesces writes while the element stays connected",
+							async run () {
+								let Class = FakeElement.with({
+									v: { type: Number, default: 0 },
+								});
+								let el = new Class();
+								el.mount();
+								let events = [];
+								el.addEventListener("propchange", e =>
+									events.push({ value: e.detail.value, oldValue: e.detail.oldValue }));
+
+								Class.props.pause(el);
+								el.v = 5;
+								el.v = 10;
+								el.v = 15;
+								Class.props.resume(el);
+
+								return events;
+							},
+							// `pause` / `resume` is the underlying mechanism the lifecycle
+							// hooks use. Exposing it lets consumers batch a burst of writes
+							// without going through disconnect/reconnect — useful inside
+							// element methods that touch many props at once.
+							expect: [{ value: 15, oldValue: 0 }],
 						},
 					],
 				},

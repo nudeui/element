@@ -49,9 +49,12 @@ export default class FakeElement extends EventTarget {
 	set isConnected (value) {
 		let was = this.#connected;
 		this.#connected = value;
-		// Stand in for the real `connectedCallback`.
+		// Stand in for the real `connectedCallback` / `disconnectedCallback`.
 		if (!was && value) {
 			this.constructor.props?.connected(this);
+		}
+		else if (was && !value) {
+			this.constructor.props?.disconnected(this);
 		}
 	}
 

@@ -394,7 +394,17 @@ export default {
 							expect: ["v/default"],
 						},
 						{
-							name: "Sync writes to a plain Signal coalesce to a single event with the settled value",
+							name: "Each sync write to a plain Signal fires its own propchange",
+							async run ({ props, actions = [], only }) {
+								let el = new (FakeElement.with(props))();
+								let events = [];
+								el.addEventListener("propchange", e =>
+									events.push({ name: e.name, source: e.detail?.source }));
+								el.mount();
+								await apply(el, actions);
+								let stream = only ? events.filter(e => only.includes(e.name)) : events;
+								return stream.length;
+							},
 							arg: {
 								props: { v: { type: Number } },
 								actions: [
@@ -406,11 +416,13 @@ export default {
 								],
 								only: ["v"],
 							},
-							// No mount event: plain Signal initial undefined ≡ oldValue.
-							expect: ["v/property"],
+							// No mount event (plain Signal initial undefined ≡ oldValue).
+							// Three writes → three propchange events; coalescing belongs
+							// to propschange / updated() (covered in `updated() bulk semantics`).
+							expect: 3,
 						},
 						{
-							name: "Round-trip back to the initial value on a plain Signal fires no event",
+							name: "Round-trip back to the initial value fires propchange for each write",
 							async run ({ props, actions }) {
 								let el = new (FakeElement.with(props))();
 								let count = 0;
@@ -428,7 +440,9 @@ export default {
 									},
 								],
 							},
-							expect: 0,
+							// Net no-op is dropped by `propschange` (see corresponding
+							// test in `updated() bulk semantics`); propchange fires per write.
+							expect: 2,
 						},
 					],
 				},
@@ -598,6 +612,22 @@ export default {
 								[{ name: "v", old: undefined, value: 99 }],
 							],
 						},
+							{
+								name: "Round-trip back to the first-seen value fires no propschange",
+								arg: {
+									props: { v: { type: Number } },
+									actions: [
+										el => {
+											el.v = 5;
+											el.v = undefined;
+										},
+									],
+								},
+								// Net no-op: settled value === first-seen oldValue, so the
+								// propschange drain drops it. (Individual propchange events
+								// still fire — see the propchange events suite.)
+								expect: [],
+							},
 					],
 				},
 				{
