@@ -1,4 +1,11 @@
+import { addPlugins, symbols } from "xtensible";
 import Props from "../../src/plugins/props/util/Props.js";
+
+/** Same Symbol the props plugin uses for its per-class slot — get-symbols' shared registry. */
+const { props: propsSymbol } = symbols.known;
+
+/** Per-class CustomElementDefinition snapshot, captured at FakeElement.with() time — mirrors customElements.define. */
+const definition = Symbol("definition");
 
 /** Yield N microtasks so any queued work runs. */
 export async function flush (ticks = 1) {
@@ -58,14 +65,24 @@ export default class FakeElement extends EventTarget {
 
 	setAttribute (name, value) {
 		let oldValue = this.#attrs.get(name) ?? null;
-		this.#attrs.set(name, String(value));
-		this.constructor.props?.attributeChanged(this, name, oldValue);
+		value = String(value);
+		this.#attrs.set(name, value);
+
+		// Dispatch through the snapshotted attributeChangedCallback, like a real browser.
+		let def = this.constructor[definition];
+		if (def?.observedAttributes.includes(name)) {
+			def.attributeChangedCallback?.call(this, name, oldValue, value);
+		}
 	}
 
 	removeAttribute (name) {
 		let oldValue = this.#attrs.get(name) ?? null;
 		this.#attrs.delete(name);
-		this.constructor.props?.attributeChanged(this, name, oldValue);
+
+		let def = this.constructor[definition];
+		if (def?.observedAttributes.includes(name)) {
+			def.attributeChangedCallback?.call(this, name, oldValue, null);
+		}
 	}
 
 	mount () {
@@ -73,10 +90,43 @@ export default class FakeElement extends EventTarget {
 		this.constructor.props.initializeFor(this);
 	}
 
-	/** Build a FakeElement subclass with the given props spec. */
-	static with (props) {
+	/** Build a FakeElement subclass with the given props spec and plugins. */
+	static with (props, ...plugins) {
 		let Class = class extends FakeElement {};
 		Class.props = new Props(Class, props);
+
+		if (plugins.length) {
+			addPlugins(Class, ...plugins);
+			Class[propsSymbol] = Class.props;
+		}
+		else {
+			// No plugins: simulate the registration-time install the props plugin
+			// would perform, so the ACB snapshot below has something to capture.
+			Class.prototype.attributeChangedCallback = function (name, value) {
+				this.constructor.props.attributeChanged(this, name, value);
+			};
+		}
+
+		FakeElement.define(Class);
 		return Class;
+	}
+
+	/**
+	 * Snapshot lifecycleCallbacks + observedAttributes the way customElements.define does:
+	 * 1. Read attributeChangedCallback from the prototype chain.
+	 * 2. ONLY IF non-null, read observedAttributes from the constructor.
+	 * https://html.spec.whatwg.org/multipage/custom-elements.html#element-definition
+	 *
+	 * Re-callable so a test can swap a class's ACB and re-snapshot, modelling
+	 * a subclass that overrides attributeChangedCallback before registration.
+	 */
+	static define (Class) {
+		let callback = Class.prototype.attributeChangedCallback;
+		Class[definition] = {
+			observedAttributes: callback
+				? (Class.observedAttributes ?? Class.props?.observedAttributes ?? [])
+				: [],
+			attributeChangedCallback: callback,
+		};
 	}
 }

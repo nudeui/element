@@ -1,30 +1,16 @@
 import Props from "./util/Props.js";
 import { symbols } from "xtensible";
-import { defineOwnProperty } from "xtensible/util";
+import { defineOwnProperty, getSuperMethod } from "xtensible/util";
 import { defineLazyProperty } from "../../util/lazy.js";
 
 export const { props } = symbols.known;
-
-function first_constructor_static () {
-	// TODO how does this work if attributeChangedCallback is inherited?
-	let _attributeChangedCallback = this.prototype.attributeChangedCallback;
-	this.prototype.attributeChangedCallback = function (name, oldValue, value) {
-		this.constructor[props].attributeChanged(this, name, oldValue, value);
-		_attributeChangedCallback?.call(this, name, oldValue, value);
-	};
-
-	// FIXME how to combine with existing observedAttributes?
-	if (!Object.hasOwn(this, "observedAttributes")) {
-		Object.defineProperty(this, "observedAttributes", {
-			get: () => this[props].observedAttributes,
-			configurable: true,
-		});
-	}
-}
+const { observedAttributes } = symbols.known;
 
 const hooks = {
 	setup () {
-		if (Object.hasOwn(this, "props")) {
+		// Skip if the static observedAttributes getter already ran the install —
+		// it's the registration-time path that fires before any instance exists.
+		if (Object.hasOwn(this, "props") && !Object.hasOwn(this, observedAttributes)) {
 			this.defineProps();
 		}
 	},
@@ -45,8 +31,6 @@ const hooks = {
 		}
 	},
 
-	first_constructor_static,
-
 	constructed () {
 		this.constructor[props].initializeFor(this);
 	},
@@ -57,11 +41,15 @@ const hooks = {
 };
 
 const provides = {
-	// ...composed({
-	// 	attributeChangedCallback (name, oldValue, value) {
-	// 		this.constructor[props].attributeChanged(this, name, oldValue, value);
-	// 	},
-	// }),
+	// Must be on the prototype chain by the time customElements.define runs:
+	// the spec only reads observedAttributes if attributeChangedCallback is non-null.
+	// https://html.spec.whatwg.org/multipage/custom-elements.html#element-definition
+	attributeChangedCallback (name, oldValue, value) {
+		// Same as super.attributeChangedCallback?.()
+		getSuperMethod(this, provides.attributeChangedCallback)?.call(this, name, oldValue, value);
+
+		this.constructor[props].attributeChanged(this, name, oldValue, value);
+	},
 };
 
 // Internal prop values
@@ -102,6 +90,21 @@ const providesStatic = {
 	// 		return [...superProps, ...thisProps];
 	// 	},
 	// }),
+
+	get observedAttributes () {
+		if (Object.hasOwn(this, observedAttributes)) {
+			return this[observedAttributes];
+		}
+
+		// Reserve the cache before defineProps so any consumer that reads
+		// Class.observedAttributes during the install (e.g., a define-props
+		// hook listener) gets the in-flight list instead of recursing.
+		this[observedAttributes] = [];
+		this.defineProps();
+
+		// FIXME how to combine with existing observedAttributes?
+		return (this[observedAttributes] = this[props].observedAttributes);
+	},
 };
 
 defineOwnProperty(providesStatic, props, function () {

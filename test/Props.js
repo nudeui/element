@@ -1,4 +1,6 @@
 import { default as Props } from "../src/plugins/props/util/Props.js";
+import { default as propsPlugin, props as propsSymbol } from "../src/plugins/props/index.js";
+import { $hook, hooksCommon } from "xtensible/plugins";
 import FakeElement, { flush } from "./util/FakeElement.js";
 
 export default {
@@ -110,10 +112,15 @@ export default {
 						},
 						{
 							name: "Post-mount setAttribute updates the property",
-							async run () {
-								let el = new (FakeElement.with({
-									prop: { type: Number, reflect: true },
-								}))();
+							run () {
+								let el = new (FakeElement.with(
+									{
+										prop: { type: Number, reflect: true },
+									},
+									$hook,
+									hooksCommon,
+									propsPlugin,
+								))();
 								el.mount();
 								el.setAttribute("prop", "100");
 								return el.prop;
@@ -174,6 +181,59 @@ export default {
 							expect: { mountCount: 1, afterDisconnect: 1, afterReconnect: 2 },
 						},
 					],
+				},
+			],
+		},
+		{
+			name: "Class.defineProps()",
+			tests: [
+				{
+					name: "Additive after observedAttributes has populated this[props]",
+					run () {
+						let Class = FakeElement.with({ foo: {} }, $hook, hooksCommon, propsPlugin);
+						Class.defineProps({ bar: {} });
+						return [...Class[propsSymbol].keys()];
+					},
+					expect: ["foo", "bar"],
+				},
+			],
+		},
+		{
+			name: "Subclass attributeChangedCallback override",
+			description: "A subclass override must chain via super to compose with the plugin.",
+			run (callSuper) {
+				let Class = FakeElement.with(
+					{ prop: { type: Number, reflect: true } },
+					$hook,
+					hooksCommon,
+					propsPlugin,
+				);
+
+				let pluginCallback = Class.prototype.attributeChangedCallback;
+				Class.prototype.attributeChangedCallback = function (name, oldValue, value) {
+					if (callSuper) {
+						pluginCallback.call(this, name, oldValue, value);
+					}
+				};
+
+				FakeElement.define(Class);
+
+				let el = new Class();
+				el.mount();
+				el.setAttribute("prop", "100");
+
+				return el.prop;
+			},
+			tests: [
+				{
+					name: "Override that calls super updates the reflected prop",
+					arg: true,
+					expect: 100,
+				},
+				{
+					name: "Override that omits super leaves the reflected prop unchanged",
+					arg: false,
+					expect: undefined,
 				},
 			],
 		},
