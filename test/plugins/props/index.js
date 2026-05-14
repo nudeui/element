@@ -5,6 +5,7 @@ import defaults from "./defaults.js";
 import computed from "./computed.js";
 import propchange from "./propchange.js";
 import lifecycle from "./lifecycle.js";
+import inheritance from "./inheritance.js";
 
 export default {
 	name: "Props plugin",
@@ -31,5 +32,5 @@ export default {
 		this.data.element.remove();
 	},
 
-	tests: [reflection, defaults, computed, propchange, lifecycle],
+	tests: [reflection, defaults, computed, propchange, lifecycle, inheritance],
 };
