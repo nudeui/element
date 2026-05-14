@@ -50,6 +50,7 @@
 	},
 	"homepage": "https://github.com/nudeui/element#readme",
 	"devDependencies": {
+		"@happy-dom/global-registrator": "^20.9.0",
 		"@stylistic/eslint-plugin": "^5.6.1",
 		"eslint": "^9.39.2",
 		"globals": "^16.5.0",
