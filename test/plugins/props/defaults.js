@@ -1,66 +1,68 @@
 export default {
 	name: "Defaults",
 
-	run ({ actions = [], read }) {
-		if (actions.length === 0) {
-			return this.data.element[read];
-		}
-
-		let stages = [this.data.element[read]];
-		for (let action of actions) {
-			action(this.data.element);
-			stages.push(this.data.element[read]);
-		}
-		return stages;
-	},
-
 	tests: [
 		{
 			name: "Plain literal default returns on read when nothing was written",
-			arg: {
-				props: { v: { type: Number, default: 42 } },
-				read: "v",
+			run () {
+				return this.data.element.v;
 			},
+			arg: { props: { v: { type: Number, default: 42 } } },
 			expect: 42,
 		},
 		{
 			name: "defaultProp severs on explicit write",
+			run () {
+				let { element } = this.data;
+				let history = [element.mirror];
+				element.mirror = "explicit";
+				history.push(element.mirror);
+				element.src = "after-sever";
+				history.push(element.mirror);
+				return history;
+			},
 			arg: {
 				props: {
 					src: { type: String, default: "initial" },
 					mirror: { type: String, defaultProp: "src" },
 				},
-				actions: [el => (el.mirror = "explicit"), el => (el.src = "after-sever")],
-				read: "mirror",
 			},
 			expect: ["initial", "explicit", "explicit"],
 		},
 		{
 			name: "defaultProp restores on undefined",
+			run () {
+				let { element } = this.data;
+				let history = [element.mirror];
+				element.mirror = "explicit";
+				history.push(element.mirror);
+				element.src = "x";
+				history.push(element.mirror);
+				element.mirror = undefined;
+				history.push(element.mirror);
+				return history;
+			},
 			arg: {
 				props: {
 					src: { type: String, default: "initial" },
 					mirror: { type: String, defaultProp: "src" },
 				},
-				actions: [
-					el => (el.mirror = "explicit"),
-					el => (el.src = "x"),
-					el => (el.mirror = undefined),
-				],
-				read: "mirror",
 			},
 			expect: ["initial", "explicit", "explicit", "x"],
 		},
 		{
 			name: "default() return is coerced via parse",
-			arg: {
-				props: { n: { type: Number, default: () => "42" } },
-				read: "n",
+			run () {
+				return this.data.element.n;
 			},
+			arg: { props: { n: { type: Number, default: () => "42" } } },
 			expect: 42,
 		},
 		{
 			name: "Default passes through convert",
+			run () {
+				return this.data.element.n;
+			},
 			arg: {
 				props: {
 					n: {
@@ -70,38 +72,52 @@ export default {
 						},
 					},
 				},
-				read: "n",
 			},
 			expect: 10,
 		},
 		{
-			name: "Plain literal default restored via undefined write",
-			arg: {
-				props: { v: { type: Number, default: 42 } },
-				actions: [el => (el.v = 100), el => (el.v = undefined)],
-				read: "v",
+			name: "Undefined write re-resolves the default",
+			run () {
+				let { element } = this.data;
+				let history = [element.v];
+				element.v = 100;
+				history.push(element.v);
+				element.v = undefined;
+				history.push(element.v);
+				return history;
 			},
-			expect: [42, 100, 42],
-		},
-		{
-			name: "undefined write re-resolves a function default",
-			arg: {
-				props: {
-					base: { type: Number, default: 7 },
-					v: {
-						type: Number,
-						default () {
-							return this.base * 10;
+
+			tests: [
+				{
+					name: "Plain literal default",
+					arg: { props: { v: { type: Number, default: 42 } } },
+					expect: [42, 100, 42],
+				},
+				{
+					name: "Function default",
+					arg: {
+						props: {
+							base: { type: Number, default: 7 },
+							v: {
+								type: Number,
+								default () {
+									return this.base * 10;
+								},
+							},
 						},
 					},
+					expect: [70, 100, 70],
 				},
-				actions: [el => (el.v = 100), el => (el.v = undefined)],
-				read: "v",
-			},
-			expect: [70, 100, 70],
+			],
 		},
 		{
 			name: "null is preserved on a prop with a default",
+			run () {
+				let { element } = this.data;
+				let before = element.v;
+				element.v = null;
+				return [before, element.v];
+			},
 			arg: {
 				props: {
 					base: { type: Number, default: 7 },
@@ -112,8 +128,6 @@ export default {
 						},
 					},
 				},
-				actions: [el => (el.v = null)],
-				read: "v",
 			},
 			expect: [70, null],
 		},
