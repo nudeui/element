@@ -1,31 +1,18 @@
 export default {
 	name: "propchange events",
 
-	// `this.data.events` is the list of [name, value-at-event-time] tuples
-	// recorded by the shared beforeEach (before connect, so mount-time events
-	// are captured).
-	run ({ actions = [], only }) {
-		for (let action of actions) {
-			action(this.data.element);
-		}
-
-		let stream = this.data.events;
-		if (only) {
-			stream = stream.filter(([name]) => only.includes(name));
-		}
-
-		return stream;
-	},
-
 	tests: [
 		{
 			name: "defaultProp re-fires when its source prop changes",
+			run () {
+				this.data.element.src = "changed";
+				return this.data.events;
+			},
 			arg: {
 				props: {
 					src: { type: String, default: "initial" },
 					mirror: { type: String, defaultProp: "src" },
 				},
-				actions: [el => (el.src = "changed")],
 			},
 			expect: [
 				["src", "initial"],
@@ -35,42 +22,57 @@ export default {
 			],
 		},
 		{
-			name: "default() with reactive deps: synthetic prop event fires before declared",
-			description:
-				"Synthetic default props are consumer-visible — analogous to native form-control .value/.defaultValue.",
-			arg: {
-				props: {
-					base: { type: Number, default: 1 },
-					bar: {
-						default () {
-							return this.base * 42;
+			name: "Mount-time event order",
+			run () {
+				return this.data.events;
+			},
+
+			tests: [
+				{
+					name: "default() with reactive deps: synthetic prop event fires before declared",
+					description:
+						"Synthetic default props are consumer-visible — analogous to native form-control .value/.defaultValue.",
+					arg: {
+						props: {
+							base: { type: Number, default: 1 },
+							bar: {
+								default () {
+									return this.base * 42;
+								},
+							},
 						},
 					},
+					expect: [
+						["base", 1],
+						["defaultBar", 42],
+						["bar", 42],
+					],
 				},
-				only: ["bar", "defaultBar"],
-			},
-			expect: [
-				["defaultBar", 42],
-				["bar", 42],
+				{
+					name: "No double-fire on mount for computed props",
+					arg: {
+						props: {
+							base: { type: Number, default: 7 },
+							derived: {
+								get () {
+									return this.base + 1;
+								},
+							},
+						},
+					},
+					expect: [
+						["base", 7],
+						["derived", 8],
+					],
+				},
 			],
 		},
 		{
-			name: "No double-fire on mount for computed props",
-			arg: {
-				props: {
-					base: { type: Number, default: 7 },
-					derived: {
-						get () {
-							return this.base + 1;
-						},
-					},
-				},
-				only: ["derived"],
-			},
-			expect: [["derived", 8]],
-		},
-		{
 			name: "default() reactive on declared name",
+			run () {
+				this.data.element.base = 2;
+				return this.data.events;
+			},
 			arg: {
 				props: {
 					base: { type: Number, default: 1 },
@@ -81,16 +83,22 @@ export default {
 						},
 					},
 				},
-				actions: [el => (el.base = 2)],
-				only: ["derived"],
 			},
 			expect: [
+				["base", 1],
+				["defaultDerived", 10],
 				["derived", 10],
+				["base", 2],
+				["defaultDerived", 20],
 				["derived", 20],
 			],
 		},
 		{
 			name: "Events fan out across plain, get, and default() props",
+			run () {
+				this.data.element.plain = 5;
+				return this.data.events;
+			},
 			arg: {
 				props: {
 					plain: { type: Number, default: 1 },
@@ -106,7 +114,6 @@ export default {
 						},
 					},
 				},
-				actions: [el => (el.plain = 5)],
 			},
 			expect: [
 				// Mount
@@ -124,10 +131,11 @@ export default {
 		},
 		{
 			name: "Assigning current default-resolved value is a no-op",
-			arg: {
-				props: { v: { type: Number, default: 42 } },
-				actions: [el => (el.v = 42)],
+			run () {
+				this.data.element.v = 42;
+				return this.data.events;
 			},
+			arg: { props: { v: { type: Number, default: 42 } } },
 			expect: [["v", 42]],
 		},
 		{
@@ -155,6 +163,13 @@ export default {
 		},
 		{
 			name: "Writes that collapse to the same value after convert do not fire propchange",
+			run () {
+				let { element } = this.data;
+				element.v = 5;
+				element.v = 5.4;
+				element.v = 5.9;
+				return this.data.events;
+			},
 			arg: {
 				props: {
 					v: {
@@ -164,8 +179,6 @@ export default {
 						},
 					},
 				},
-				actions: [el => (el.v = 5), el => (el.v = 5.4), el => (el.v = 5.9)],
-				only: ["v"],
 			},
 			expect: [
 				["v", undefined],
