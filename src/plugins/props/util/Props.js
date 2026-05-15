@@ -144,16 +144,7 @@ export default class Props extends Map {
 	eventDispatchQueue = new WeakMap();
 
 	propChanged (element, prop, change) {
-		// Update all props that have this prop as a dependency
-		let dependents = this.dependents[prop.name] ?? new Set();
-
-		for (let dependent of dependents) {
-			if (dependent.dependsOn(prop, element)) {
-				dependent.update(element, prop);
-			}
-		}
-
-		// Fire propchange event
+		// Source-first: fire before cascading so listeners hear the written prop first.
 		let eventNames = ["propchange", ...(prop.eventNames ?? [])];
 		for (let eventName of eventNames) {
 			this.firePropChangeEvent(element, eventName, {
@@ -161,6 +152,15 @@ export default class Props extends Map {
 				prop,
 				detail: change,
 			});
+		}
+
+		// Update all props that have this prop as a dependency
+		let dependents = this.dependents[prop.name] ?? new Set();
+
+		for (let dependent of dependents) {
+			if (dependent.dependsOn(prop, element)) {
+				dependent.update(element, prop);
+			}
 		}
 	}
 
