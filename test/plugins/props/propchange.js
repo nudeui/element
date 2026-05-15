@@ -35,9 +35,9 @@ export default {
 			],
 		},
 		{
-			// `bar`'s default has a dependency, so a synthetic `defaultBar` prop is
-			// created internally — it must not surface propchange events to consumers.
-			name: "default() fires on declared name only",
+			name: "default() with reactive deps: synthetic prop event fires before declared",
+			description:
+				"Synthetic default props are consumer-visible — analogous to native form-control .value/.defaultValue.",
 			arg: {
 				props: {
 					base: { type: Number, default: 1 },
@@ -49,7 +49,10 @@ export default {
 				},
 				only: ["bar", "defaultBar"],
 			},
-			expect: [["bar", 42]],
+			expect: [
+				["defaultBar", 42],
+				["bar", 42],
+			],
 		},
 		{
 			name: "No double-fire on mount for computed props",
@@ -109,11 +112,13 @@ export default {
 				// Mount
 				["plain", 1],
 				["computed", 11],
+				["defaultFnDefault", 100],
 				["fnDefault", 100],
 
 				// Update
 				["plain", 5],
 				["computed", 15],
+				["defaultFnDefault", 500],
 				["fnDefault", 500],
 			],
 		},
