@@ -183,10 +183,9 @@ let Self = class Prop {
 		return value;
 	}
 
-	set (element, value, { source, name, oldValue } = {}) {
-		let oldInternalValue = element.props[this.name];
+	set (element, value, { source, name, oldAttributeValue } = {}) {
+		let oldValue = element.props[this.name];
 
-		let attributeName = name;
 		let parsedValue;
 
 		try {
@@ -205,7 +204,7 @@ let Self = class Prop {
 			parsedValue = this.spec.convert.call(element, parsedValue);
 		}
 
-		if (this.equals(parsedValue, oldInternalValue)) {
+		if (this.equals(parsedValue, oldValue)) {
 			return;
 		}
 
@@ -214,10 +213,8 @@ let Self = class Prop {
 		let change = {
 			element,
 			source,
-			value,
-			parsedValue,
-			oldInternalValue,
-			attributeName: name,
+			value: parsedValue,
+			oldValue,
 		};
 
 		if (source === "property") {
@@ -240,9 +237,9 @@ let Self = class Prop {
 		}
 		else if (source === "attribute") {
 			Object.assign(change, {
-				attributeName,
+				attributeName: name,
 				attributeValue: value,
-				oldAttributeValue: oldValue,
+				oldAttributeValue,
 			});
 		}
 
