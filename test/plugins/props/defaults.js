@@ -76,6 +76,14 @@ export default {
 			expect: 10,
 		},
 		{
+			name: "Default is not reflected to the attribute on mount",
+			run () {
+				return this.data.element.getAttribute("plain");
+			},
+			arg: { props: { plain: { type: Number, default: 7, reflect: true } } },
+			expect: null,
+		},
+		{
 			name: "Undefined write re-resolves the default",
 			run () {
 				let { element } = this.data;

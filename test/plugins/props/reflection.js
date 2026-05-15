@@ -54,14 +54,6 @@ export default {
 			expect: 42,
 		},
 		{
-			name: "Default is not reflected to the attribute on mount",
-			run () {
-				return this.data.element.getAttribute("plain");
-			},
-			arg: { props: { plain: { type: Number, default: 7, reflect: true } } },
-			expect: null,
-		},
-		{
 			name: "Explicit write equal to the default still reflects to the attribute",
 			description:
 				"Mount must not reflect the default, but an explicit user write of the same value must (issue #105)",
