@@ -254,7 +254,9 @@ let Self = class Prop {
 			if (element.setAttribute) {
 				let attributeName = change.attributeName ?? this.toAttribute;
 				let attributeValue =
-					change.attributeValue ?? change.element.getAttribute(attributeName);
+					change.attributeValue !== undefined
+						? change.attributeValue
+						: change.element.getAttribute(attributeName);
 
 				if (attributeValue === null) {
 					element.removeAttribute(attributeName);
