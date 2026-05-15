@@ -193,15 +193,19 @@ export default class Props extends Map {
 			prop.initializeFor(element);
 		}
 
-		// Dispatch any events that were queued
+		this.drainFor(element);
+	}
+
+	drainFor (element) {
 		let queue = this.eventDispatchQueue.get(element);
-
-		if (queue) {
-			for (let event of queue) {
-				element.dispatchEvent?.(event);
-			}
-
-			this.eventDispatchQueue.delete(element);
+		if (!queue) {
+			return;
 		}
+
+		for (let event of queue) {
+			element.dispatchEvent?.(event);
+		}
+
+		this.eventDispatchQueue.delete(element);
 	}
 }

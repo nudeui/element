@@ -40,6 +40,10 @@ const hooks = {
 	constructed () {
 		this.constructor[props].initializeFor(this);
 	},
+
+	connected () {
+		this.constructor[props].drainFor(this);
+	},
 };
 
 const provides = {
