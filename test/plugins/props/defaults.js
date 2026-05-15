@@ -2,11 +2,16 @@ export default {
 	name: "Defaults",
 
 	run ({ actions = [], read }) {
-		for (let action of actions) {
-			action(this.data.element);
+		if (actions.length === 0) {
+			return this.data.element[read];
 		}
 
-		return this.data.element[read];
+		let stages = [this.data.element[read]];
+		for (let action of actions) {
+			action(this.data.element);
+			stages.push(this.data.element[read]);
+		}
+		return stages;
 	},
 
 	tests: [
@@ -28,7 +33,7 @@ export default {
 				actions: [el => (el.mirror = "explicit"), el => (el.src = "after-sever")],
 				read: "mirror",
 			},
-			expect: "explicit",
+			expect: ["initial", "explicit", "explicit"],
 		},
 		{
 			name: "defaultProp restores on undefined",
@@ -44,7 +49,7 @@ export default {
 				],
 				read: "mirror",
 			},
-			expect: "x",
+			expect: ["initial", "explicit", "explicit", "x"],
 		},
 		{
 			name: "default() return is coerced via parse",
@@ -76,7 +81,7 @@ export default {
 				actions: [el => (el.v = 100), el => (el.v = undefined)],
 				read: "v",
 			},
-			expect: 42,
+			expect: [42, 100, 42],
 		},
 		{
 			name: "undefined write re-resolves a function default",
@@ -93,7 +98,7 @@ export default {
 				actions: [el => (el.v = 100), el => (el.v = undefined)],
 				read: "v",
 			},
-			expect: 70,
+			expect: [70, 100, 70],
 		},
 		{
 			name: "null is preserved on a prop with a default",
@@ -110,7 +115,7 @@ export default {
 				actions: [el => (el.v = null)],
 				read: "v",
 			},
-			expect: null,
+			expect: [70, null],
 		},
 	],
 };

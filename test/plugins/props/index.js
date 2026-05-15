@@ -21,8 +21,10 @@ export default {
 				let element = document.createElement(tag);
 
 				let events = [];
+				// Each entry is [name, value-at-event-time].
 				// Attached before connect so mount-time events are captured.
-				element.addEventListener("propchange", e => events.push(e.name));
+				element.addEventListener("propchange", e =>
+					events.push([e.name, e.target[e.name]]));
 
 				for (let [name, value] of Object.entries(attributes ?? {})) {
 					element.setAttribute(name, value);

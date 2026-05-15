@@ -1,8 +1,9 @@
 export default {
 	name: "propchange events",
 
-	// `this.data.events` is the list of propchange'd prop names recorded by the
-	// shared beforeEach (before connect, so mount-time events are captured).
+	// `this.data.events` is the list of [name, value-at-event-time] tuples
+	// recorded by the shared beforeEach (before connect, so mount-time events
+	// are captured).
 	run ({ actions = [], only }) {
 		for (let action of actions) {
 			action(this.data.element);
@@ -10,7 +11,7 @@ export default {
 
 		let stream = this.data.events;
 		if (only) {
-			stream = stream.filter(name => only.includes(name));
+			stream = stream.filter(([name]) => only.includes(name));
 		}
 
 		return stream;
@@ -26,7 +27,12 @@ export default {
 				},
 				actions: [el => (el.src = "changed")],
 			},
-			expect: ["src", "mirror", "src", "mirror"],
+			expect: [
+				["src", "initial"],
+				["mirror", "initial"],
+				["src", "changed"],
+				["mirror", "changed"],
+			],
 		},
 		{
 			// `bar`'s default has a dependency, so a synthetic `defaultBar` prop is
@@ -43,7 +49,7 @@ export default {
 				},
 				only: ["bar", "defaultBar"],
 			},
-			expect: ["bar"],
+			expect: [["bar", 42]],
 		},
 		{
 			name: "No double-fire on mount for computed props",
@@ -58,7 +64,7 @@ export default {
 				},
 				only: ["derived"],
 			},
-			expect: ["derived"],
+			expect: [["derived", 8]],
 		},
 		{
 			name: "default() reactive on declared name",
@@ -75,7 +81,10 @@ export default {
 				actions: [el => (el.base = 2)],
 				only: ["derived"],
 			},
-			expect: ["derived", "derived"],
+			expect: [
+				["derived", 10],
+				["derived", 20],
+			],
 		},
 		{
 			name: "Events fan out across plain, get, and default() props",
@@ -98,14 +107,14 @@ export default {
 			},
 			expect: [
 				// Mount
-				"plain",
-				"computed",
-				"fnDefault",
+				["plain", 1],
+				["computed", 11],
+				["fnDefault", 100],
 
 				// Update
-				"plain",
-				"computed",
-				"fnDefault",
+				["plain", 5],
+				["computed", 15],
+				["fnDefault", 500],
 			],
 		},
 		{
@@ -114,7 +123,7 @@ export default {
 				props: { v: { type: Number, default: 42 } },
 				actions: [el => (el.v = 42)],
 			},
-			expect: ["v"],
+			expect: [["v", 42]],
 		},
 		{
 			name: "Three writes fire three propchange events in order, synchronously",
@@ -153,7 +162,11 @@ export default {
 				actions: [el => (el.v = 5), el => (el.v = 5.4), el => (el.v = 5.9)],
 				only: ["v"],
 			},
-			expect: ["v"],
+			expect: [
+				["v", undefined],
+				["v", 5],
+				// the 5.4 and 5.9 writes do not fire
+			],
 		},
 	],
 };

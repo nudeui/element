@@ -8,7 +8,7 @@ export default {
 				this.data.element.foo = "bar";
 				return this.data.element.foo === "bar";
 			},
-			arg: { props: { foo: {} } },
+			arg: { props: { foo: { default: "foo" } } },
 			expect: true,
 		},
 		{
