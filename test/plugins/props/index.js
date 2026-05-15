@@ -6,31 +6,40 @@ import computed from "./computed.js";
 import propchange from "./propchange.js";
 import lifecycle from "./lifecycle.js";
 import inheritance from "./inheritance.js";
+import install from "./install.js";
 
 export default {
 	name: "Props plugin",
 
-	beforeEach () {
-		let { props, attributes } = this.arg;
-		let tag = defineElement({ plugins: [propsPlugin], props });
-		let element = document.createElement(tag);
+	tests: [
+		{
+			name: "Behavior",
 
-		let events = [];
-		// Attached before connect so mount-time events are captured.
-		element.addEventListener("propchange", e => events.push(e.name));
+			beforeEach () {
+				let { props, attributes } = this.arg;
+				let tag = defineElement({ plugins: [propsPlugin], props });
+				let element = document.createElement(tag);
 
-		for (let [name, value] of Object.entries(attributes ?? {})) {
-			element.setAttribute(name, value);
-		}
+				let events = [];
+				// Attached before connect so mount-time events are captured.
+				element.addEventListener("propchange", e => events.push(e.name));
 
-		document.body.append(element);
+				for (let [name, value] of Object.entries(attributes ?? {})) {
+					element.setAttribute(name, value);
+				}
 
-		Object.assign(this.data, { element, events });
-	},
+				document.body.append(element);
 
-	afterEach () {
-		this.data.element.remove();
-	},
+				Object.assign(this.data, { element, events });
+			},
 
-	tests: [reflection, defaults, computed, propchange, lifecycle, inheritance],
+			afterEach () {
+				this.data.element.remove();
+			},
+
+			tests: [reflection, defaults, computed, propchange, lifecycle],
+		},
+		inheritance,
+		install,
+	],
 };

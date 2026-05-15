@@ -11,6 +11,14 @@ export default {
 
 	tests: [
 		{
+			name: "Plain literal default returns on read when nothing was written",
+			arg: {
+				props: { v: { type: Number, default: 42 } },
+				read: "v",
+			},
+			expect: 42,
+		},
+		{
 			name: "defaultProp severs on explicit write",
 			arg: {
 				props: {

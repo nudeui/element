@@ -116,5 +116,44 @@ export default {
 			},
 			expect: ["v"],
 		},
+		{
+			name: "Three writes fire three propchange events in order, synchronously",
+			description:
+				"Each assignment dispatches its propchange before the next statement runs, carrying the just-written value (issue #111)",
+			run () {
+				let { element } = this.data;
+				let log = [];
+				element.addEventListener("propchange", e =>
+					log.push([e.name, e.detail.parsedValue]));
+
+				element.v = "foo";
+				element.v = "bar";
+				element.v = "baz";
+
+				return log;
+			},
+			arg: { props: { v: {} } },
+			expect: [
+				["v", "foo"],
+				["v", "bar"],
+				["v", "baz"],
+			],
+		},
+		{
+			name: "Writes that collapse to the same value after convert do not fire propchange",
+			arg: {
+				props: {
+					v: {
+						type: Number,
+						convert (n) {
+							return Math.floor(n);
+						},
+					},
+				},
+				actions: [el => (el.v = 5), el => (el.v = 5.4), el => (el.v = 5.9)],
+				only: ["v"],
+			},
+			expect: ["v"],
+		},
 	],
 };
