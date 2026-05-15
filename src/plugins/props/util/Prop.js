@@ -156,7 +156,7 @@ let Self = class Prop {
 			value = element.props[this.name];
 		}
 
-		if (value === undefined || value === null) {
+		if (value === undefined) {
 			if (this.default !== undefined) {
 				if (this.defaultProp) {
 					value = this.defaultProp.get(element);
@@ -166,7 +166,7 @@ let Self = class Prop {
 				}
 
 				try {
-					return this.parse(value);
+					value = this.parse(value);
 				}
 				catch (e) {
 					console.warn(
@@ -176,6 +176,10 @@ let Self = class Prop {
 						e,
 					);
 					return null;
+				}
+
+				if (this.spec.convert) {
+					value = this.spec.convert.call(element, value);
 				}
 			}
 		}
@@ -198,6 +202,13 @@ let Self = class Prop {
 				e,
 			);
 			return;
+		}
+
+		// removeAttribute() arrives as null; collapse to undefined so the prop
+		// reverts to its natural empty state. Property writes of null remain a
+		// legitimate user value.
+		if (source === "attribute" && parsedValue === null) {
+			parsedValue = undefined;
 		}
 
 		if (this.spec.convert) {
