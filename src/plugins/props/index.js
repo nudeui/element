@@ -42,7 +42,7 @@ const hooks = {
 	},
 
 	connected () {
-		this.constructor[props].drainFor(this);
+		this.constructor[props].dispatchQueuedEvents(this);
 	},
 };
 
