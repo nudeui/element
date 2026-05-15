@@ -145,8 +145,7 @@ export default {
 			run () {
 				let { element } = this.data;
 				let log = [];
-				element.addEventListener("propchange", e =>
-					log.push([e.name, e.detail.parsedValue]));
+				element.addEventListener("propchange", e => log.push([e.name, e.detail.value]));
 
 				element.v = "foo";
 				element.v = "bar";
