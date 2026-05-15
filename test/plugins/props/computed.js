@@ -1,22 +1,15 @@
 export default {
 	name: "Computed properties",
 
-	run ({ actions = [], read }) {
-		if (actions.length === 0) {
-			return this.data.element[read];
-		}
-
-		let stages = [this.data.element[read]];
-		for (let action of actions) {
-			action(this.data.element);
-			stages.push(this.data.element[read]);
-		}
-		return stages;
-	},
-
 	tests: [
 		{
 			name: "get() updates when its dependency changes",
+			run () {
+				let { element } = this.data;
+				let before = element.derived;
+				element.base = 5;
+				return [before, element.derived];
+			},
 			arg: {
 				props: {
 					base: { type: Number, default: 1 },
@@ -26,13 +19,17 @@ export default {
 						},
 					},
 				},
-				actions: [el => (el.base = 5)],
-				read: "derived",
 			},
 			expect: [2, 10],
 		},
 		{
 			name: "spec.equals: a tolerated dependency change leaves the cached value",
+			run () {
+				let { element } = this.data;
+				let before = element.derived;
+				element.base = 42.05;
+				return [before, element.derived];
+			},
 			arg: {
 				props: {
 					base: { type: Number, default: 42 },
@@ -43,8 +40,6 @@ export default {
 						equals: (a, b) => Math.abs(a - b) < 0.1,
 					},
 				},
-				actions: [el => (el.base = 42.05)],
-				read: "derived",
 			},
 			expect: [42, 42],
 		},
