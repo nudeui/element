@@ -1,3 +1,5 @@
+import { props as propsSymbol } from "../../../src/plugins/props/index.js";
+
 export default {
 	name: "Disconnect / reconnect lifecycle",
 
@@ -23,6 +25,37 @@ export default {
 				after: [
 					["v", 1],
 					["v", 2],
+				],
+			},
+		},
+		{
+			name: "pauseEvents holds dispatch until resumeEvents drains in order",
+			run () {
+				let { element } = this.data;
+				let log = [];
+				element.addEventListener("propchange", e => log.push([e.name, e.detail.value]));
+
+				element.a = 1; // fires immediately
+				let beforePause = log.length;
+
+				let props = element.constructor[propsSymbol];
+				props.pauseEvents(element);
+
+				element.b = "x";
+				element.a = 2;
+
+				let duringPause = log.length - beforePause;
+				props.resumeEvents(element);
+
+				return { duringPause, afterResume: log };
+			},
+			arg: { props: { a: { type: Number, default: 42 }, b: {} } },
+			expect: {
+				duringPause: 0,
+				afterResume: [
+					["a", 1],
+					["b", "x"],
+					["a", 2],
 				],
 			},
 		},

@@ -42,7 +42,11 @@ const hooks = {
 	},
 
 	connected () {
-		this.constructor[props].dispatchQueuedEvents(this);
+		this.constructor[props].resumeEvents(this);
+	},
+
+	disconnected () {
+		this.constructor[props].pauseEvents(this);
 	},
 };
 
