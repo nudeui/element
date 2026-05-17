@@ -141,6 +141,12 @@ export default class Props extends Map {
 		}
 	}
 
+	/**
+	 * Elements currently holding propchange event dispatch.
+	 * @type {WeakSet<HTMLElement>}
+	 */
+	#paused = new WeakSet();
+
 	eventDispatchQueue = new WeakMap();
 
 	propChanged (element, prop, change) {
@@ -167,7 +173,7 @@ export default class Props extends Map {
 	firePropChangeEvent (element, eventName, eventProps) {
 		let event = new PropChangeEvent(eventName, eventProps);
 
-		if (element.isConnected && eventProps.prop.initialized) {
+		if (!this.#paused.has(element) && eventProps.prop.initialized) {
 			element.dispatchEvent?.(event);
 		}
 		else {
@@ -193,15 +199,25 @@ export default class Props extends Map {
 			prop.initializeFor(element);
 		}
 
-		// Dispatch any events that were queued
+		this.resumeEvents(element);
+	}
+
+	pauseEvents (element) {
+		this.#paused.add(element);
+	}
+
+	resumeEvents (element) {
+		this.#paused.delete(element);
+
 		let queue = this.eventDispatchQueue.get(element);
-
-		if (queue) {
-			for (let event of queue) {
-				element.dispatchEvent?.(event);
-			}
-
-			this.eventDispatchQueue.delete(element);
+		if (!queue) {
+			return;
 		}
+
+		for (let event of queue) {
+			element.dispatchEvent?.(event);
+		}
+
+		this.eventDispatchQueue.delete(element);
 	}
 }

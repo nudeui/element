@@ -40,6 +40,14 @@ const hooks = {
 	constructed () {
 		this.constructor[props].initializeFor(this);
 	},
+
+	connected () {
+		this.constructor[props].resumeEvents(this);
+	},
+
+	disconnected () {
+		this.constructor[props].pauseEvents(this);
+	},
 };
 
 const provides = {
