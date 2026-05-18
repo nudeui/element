@@ -1,6 +1,6 @@
 import Props from "./util/Props.js";
 import { symbols } from "xtensible";
-import { defineOwnProperty, getSuperMethod } from "xtensible/util";
+import { defineOwnProperty } from "xtensible/util";
 import { defineLazyProperty } from "../../util/lazy.js";
 
 export const { props } = symbols.known;
@@ -32,19 +32,13 @@ const hooks = {
 	disconnected () {
 		this.constructor[props].pauseEvents(this);
 	},
-};
 
-const provides = {
-	// Must be on the prototype chain by the time customElements.define runs:
-	// the spec only reads observedAttributes if attributeChangedCallback is non-null.
-	// https://html.spec.whatwg.org/multipage/custom-elements.html#element-definition
-	attributeChangedCallback (name, oldValue, value) {
-		// Same as super.attributeChangedCallback?.()
-		getSuperMethod(this, provides.attributeChangedCallback)?.call(this, name, oldValue, value);
-
+	"attribute-changed" ({ name, oldValue, value }) {
 		this.constructor[props].attributeChanged(this, name, oldValue, value);
 	},
 };
+
+const provides = {};
 
 // Internal prop values
 defineLazyProperty(provides, "props", {
