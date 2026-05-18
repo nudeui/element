@@ -132,11 +132,25 @@ export default {
 		{
 			name: "Assigning current default-resolved value is a no-op",
 			run () {
-				this.data.element.v = 42;
-				return this.data.events;
+				let { element, events } = this.data;
+				let before = events.length;
+				element.v = 42;
+				return events.length - before;
 			},
 			arg: { props: { v: { type: Number, default: 42 } } },
-			expect: [["v", 42]],
+			expect: 0,
+		},
+		{
+			name: "First write reports the resolved default as oldValue",
+			run () {
+				let { element } = this.data;
+				let oldValue;
+				element.addEventListener("propchange", e => (oldValue = e.detail.oldValue));
+				element.prop = "new";
+				return oldValue;
+			},
+			arg: { props: { prop: { default: "initial" } } },
+			expect: "initial",
 		},
 		{
 			name: "Three writes fire three propchange events in order, synchronously",

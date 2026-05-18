@@ -215,11 +215,15 @@ let Self = class Prop {
 			parsedValue = this.spec.convert.call(element, parsedValue);
 		}
 
-		if (this.equals(parsedValue, oldValue)) {
-			return;
+		// Resolve the default lazily so equality and propchange.oldValue match the getter.
+		if (
+			oldValue === undefined &&
+			!this.spec.get &&
+			this.default !== undefined &&
+			typeof this.default !== "function"
+		) {
+			oldValue = this.get(element);
 		}
-
-		element.props[this.name] = parsedValue;
 
 		let change = {
 			element,
@@ -228,6 +232,7 @@ let Self = class Prop {
 			oldValue,
 		};
 
+		// Reflect before the equality check: an explicit equal-value write still updates the attribute.
 		if (source === "property") {
 			// Reflect to attribute?
 			if (this.toAttribute) {
@@ -253,6 +258,12 @@ let Self = class Prop {
 				oldAttributeValue,
 			});
 		}
+
+		if (this.equals(parsedValue, oldValue)) {
+			return;
+		}
+
+		element.props[this.name] = parsedValue;
 
 		this.changed(element, change);
 	}
