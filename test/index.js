@@ -1,11 +1,9 @@
-const { restoreNativeCustomEvent } = await import("./util/happy-dom.js");
+// Let happy-dom finish registering before the test tree's src/ imports load
+// (PropChangeEvent `extends CustomEvent` at module-eval time, needs happy-dom's).
+import { restoreNativeCustomEvent } from "./util/happy-dom.js";
 
-let tests = ["./Prop.js", "./Props.js", "./hooks.js", "./split.js", "./plugins/index.js"];
-tests = (await Promise.all(tests.map(p => import(p)))).map(m => m.default);
+const { default: tests } = await import("./index-fn.js");
 
 restoreNativeCustomEvent();
 
-export default {
-	name: "All tests",
-	tests,
-};
+export default tests;
