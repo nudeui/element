@@ -1,3 +1,4 @@
+import "#dom-polyfill";
 import { defineElement } from "../../util/dom.js";
 import { default as propsPlugin } from "../../../src/plugins/props/index.js";
 

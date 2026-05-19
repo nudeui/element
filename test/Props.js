@@ -1,3 +1,4 @@
+import "#dom-polyfill";
 import { default as Props } from "../src/plugins/props/util/Props.js";
 
 export default {

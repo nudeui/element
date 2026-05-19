@@ -26,6 +26,11 @@
 		"./plugins": "./src/plugins/index.js",
 		"./plugins/fn": "./src/plugins/index-fn.js"
 	},
+	"imports": {
+		"#dom-polyfill": {
+			"node": "./test/util/dom-polyfill.js"
+		}
+	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/nudeui/element.git"

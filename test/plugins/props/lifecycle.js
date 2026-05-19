@@ -1,3 +1,4 @@
+import "#dom-polyfill";
 import { props as propsSymbol } from "../../../src/plugins/props/index.js";
 
 export default {

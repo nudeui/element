@@ -1,9 +1,10 @@
-// Let happy-dom finish registering before the test tree's src/ imports load
-// (PropChangeEvent `extends CustomEvent` at module-eval time, needs happy-dom's).
-import { restoreNativeCustomEvent } from "./util/happy-dom.js";
+import Prop from "./Prop.js";
+import Props from "./Props.js";
+import hooks from "./hooks.js";
+import split from "./split.js";
+import plugins from "./plugins/index.js";
 
-const { default: tests } = await import("./index-fn.js");
-
-restoreNativeCustomEvent();
-
-export default tests;
+export default {
+	name: "All tests",
+	tests: [Prop, Props, hooks, split, plugins],
+};

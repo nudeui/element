@@ -1,3 +1,4 @@
+import "#dom-polyfill";
 import ElementFactory from "../../../src/element/factory.js";
 import { default as propsPlugin } from "../../../src/plugins/props/index.js";
 
