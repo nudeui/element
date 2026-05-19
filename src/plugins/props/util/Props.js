@@ -46,12 +46,17 @@ export default class Props extends Map {
 		}
 
 		for (let [name, spec] of Object.entries(props)) {
-			let prop = new Prop(name, spec, this);
-			this.set(name, prop);
-			Object.defineProperty(this.Class.prototype, name, prop.getDescriptor());
+			this.createProp(name, spec);
 		}
 
 		this.updateDependents();
+	}
+
+	createProp (name, spec) {
+		let prop = new Prop(name, spec, this);
+		this.set(name, prop);
+		Object.defineProperty(this.Class.prototype, name, prop.getDescriptor());
+		return prop;
 	}
 
 	/**
