@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<title>Tests</title>
+	<link rel="stylesheet" href="../node_modules/htest.dev/htest.css" crossorigin />
+	<!--
+		"#dom-polyfill" loads happy-dom in Node; browsers have native DOM and don't need it.
+		Test files static-import the specifier regardless, so it's mapped to an empty data URL (a valid no-op module) here.
+	-->
+	<script type="importmap">
+			{
+				"imports": {
+					"#dom-polyfill": "data:text/javascript,",
+					"htest.dev/render": "../node_modules/htest.dev/src/render.js",
+					"xtensible": "../node_modules/xtensible/src/index.js",
+					"xtensible/util": "../node_modules/xtensible/src/util.js",
+					"xtensible/plugins": "../node_modules/xtensible/plugins/index.js",
+					"get-symbols": "../node_modules/get-symbols/index.js"
+				}
+			}
+		</script>
+	<script src="../node_modules/htest.dev/htest.js" type="module" crossorigin></script>
+	<script type="module">
+		// Pass `?test=path/to/tests` to load `./path/to/tests.js`.
+		// The extension is optional and slashes route into subdirectories.
+		const params = new URLSearchParams(location.search);
+		let testUrl = params.get("test") ?? "index";
+
+		if (!testUrl.match(/\.\w+$/)) {
+			testUrl += ".js";
+		}
+
+		if (/^[\w/-]+\.\w+$/.test(testUrl)) {
+			testUrl = `./${testUrl}`;
+		}
+
+		const [render, tests] = await Promise.all([
+			import("htest.dev/render").then(m => m.default),
+			import(testUrl).then(m => m.default),
+		]);
+		render(tests);
+	</script>
+</head>
+
+<body></body>
+
+</html>

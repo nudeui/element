@@ -18,6 +18,7 @@
 		"build": "npm run build:apidocs",
 		"watch": "npm run watch:apidocs",
 		"test": "npx htest test/index.js",
+		"test:browser": "python3 -m http.server 8765 >/dev/null 2>&1 & PID=$!; trap 'kill $PID 2>/dev/null' EXIT; trap 'exit 0' INT TERM HUP; sleep 1; open http://localhost:8765/test/index.html; wait $PID",
 		"release": "npm login && npx release-it"
 	},
 	"exports": {
