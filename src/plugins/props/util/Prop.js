@@ -9,6 +9,11 @@ let Self = class Prop {
 
 	#initialized = false;
 
+	/**
+	 * @param {string} name
+	 * @param {Object | Prop} spec Prop spec. If a {@link Prop} with matching name is passed, it is returned as-is.
+	 * @param {Props} props The owning {@link Props} collection.
+	 */
 	constructor (name, spec, props) {
 		if (spec instanceof Prop && name === spec.name) {
 			return spec;
@@ -57,6 +62,9 @@ let Self = class Prop {
 		this.reflect = spec.reflect ?? !this.spec.get;
 	}
 
+	/**
+	 * @returns {string | null} Attribute name this prop reflects from, or null if none.
+	 */
 	get fromAttribute () {
 		let reflectFrom = typeof this.reflect === "object" ? this.reflect.from : this.reflect;
 		return reflectFrom === true
@@ -66,16 +74,27 @@ let Self = class Prop {
 				: null;
 	}
 
+	/**
+	 * @returns {string | null} Attribute name this prop reflects to, or null if none.
+	 */
 	get toAttribute () {
 		let reflectTo = typeof this.reflect === "object" ? this.reflect.to : this.reflect;
 		return reflectTo === true ? this.name : typeof reflectTo === "string" ? reflectTo : null;
 	}
 
+	/**
+	 * @returns {Prop | null} The prop that provides this prop's default, if `default` is another prop.
+	 */
 	get defaultProp () {
 		return this.default instanceof Prop ? this.default : null;
 	}
 
-	// Just calls equals() by default but can be overridden
+	/**
+	 * Compare two values for equality. Delegates to `spec.equals` if provided, else the prop's type.
+	 * @param {*} a
+	 * @param {*} b
+	 * @returns {boolean}
+	 */
 	equals (a, b) {
 		if (this.spec.equals) {
 			return this.spec.equals(a, b);
@@ -84,7 +103,11 @@ let Self = class Prop {
 		return types.equals(a, b, this.type);
 	}
 
-	// To attribute
+	/**
+	 * Serialize a value for attribute reflection.
+	 * @param {*} value
+	 * @returns {string | null}
+	 */
 	stringify (value) {
 		if (this.spec.stringify) {
 			return this.spec.stringify(value);
@@ -93,9 +116,11 @@ let Self = class Prop {
 		return types.stringify(value, this.type);
 	}
 
-	// Parse value into the correct type
-	// This could be coming from an attribute (string)
-	// Or directly setting the property (which could be a variety of types)
+	/**
+	 * Parse a raw value into this prop's type. Input may be a string (from an attribute)
+	 * or any value (from a property write).
+	 * @param {*} value
+	 */
 	parse (value) {
 		if (this.spec.parse) {
 			return this.spec.parse(value);
@@ -104,6 +129,11 @@ let Self = class Prop {
 		return types.parse(value, this.type);
 	}
 
+	/**
+	 * Initialize this prop on an element: surface any pre-set value through the accessor,
+	 * or fire a default-source change if neither value nor default-prop applies.
+	 * @param {HTMLElement} element
+	 */
 	initializeFor (element) {
 		// Handle any properties already set before initialization
 		let name = this.name;
@@ -123,7 +153,11 @@ let Self = class Prop {
 		this.#initialized = true;
 	}
 
-	// Define the necessary getters and setters
+	/**
+	 * Build the prototype accessor descriptor for this prop.
+	 * @param {{enumerable?: boolean}} [options]
+	 * @returns {PropertyDescriptor}
+	 */
 	getDescriptor ({ enumerable = true } = this.spec) {
 		let me = this;
 		let descriptor = {
@@ -148,6 +182,10 @@ let Self = class Prop {
 		return descriptor;
 	}
 
+	/**
+	 * Read this prop's current value for an element, falling back to its default.
+	 * @param {HTMLElement} element
+	 */
 	get (element) {
 		let value = element.props[this.name];
 
@@ -187,6 +225,12 @@ let Self = class Prop {
 		return value;
 	}
 
+	/**
+	 * Write a value to an element: parse, convert, store, and reflect to attribute when applicable.
+	 * @param {HTMLElement} element
+	 * @param {*} value Raw value (string from an attribute, or any from a property write).
+	 * @param {{source?: string, name?: string, oldAttributeValue?: string | null}} [options]
+	 */
 	set (element, value, { source, name, oldAttributeValue } = {}) {
 		let oldValue = element.props[this.name];
 
@@ -257,6 +301,11 @@ let Self = class Prop {
 		this.changed(element, change);
 	}
 
+	/**
+	 * Apply a change descriptor to an element by writing through the matching attribute or property.
+	 * @param {HTMLElement} element
+	 * @param {Object} change
+	 */
 	applyChange (element, change) {
 		if (change.source === "attribute") {
 			if (element.setAttribute) {
@@ -290,14 +339,20 @@ let Self = class Prop {
 		}
 	}
 
+	/**
+	 * Invoke the spec's `changed` hook and cascade to {@link Props#propChanged}.
+	 * @param {HTMLElement} element
+	 * @param {Object} change
+	 */
 	async changed (element, change) {
 		this.spec.changed?.call(element, change);
 		this.props.propChanged(element, this, change);
 	}
 
 	/**
-	 * Recalculate computed properties and cache the value
-	 * @param {*} element
+	 * Recalculate this prop's value (for computed props or `convert`) and store it.
+	 * @param {HTMLElement} element
+	 * @param {Prop} [dependency] The dependency whose change triggered this update.
 	 */
 	update (element, dependency) {
 		let oldValue = element.props[this.name];
@@ -320,6 +375,13 @@ let Self = class Prop {
 		}
 	}
 
+	/**
+	 * Whether this prop currently depends on `prop`'s value for the given element.
+	 * Includes the default-prop link only while this prop has no explicit value.
+	 * @param {Prop} prop
+	 * @param {HTMLElement} element
+	 * @returns {boolean}
+	 */
 	dependsOn (prop, element) {
 		if (!prop) {
 			return false;
@@ -335,6 +397,9 @@ let Self = class Prop {
 		);
 	}
 
+	/**
+	 * @returns {boolean} Whether {@link initializeFor} has run for this prop at least once.
+	 */
 	get initialized () {
 		return this.#initialized;
 	}

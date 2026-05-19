@@ -26,11 +26,19 @@ export default class Props extends Map {
 		}
 	}
 
+	/**
+	 * @returns {string[]} Unique attribute names that any reflected prop reads from.
+	 */
 	get observedAttributes () {
 		let attributes = [...this.values()].map(spec => spec.fromAttribute).filter(Boolean);
 		return [...new Set(attributes)];
 	}
 
+	/**
+	 * Define one or more props on the class.
+	 * @param {string | Object<string, Object>} nameOrProps Prop name, or map of name → spec.
+	 * @param {Object} [spec] Prop spec, when the first argument is a name.
+	 */
 	add (props) {
 		if (arguments.length === 2) {
 			let [name, spec] = arguments;
@@ -46,6 +54,9 @@ export default class Props extends Map {
 		this.updateDependents();
 	}
 
+	/**
+	 * Rebuild the dependency graph and reorder props so dependents come after their dependencies.
+	 */
 	updateDependents () {
 		// Rebuild dependency graph
 		let dependents = {};
@@ -123,6 +134,12 @@ export default class Props extends Map {
 		}
 	}
 
+	/**
+	 * Propagate an observed attribute change to every prop reflected from it.
+	 * @param {HTMLElement} element
+	 * @param {string} name Attribute name.
+	 * @param {string | null} [oldValue]
+	 */
 	attributeChanged (element, name, oldValue) {
 		if (!element.isConnected || element.ignoredAttributes.has(name)) {
 			// We process attributes all at once when the element is connected
@@ -147,8 +164,18 @@ export default class Props extends Map {
 	 */
 	#paused = new WeakSet();
 
+	/**
+	 * Per-element queue of propchange events awaiting dispatch while paused or before init.
+	 * @type {WeakMap<HTMLElement, PropChangeEvent[]>}
+	 */
 	eventDispatchQueue = new WeakMap();
 
+	/**
+	 * Fire propchange events for `prop` and cascade updates to any dependents.
+	 * @param {HTMLElement} element
+	 * @param {Prop} prop The prop that changed.
+	 * @param {Object} change Change descriptor (see {@link Prop#set}).
+	 */
 	propChanged (element, prop, change) {
 		// Source-first: fire before cascading so listeners hear the written prop first.
 		let eventNames = ["propchange", ...(prop.eventNames ?? [])];
@@ -170,6 +197,12 @@ export default class Props extends Map {
 		}
 	}
 
+	/**
+	 * Dispatch (or queue, if paused or not yet initialized) a propchange-style event.
+	 * @param {HTMLElement} element
+	 * @param {string} eventName
+	 * @param {{name: string, prop: Prop, detail: Object}} eventProps
+	 */
 	firePropChangeEvent (element, eventName, eventProps) {
 		let event = new PropChangeEvent(eventName, eventProps);
 
@@ -183,6 +216,11 @@ export default class Props extends Map {
 		}
 	}
 
+	/**
+	 * Initialize all props for an element: read reflected attributes, apply defaults,
+	 * and flush any queued events.
+	 * @param {HTMLElement} element
+	 */
 	initializeFor (element) {
 		if (element.hasAttribute) {
 			// Update all reflected props from attributes at once
@@ -202,10 +240,18 @@ export default class Props extends Map {
 		this.resumeEvents(element);
 	}
 
+	/**
+	 * Hold propchange event dispatch for an element; events are queued and flushed on resume.
+	 * @param {HTMLElement} element
+	 */
 	pauseEvents (element) {
 		this.#paused.add(element);
 	}
 
+	/**
+	 * Resume propchange event dispatch for an element and flush any queued events.
+	 * @param {HTMLElement} element
+	 */
 	resumeEvents (element) {
 		this.#paused.delete(element);
 
