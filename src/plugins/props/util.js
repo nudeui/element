@@ -28,3 +28,7 @@ export function sortObject (obj, fn) {
 
 	return Object.fromEntries(Object.entries(obj).sort(fn));
 }
+
+export function capitalize (str) {
+	return str[0].toUpperCase() + str.slice(1);
+}

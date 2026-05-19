@@ -1,4 +1,4 @@
-import { inferDependencies, resolveValue } from "../util.js";
+import { inferDependencies, resolveValue, capitalize } from "../util.js";
 import * as types from "./types.js";
 
 let Self = class Prop {
@@ -30,7 +30,7 @@ let Self = class Prop {
 		if (typeof spec.default === "function") {
 			let defaultDependencies = spec.defaultDependencies ?? inferDependencies(spec.default);
 			if (defaultDependencies.length > 0) {
-				let defaultProp = "default" + name.replace(/^\w/, c => c.toUpperCase());
+				let defaultProp = "default" + capitalize(name);
 				this.props.add(defaultProp, {
 					get: spec.default,
 					dependencies: defaultDependencies,
