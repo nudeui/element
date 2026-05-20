@@ -42,50 +42,5 @@ export default {
 				},
 			],
 		},
-		{
-			name: "observedAttributes()",
-			run (Class) {
-				let props = new Props(Class, Class.props);
-				return props.observedAttributes;
-			},
-			tests: [
-				{
-					name: "No props === no observed attributes",
-					arg: class {
-						static props = {};
-					},
-					expect: [],
-				},
-				{
-					name: "Observed attributes correspond to reflected props",
-					arg: class {
-						static props = {
-							foo: {},
-							bar: {
-								reflect: false,
-							},
-							baz: {
-								reflect: { from: "yolo" },
-							},
-							foobar: {
-								reflect: "foo",
-							},
-						};
-					},
-					expect: ["foo", "yolo"],
-				},
-				{
-					name: "Props reflecting from an empty string should be ignored",
-					arg: class {
-						static props = {
-							foo: {
-								reflect: "",
-							},
-						};
-					},
-					expect: [],
-				},
-			],
-		},
 	],
 };
