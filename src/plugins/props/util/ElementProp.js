@@ -160,12 +160,7 @@ export default class ElementProp {
 
 				let ignored = this.props.ignoredAttributes;
 				ignored.add(attributeName);
-				if (attributeValue === null) {
-					element.removeAttribute(attributeName);
-				}
-				else {
-					element.setAttribute(attributeName, attributeValue);
-				}
+				this.applyChange({ ...change, source: "attribute" });
 				ignored.delete(attributeName);
 			}
 		}
