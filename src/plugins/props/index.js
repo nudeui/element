@@ -1,7 +1,7 @@
 import Props from "./util/Props.js";
+import ElementProps from "./util/ElementProps.js";
 import { symbols } from "xtensible";
 import { defineOwnProperty } from "xtensible/util";
-import { defineLazyProperty } from "../../util/lazy.js";
 
 export const { props } = symbols.known;
 const { observedAttributes } = symbols.known;
@@ -22,41 +22,29 @@ const hooks = {
 	},
 
 	constructed () {
-		this.constructor[props].initializeFor(this);
+		// Create the per-element ElementProps now, after the element constructor
+		// and all sync pre-mount setup has completed. The ElementProps
+		// constructor self-installs as `this.props` and runs the full mount
+		// pass (shadow recovery + attr-read + default-fire), then resumes
+		// event dispatch.
+		new ElementProps(this);
 	},
 
 	connected () {
-		this.constructor[props].resumeEvents(this);
+		this.props?.resumeEvents();
 	},
 
 	disconnected () {
-		this.constructor[props].pauseEvents(this);
+		this.props?.pauseEvents();
 	},
 
-	"attribute-changed" ({ name, oldValue, value }) {
-		this.constructor[props].attributeChanged(this, name, oldValue, value);
+	"attribute-changed" ({ name, oldValue }) {
+		// Pre-mount attribute writes (before `constructed` fires) leave the
+		// attribute on the element; ElementProps' constructor reads it during
+		// init. No need to handle them here.
+		this.props?.attributeChanged(name, oldValue);
 	},
 };
-
-const provides = {};
-
-// Internal prop values
-defineLazyProperty(provides, "props", {
-	get () {
-		return {};
-	},
-	configurable: true,
-	writable: true,
-});
-
-// Ignore mutations on these attributes
-defineLazyProperty(provides, "ignoredAttributes", {
-	get () {
-		return new Set();
-	},
-	configurable: true,
-	writable: true,
-});
 
 const providesStatic = {
 	defineProps (def = this.props) {
@@ -70,14 +58,6 @@ const providesStatic = {
 
 		this[props].add(env.props);
 	},
-
-	// ...composed({
-	// 	get observedAttributes () {
-	// 		let thisProps = this[props].observedAttributes ?? [];
-	// 		let superProps = this.super?.observedAttributes ?? [];
-	// 		return [...superProps, ...thisProps];
-	// 	},
-	// }),
 
 	get observedAttributes () {
 		if (Object.hasOwn(this, observedAttributes)) {
@@ -99,4 +79,4 @@ defineOwnProperty(providesStatic, props, function () {
 	return new Props(this);
 });
 
-export default { hooks, provides, providesStatic };
+export default { hooks, providesStatic };

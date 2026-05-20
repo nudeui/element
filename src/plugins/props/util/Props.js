@@ -1,25 +1,27 @@
-import { sortObject, isRegularFunction, capitalize } from "../util.js";
+import { sortObject, capitalize, inferDependencies } from "../util.js";
 import Prop from "./Prop.js";
 
+/**
+ * Class-level collection of {@link Prop} specs for a custom element class.
+ * Per-element state lives in {@link ElementProps}.
+ */
 export default class Props extends Map {
 	/**
-	 * Dependency graph
-	 * @type {Object.<string, Set<string>>}
-	 * Key is the name of the prop, value is a set of prop names that depend on it
+	 * Dependency graph.
+	 * Key is the name of the prop; value is the set of {@link Prop}s that depend on it.
+	 * @type {Object<string, Set<Prop>>}
 	 */
 	dependents = {};
 
 	/**
-	 *
-	 * @param {HTMLElement} Class The class to define props for
-	 * @param {Object} [props] The props to define as an object with the prop name as the key and the prop spec as the value.
+	 * @param {Function} Class The class to define props for.
+	 * @param {Object} [props] Props to define, as a map of name → spec.
 	 */
 	constructor (Class, props) {
 		super();
 
 		this.Class = Class;
 
-		// Define getters and setters for each prop
 		if (props) {
 			this.add(props);
 		}
@@ -29,7 +31,7 @@ export default class Props extends Map {
 	 * @returns {string[]} Unique attribute names that any reflected prop reads from.
 	 */
 	get observedAttributes () {
-		let attributes = [...this.values()].map(spec => spec.reflect.from).filter(Boolean);
+		let attributes = [...this.values()].map(prop => prop.reflect.from).filter(Boolean);
 		return [...new Set(attributes)];
 	}
 
@@ -37,34 +39,50 @@ export default class Props extends Map {
 	 * Define one or more props on the class.
 	 * @param {string | Object<string, Object>} nameOrProps Prop name, or map of name → spec.
 	 * @param {Object} [spec] Prop spec, when the first argument is a name.
+	 * @returns {Prop | Prop[]} The created prop, or array of created props.
 	 */
-	add (props) {
-		if (arguments.length === 2) {
-			let [name, spec] = arguments;
-			return this.add({ [name]: spec });
+	add (nameOrProps, spec) {
+		if (typeof nameOrProps === "string") {
+			let prop = this.createProp(nameOrProps, spec);
+			this.updateDependents();
+			return prop;
 		}
 
-		for (let [name, spec] of Object.entries(props)) {
-			this.createProp(name, spec);
+		let created = [];
+		for (let [name, spec] of Object.entries(nameOrProps)) {
+			created.push(this.createProp(name, spec));
 		}
 
 		this.updateDependents();
+		return created;
 	}
 
 	/**
-	 * Low level method to create one prop. Does not call updateDependents()
+	 * Low-level: create a single prop and install its accessor on the class prototype.
+	 * Does not call {@link updateDependents}; callers should batch and call it once.
+	 * Clones `spec` before any normalization so the user's object is not mutated.
 	 * @param {string} name
 	 * @param {Object} spec
-	 * @returns
+	 * @returns {Prop}
 	 */
 	createProp (name, spec) {
-		if (isRegularFunction(spec.default) && !("defaultProp" in spec)) {
-			// Create a prop for the default value so that dependencies are tracked and change events are fired for it
-			delete spec.default;
-			spec.defaultProp = this.createProp("default" + capitalize(name), {
-				get: spec.default,
-			});
-			// No need to call updateDependents() here, it will be called anyway at the end of this
+		spec = { ...spec };
+
+		// Promote `default () { ... }` to a synthetic computed prop so its
+		// dependencies are tracked and changes are propagated. A function default
+		// with no `this.X` references behaves like a constant and stays as the
+		// plain default (this also covers arrow functions, which we can't
+		// reliably tell apart from regular ones).
+		if (typeof spec.default === "function" && !spec.defaultProp) {
+			let defaultDependencies = spec.defaultDependencies ?? inferDependencies(spec.default);
+			if (defaultDependencies.length > 0) {
+				let defaultFn = spec.default;
+				delete spec.default;
+				spec.defaultProp = this.createProp("default" + capitalize(name), {
+					get: defaultFn,
+					dependencies: defaultDependencies,
+				});
+			}
 		}
 
 		let prop = new Prop(name, spec, this);
@@ -74,9 +92,23 @@ export default class Props extends Map {
 	}
 
 	/**
+	 * Resolve any `defaultProp: "name"` string references to actual {@link Prop} instances.
+	 * Done as a separate pass so a prop can reference another that hasn't been declared yet.
+	 */
+	#resolveDefaultProps () {
+		for (let prop of this.values()) {
+			if (typeof prop.defaultProp === "string") {
+				prop.defaultProp = this.get(prop.defaultProp);
+			}
+		}
+	}
+
+	/**
 	 * Rebuild the dependency graph and reorder props so dependents come after their dependencies.
 	 */
 	updateDependents () {
+		this.#resolveDefaultProps();
+
 		// Rebuild dependency graph
 		let dependents = {};
 

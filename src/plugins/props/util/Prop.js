@@ -1,9 +1,13 @@
-import { inferDependencies, resolveValue, capitalize, isArrowFunction } from "../util.js";
+import { inferDependencies } from "../util.js";
 import * as types from "./types.js";
 
+/**
+ * Class-level metadata for a single prop.
+ * Holds the normalized spec; per-element state and behavior live in {@link ElementProp}.
+ */
 let Self = class Prop {
 	/**
-	 * @type {Props} props - The props object this prop belongs to
+	 * @type {Props} The owning {@link Props} collection.
 	 */
 	props;
 
@@ -18,11 +22,18 @@ let Self = class Prop {
 		}
 
 		this.name = name;
-		this.spec = spec;
 		this.props = props;
 
+		// Direct pass-through hooks: ElementProp accesses these via the Prop, never via a raw spec.
+		this.get = spec.get;
+		this.set = spec.set;
+		this.convert = spec.convert;
+		this.changed = spec.changed;
+		this.eventNames = spec.eventNames;
+		this.enumerable = spec.enumerable ?? true;
+
 		this.default = spec.default;
-		this.defaultProp = spec.defaultProp;
+		this.defaultProp = spec.defaultProp ?? null;
 
 		if (spec.dependencies) {
 			this.dependencies = new Set(spec.dependencies);
@@ -35,79 +46,76 @@ let Self = class Prop {
 			]);
 		}
 
-		// Normalize reflect config
-		// Computed properties are not reflected by default
-		this.reflect = spec.reflect ?? !this.spec.get;
-		if (typeof this.reflect === "boolean") {
-			this.reflect = { from: this.reflect, to: this.reflect };
+		// Normalize reflect config without mutating the user's spec.
+		// Computed properties are not reflected by default.
+		let reflect = spec.reflect ?? !spec.get;
+		if (typeof reflect !== "object" || reflect === null) {
+			reflect = { from: reflect, to: reflect };
 		}
-		this.reflect.from = this.reflect.from === true ? this.name : this.reflect.from || undefined;
-		this.reflect.to = this.reflect.to === true ? this.name : this.reflect.to || undefined;
+		this.reflect = {
+			from: reflect.from === true ? name : reflect.from || undefined,
+			to: reflect.to === true ? name : reflect.to || undefined,
+		};
 
 		this.type = types.resolve(spec.type);
 
 		for (let fnName of ["equals", "stringify", "parse"]) {
 			this[fnName] =
-				this.spec[fnName] ??
+				spec[fnName] ??
 				function (...args) {
 					return types[fnName](...args, this.type);
 				};
-		}
-
-		if (this.spec.convert) {
-			this.convert = this.spec.convert;
 		}
 	}
 
 	/**
 	 * Build the prototype accessor descriptor for this prop.
-	 * @param {{enumerable?: boolean}} [options]
+	 * Captures the Prop directly so subclass accessors keep working even when
+	 * the element's class-level {@link Props} doesn't include this prop
+	 * (inheritance) — the descriptor asks {@link ElementProps#forSpec} for
+	 * the matching wrapper without going through name lookup.
 	 * @returns {PropertyDescriptor}
 	 */
-	getDescriptor ({ enumerable = true } = this.spec) {
-		let me = this;
+	getDescriptor () {
+		let prop = this;
+		let { name, get: computed, set: userSet } = this;
 		let descriptor = {
 			get () {
-				return me.get(this);
+				// Pre-mount: this.props isn't set up yet, no data property
+				// shadowing has been written either, so the prop genuinely has
+				// no value to read.
+				return this.props?.forSpec(prop).get();
 			},
-			enumerable,
+			enumerable: this.enumerable,
 			configurable: true,
 		};
 
-		if (!this.spec.get || this.spec.set === true) {
+		if (!computed || userSet === true) {
 			descriptor.set = function (value) {
-				me.set(this, value, { source: "property" });
+				// TODO throw if this is the constructor class
+				if (this.props) {
+					this.props.forSpec(prop).set(value, { source: "property" });
+				}
+				else {
+					// Pre-mount write: install a shadowing data property. When
+					// ElementProps is later constructed, ElementProp#initialize
+					// will pick it up via shadow recovery (Object.hasOwn).
+					Object.defineProperty(this, name, {
+						value,
+						writable: true,
+						configurable: true,
+						enumerable: true,
+					});
+				}
 			};
 		}
-		else if (this.spec.set) {
+		else if (typeof userSet === "function") {
 			descriptor.set = function (value) {
-				me.spec.set.call(this, value);
+				userSet.call(this, value);
 			};
 		}
 
 		return descriptor;
-	}
-
-	/**
-	 * Whether this prop currently depends on `prop`'s value for the given element.
-	 * Includes the default-prop link only while this prop has no explicit value.
-	 * @param {Prop} prop
-	 * @param {HTMLElement} element
-	 * @returns {boolean}
-	 */
-	dependsOn (prop, element) {
-		if (!prop) {
-			return false;
-		}
-
-		if (prop === this) {
-			return true;
-		}
-
-		return (
-			this.dependencies.has(prop.name) ||
-			(this.defaultProp === prop && element.props[this.name] === undefined)
-		);
 	}
 };
 

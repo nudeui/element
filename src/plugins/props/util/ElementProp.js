@@ -1,98 +1,122 @@
 import { resolveValue } from "../util.js";
 
+/**
+ * Per-element wrapper around a {@link Prop} spec.
+ * Holds the current and previous value for one prop on one element, and the
+ * per-element behavior (get, set, update, cascade) for that prop.
+ */
 export default class ElementProp {
 	/**
-	 * Internal value
+	 * Current stored value. `undefined` means no explicit value has been set,
+	 * which triggers default resolution on read.
 	 */
 	value;
 
 	/**
-	 *
-	 * @param {HTMLElement} element
-	 * @param {Prop} spec
+	 * Last value that was different from the current one (i.e. the value
+	 * before the most recent change that passed the equality check).
 	 */
-	constructor (element, spec) {
-		this.element = element;
+	oldValue;
+
+	/**
+	 * @param {ElementProps} props The owning per-element collection.
+	 * @param {Prop} spec The class-level prop spec.
+	 */
+	constructor (props, spec) {
+		this.props = props;
 		this.spec = spec;
 
-		let name = this.spec.name;
+		// Register before any side effects, so re-entrant lookups during the
+		// init below (e.g. a dependent's getter reading `this.someOtherProp`)
+		// find this wrapper in the Map.
+		props.set(spec.name, this);
+
+		let { name, reflect, defaultProp, get: computed } = spec;
+		let { element } = props;
+
 		if (Object.hasOwn(element, name)) {
-			// A local data property will shadow the accessor that is defined on the prototype
+			// A local data property (e.g. a class field, or a pre-mount write
+			// that was shadowed onto the element) covers the prototype accessor.
 			// See https://github.com/nudeui/element/issues/14
 			let value = element[name];
-			delete element[name]; // Deleting the data property will uncover the accessor
-			element[name] = value; // Invoking the accessor means the value doesn't skip parsing
+			delete element[name];
+			this.set(value, { source: "property" });
 		}
-		// TODO this needs editing
-		else if (element.props[name] === undefined && !this.spec.defaultProp) {
-			// Is not set and its default is not another prop
-			this.changed(element, { source: "default", element });
+		else if (reflect.from && element.hasAttribute(reflect.from)) {
+			this.set(element.getAttribute(reflect.from), {
+				source: "attribute",
+				name: reflect.from,
+			});
 		}
+		else if (!defaultProp && !computed) {
+			// Plain prop (value-or-function default, no `get`, no `defaultProp`).
+			// Computed / defaultProp'd props don't need this — they receive their
+			// initial value via the cascade from their dependencies.
+			this.changed({ source: "default" });
+		}
+	}
+
+	get element () {
+		return this.props.element;
 	}
 
 	get name () {
 		return this.spec.name;
 	}
 
-	get type () {
-		return this.spec.type;
-	}
-
 	/**
-	 * Read this prop's current value for an element, falling back to its default.
-	 * @param {HTMLElement} element
+	 * Read this prop's current value, falling back to its default if unset.
 	 */
 	get () {
-		let element = this.element;
-		let value = this.value;
-
-		if (value === undefined) {
-			this.update(element);
-			value = this.value;
+		if (this.value === undefined) {
+			this.update();
 		}
 
-		if (value === undefined) {
-			if (this.defaultProp) {
-				value = this.defaultProp.get(element);
-			}
-			else if (this.default !== undefined) {
-				value = resolveValue(this.default, [element, element]);
-
-				try {
-					value = this.parse(value);
-				}
-				catch (e) {
-					console.warn(
-						"Failed to parse default value",
-						value,
-						`for prop ${this.name}. Original error was: `,
-						e,
-					);
-					return null;
-				}
-
-				if (this.spec.convert) {
-					value = this.spec.convert.call(element, value);
-				}
-			}
+		if (this.value !== undefined) {
+			return this.value;
 		}
 
-		return value;
+		let { spec, element } = this;
+		let raw;
+
+		if (spec.defaultProp) {
+			raw = this.props.forSpec(spec.defaultProp).get();
+		}
+		else if (spec.default !== undefined) {
+			raw = resolveValue(spec.default, [element, element]);
+		}
+		else {
+			return undefined;
+		}
+
+		let value;
+		try {
+			value = spec.parse(raw);
+		}
+		catch (e) {
+			console.warn(
+				"Failed to parse default value",
+				raw,
+				`for prop ${this.name}. Original error was: `,
+				e,
+			);
+			return null;
+		}
+
+		return this.convert(value);
 	}
 
 	/**
-	 * Write a value to an element: parse, convert, store, and reflect to attribute when applicable.
-	 * @param {HTMLElement} element
-	 * @param {*} value Raw value (string from an attribute, or any from a property write).
+	 * Write a value: parse, convert, store, and reflect to attribute when applicable.
+	 * @param {*} value Raw value (string from an attribute, any from a property write).
 	 * @param {{source?: string, name?: string, oldAttributeValue?: string | null}} [options]
 	 */
-	set (element, value, { source, name, oldAttributeValue } = {}) {
-		let oldValue = element.props[this.name];
-
-		let parsedValue;
+	set (value, { source, name, oldAttributeValue } = {}) {
+		let { spec, element } = this;
+		let parsed;
 
 		try {
-			parsedValue = this.parse(value);
+			parsed = spec.parse(value);
 		}
 		catch (e) {
 			// Abort mission
@@ -106,43 +130,43 @@ export default class ElementProp {
 		// removeAttribute() arrives as null; collapse to undefined so the prop
 		// reverts to its natural empty state. Property writes of null remain a
 		// legitimate user value.
-		if (source === "attribute" && parsedValue === null) {
-			parsedValue = undefined;
+		if (source === "attribute" && parsed === null) {
+			parsed = undefined;
 		}
 
-		if (this.spec.convert) {
-			parsedValue = this.spec.convert.call(element, parsedValue);
-		}
+		parsed = this.convert(parsed);
 
-		if (this.equals(parsedValue, oldValue)) {
+		if (spec.equals(parsed, this.value)) {
 			return;
 		}
 
-		element.props[this.name] = parsedValue;
+		this.oldValue = this.value;
+		this.value = parsed;
 
 		let change = {
-			element,
 			source,
-			value: parsedValue,
-			oldValue,
+			value: parsed,
+			oldValue: this.oldValue,
 		};
 
-		if (source === "property") {
-			// Reflect to attribute?
-			if (this.spec.reflect.to) {
-				let attributeName = this.spec.reflect.to;
-				let attributeValue = this.stringify(parsedValue);
-				let oldAttributeValue = element.getAttribute(attributeName);
+		if (source === "property" && spec.reflect.to) {
+			let attributeName = spec.reflect.to;
+			let attributeValue = spec.stringify(parsed);
+			let oldAttributeValue = element.getAttribute(attributeName);
 
-				if (oldAttributeValue !== attributeValue) {
-					// TODO what if another prop is reflected *from* this attribute?
-					element.ignoredAttributes.add(attributeName);
+			if (oldAttributeValue !== attributeValue) {
+				// TODO what if another prop is reflected *from* this attribute?
+				Object.assign(change, { attributeName, attributeValue, oldAttributeValue });
 
-					Object.assign(change, { attributeName, attributeValue, oldAttributeValue });
-					this.applyChange(element, { ...change, source: "attribute" });
-
-					element.ignoredAttributes.delete(attributeName);
+				let ignored = this.props.ignoredAttributes;
+				ignored.add(attributeName);
+				if (attributeValue === null) {
+					element.removeAttribute(attributeName);
 				}
+				else {
+					element.setAttribute(attributeName, attributeValue);
+				}
+				ignored.delete(attributeName);
 			}
 		}
 		else if (source === "attribute") {
@@ -153,81 +177,102 @@ export default class ElementProp {
 			});
 		}
 
-		this.changed(element, change);
+		this.changed(change);
 	}
 
 	/**
-	 * Apply a change descriptor to an element by writing through the matching attribute or property.
-	 * @param {HTMLElement} element
+	 * Apply the spec's `convert` hook, or pass the value through if none.
+	 * @param {*} value
+	 */
+	convert (value) {
+		let { convert } = this.spec;
+		return convert ? convert.call(this.element, value) : value;
+	}
+
+	/**
+	 * Apply a change descriptor by writing through the matching attribute or property.
+	 * Used to mirror a change after the fact (e.g. to replay queued changes).
 	 * @param {Object} change
 	 */
-	applyChange (element, change) {
-		if (change.source === "attribute") {
-			if (element.setAttribute) {
-				let attributeName = change.attributeName ?? this.spec.reflect.to;
-				let attributeValue =
-					change.attributeValue !== undefined
-						? change.attributeValue
-						: change.element.getAttribute(attributeName);
+	applyChange (change) {
+		let { element, spec } = this;
 
-				if (attributeValue === null) {
-					element.removeAttribute(attributeName);
-				}
-				else {
-					element.setAttribute(attributeName, attributeValue);
-				}
+		if (change.source === "attribute") {
+			let attributeName = change.attributeName ?? spec.reflect.to;
+			let attributeValue = change.attributeValue ?? element.getAttribute(attributeName);
+
+			if (attributeValue === null) {
+				element.removeAttribute(attributeName);
+			}
+			else {
+				element.setAttribute(attributeName, attributeValue);
 			}
 		}
 		else if (change.source === "property") {
 			element[this.name] = change.value;
 		}
 		else if (change.source === "default") {
-			// Value will be undefined here
-			if (change.element !== element) {
-				element[this.name] = change.element[this.name];
-			}
+			// Nothing to do: defaults resolve lazily on read.
 		}
 		else {
 			// Mixed
-			this.applyChange(element, { ...change, source: "attribute" });
-			this.applyChange(element, { ...change, source: "property" });
+			this.applyChange({ ...change, source: "attribute" });
+			this.applyChange({ ...change, source: "property" });
 		}
 	}
 
 	/**
-	 * Invoke the spec's `changed` hook and cascade to {@link Props#propChanged}.
-	 * @param {HTMLElement} element
+	 * Invoke the spec's `changed` hook and cascade to {@link ElementProps#propChanged}.
 	 * @param {Object} change
 	 */
-	async changed (element, change) {
-		this.spec.changed?.call(element, change);
-		this.props.propChanged(element, this, change);
+	changed (change) {
+		this.spec.changed?.call(this.element, change);
+		this.props.propChanged(this, change);
 	}
 
 	/**
 	 * Recalculate this prop's value (for computed props or `convert`) and store it.
-	 * @param {HTMLElement} element
-	 * @param {Prop} [dependency] The dependency whose change triggered this update.
+	 * @param {ElementProp} [dependency] The dependency whose change triggered this update.
 	 */
 	update (dependency) {
-		let element = this.element;
-		let oldValue = element.props[this.name];
+		let { spec } = this;
 
-		if (dependency === this.defaultProp) {
-			// We have no way of checking if the default prop has changed
-			// and there’s nothing to set, so let’s just called changed directly
-			this.changed(element, { element, source: "default" });
+		if (dependency && dependency.spec === spec.defaultProp) {
+			// The default prop changed; the resolved default may differ, but since
+			// we have no value of our own to update, just notify listeners.
+			this.changed({ source: "default" });
 			return;
 		}
 
-		if (this.spec.get) {
-			let value = this.spec.get.call(element);
-			this.set(element, value, { source: "get", oldValue });
+		if (spec.get) {
+			let value = spec.get.call(this.element);
+			this.set(value, { source: "get" });
 		}
 
-		if (this.spec.convert && oldValue !== undefined) {
-			let value = this.spec.convert.call(element, oldValue);
-			this.set(element, value, { source: "convert", oldValue });
+		if (spec.convert && this.value !== undefined) {
+			this.set(this.convert(this.value), { source: "convert" });
 		}
+	}
+
+	/**
+	 * Whether this prop currently depends on `dep`'s value.
+	 * Includes the default-prop link only while this prop has no explicit value.
+	 * @param {ElementProp} dep
+	 * @returns {boolean}
+	 */
+	dependsOn (dep) {
+		if (!dep) {
+			return false;
+		}
+
+		if (dep === this) {
+			return true;
+		}
+
+		let { spec } = this;
+		return (
+			spec.dependencies.has(dep.name) ||
+			(spec.defaultProp === dep.spec && this.value === undefined)
+		);
 	}
 }

@@ -132,10 +132,9 @@ export default {
 
 						let props = new Props(Class, Class.props);
 
-						let ret = props.get("foo").default;
-						if (ret instanceof Prop) {
-							ret = ret.default;
-						}
+						let prop = props.get("foo");
+						// Follow `defaultProp` chain to find the underlying default value.
+						let ret = prop.defaultProp ? prop.defaultProp.default : prop.default;
 
 						return resolveValue(ret, []);
 					},
@@ -190,51 +189,31 @@ export default {
 					],
 				},
 				{
-					name: "Reflections",
+					name: "reflect",
+					description: "Normalized {from, to} attribute names for each spec shape.",
 					run (spec) {
 						let prop = new Prop("foo", spec);
-						return prop.reflect;
+						return [prop.reflect.from, prop.reflect.to];
 					},
 					tests: [
 						{
 							name: "By default, props are reflected",
 							arg: {},
-							expect: true,
-						},
-						{
-							name: "Disable reflection",
-							arg: {
-								reflect: false,
-							},
-							expect: false,
+							expect: ["foo", "foo"],
 						},
 						{
 							name: "Computed props are not reflected by default",
 							arg: {
 								get () {},
 							},
-							expect: false,
+							expect: [undefined, undefined],
 						},
 						{
-							name: "Reflected computed prop",
+							name: "Computed props can opt back in",
 							arg: {
 								get () {},
 								reflect: true,
 							},
-							expect: true,
-						},
-					],
-				},
-				{
-					name: "fromAttribute() / toAttribute()",
-					run (spec) {
-						let prop = new Prop("foo", spec);
-						return [prop.fromAttribute, prop.toAttribute];
-					},
-					tests: [
-						{
-							name: "By default, props are reflected",
-							arg: {},
 							expect: ["foo", "foo"],
 						},
 						{
@@ -247,7 +226,7 @@ export default {
 							arg: {
 								reflect: false,
 							},
-							expect: [null, null],
+							expect: [undefined, undefined],
 						},
 						{
 							arg: {
@@ -279,7 +258,7 @@ export default {
 									from: "bar",
 								},
 							},
-							expect: ["bar", null],
+							expect: ["bar", undefined],
 						},
 						{
 							arg: {
@@ -287,7 +266,7 @@ export default {
 									to: "baz",
 								},
 							},
-							expect: [null, "baz"],
+							expect: [undefined, "baz"],
 						},
 						{
 							arg: {
@@ -295,7 +274,7 @@ export default {
 									from: true,
 								},
 							},
-							expect: ["foo", null],
+							expect: ["foo", undefined],
 						},
 						{
 							arg: {
@@ -303,7 +282,7 @@ export default {
 									to: true,
 								},
 							},
-							expect: [null, "foo"],
+							expect: [undefined, "foo"],
 						},
 						{
 							arg: {
@@ -311,7 +290,7 @@ export default {
 									from: false,
 								},
 							},
-							expect: [null, null],
+							expect: [undefined, undefined],
 						},
 						{
 							arg: {
@@ -319,7 +298,7 @@ export default {
 									to: false,
 								},
 							},
-							expect: [null, null],
+							expect: [undefined, undefined],
 						},
 						{
 							arg: {
@@ -346,7 +325,7 @@ export default {
 									to: "baz",
 								},
 							},
-							expect: [null, "baz"],
+							expect: [undefined, "baz"],
 						},
 						{
 							arg: {
@@ -355,7 +334,7 @@ export default {
 									to: false,
 								},
 							},
-							expect: ["bar", null],
+							expect: ["bar", undefined],
 						},
 						{
 							arg: {
@@ -364,7 +343,7 @@ export default {
 									to: false,
 								},
 							},
-							expect: [null, null],
+							expect: [undefined, undefined],
 						},
 						{
 							arg: {
@@ -382,7 +361,7 @@ export default {
 									to: false,
 								},
 							},
-							expect: ["foo", null],
+							expect: ["foo", undefined],
 						},
 						{
 							arg: {
@@ -391,7 +370,7 @@ export default {
 									to: true,
 								},
 							},
-							expect: [null, "foo"],
+							expect: [undefined, "foo"],
 						},
 					],
 				},

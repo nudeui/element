@@ -1,131 +1,166 @@
+import { symbols } from "xtensible";
 import ElementProp from "./ElementProp.js";
 import PropChangeEvent from "./PropChangeEvent.js";
 
-export default class ElementProps {
-	#paused = false;
+const { props } = symbols.known;
+
+/**
+ * Per-element collection of {@link ElementProp} wrappers.
+ * Owns per-element state: stored values, paused/queued events, and attribute
+ * echo suppression.
+ */
+export default class ElementProps extends Map {
+	#paused = true;
 
 	/**
-	 * Per-element queue of propchange events awaiting dispatch while paused or before init.
+	 * Attributes currently being written reflexively by an {@link ElementProp};
+	 * the resulting attributeChangedCallback should be ignored.
+	 * @type {Set<string>}
+	 */
+	ignoredAttributes = new Set();
+
+	/**
+	 * Queue of propchange-style events awaiting dispatch while paused.
 	 * @type {PropChangeEvent[]}
 	 */
-	eventDispatchQueue = [];
+	#eventQueue = [];
 
+	/**
+	 * Construct the per-element collection and run the mount-time init pass.
+	 * Pre-mount user writes (`element.foo = …`) and pre-mount attribute writes
+	 * (`setAttribute`) leave traces on the element itself — a shadowing data
+	 * property and an attribute, respectively — which each {@link ElementProp}'s
+	 * init pass picks up. So there's no separate `initialize()` step: the
+	 * constructor allocates every wrapper and then runs init on each.
+	 *
+	 * The split is internal (allocate-all → init-all) so cascades during init
+	 * always find existing wrappers in the Map — a wrapper materialized
+	 * mid-cascade would fire its own default event in addition to the
+	 * cascading update.
+	 *
+	 * @param {HTMLElement} element The element this collection belongs to.
+	 */
 	constructor (element) {
+		super();
 		this.element = element;
 
-		// Update all reflected props from attributes at once
-		for (let name of this.observedAttributes) {
-			// Only process elements that have this attribute, or used to
-			if (element.hasAttribute(name)) {
-				this.attributeChanged(element, name);
+		// Install on the element first, so mount-time events and computed
+		// getters fired during init can resolve other props through the
+		// accessor (which routes via `element.props`).
+		element.props = this;
+
+		// Materialize an ElementProp for every spec. Each constructor
+		// self-registers and runs its own init (shadow / attr / default-fire),
+		// cascading to dependents via {@link forSpec} if needed — so wrappers
+		// that get created mid-cascade end up in the Map before this loop
+		// reaches them.
+		this.spec.forEach(spec => this.forSpec(spec));
+
+		this.resumeEvents();
+	}
+
+	/**
+	 * @returns {Props} The class-level prop spec collection.
+	 */
+	get spec () {
+		return this.element.constructor[props];
+	}
+
+	/**
+	 * Get the {@link ElementProp} for an arbitrary {@link Prop} spec, creating
+	 * it lazily if absent. Used by accessors installed on a superclass prototype
+	 * so they find a wrapper even when the element's class-level Props doesn't
+	 * include that prop (inheritance).
+	 * @param {Prop} spec
+	 * @returns {ElementProp}
+	 */
+	forSpec (spec) {
+		// ElementProp's constructor self-registers, so `new` alone is enough.
+		return super.get(spec.name) ?? new ElementProp(this, spec);
+	}
+
+	/**
+	 * Propagate an observed attribute change to every prop reflected from it.
+	 * @param {string} name Attribute name.
+	 * @param {string | null} [oldValue]
+	 */
+	attributeChanged (name, oldValue) {
+		if (this.ignoredAttributes.has(name)) {
+			return;
+		}
+
+		for (let [propName, spec] of this.spec) {
+			if (spec.reflect.from === name) {
+				this.get(propName).set(this.element.getAttribute(name), {
+					source: "attribute",
+					name,
+					oldAttributeValue: oldValue,
+				});
 			}
 		}
-
-		// Fire propchange events for any props not already handled
-		for (let prop of this.values()) {
-			prop.initializeFor(element);
-		}
-
-		this.resumeEvents(element);
-	}
-
-	get spec () {
-		return this.element.constructor.props;
 	}
 
 	/**
-	 * Dispatch (or queue, if paused or not yet initialized) a propchange-style event.
-	 * @param {HTMLElement} element
-	 * @param {string} eventName
-	 * @param {{name: string, prop: Prop, detail: Object}} eventProps
+	 * Fire propchange events for `ep` and cascade updates to any dependents.
+	 * @param {ElementProp} ep The prop that changed.
+	 * @param {Object} change Change descriptor (see {@link ElementProp#set}).
 	 */
-	firePropChangeEvent (element, eventName, eventProps) {
-		let event = new PropChangeEvent(eventName, eventProps);
-
-		if (!this.#paused.has(element) && eventProps.prop.initialized) {
-			element.dispatchEvent?.(event);
+	propChanged (ep, change) {
+		// Source-first: fire before cascading so listeners hear the written prop first.
+		let eventNames = ["propchange", ...(ep.spec.eventNames ?? [])];
+		for (let eventName of eventNames) {
+			this.#firePropChangeEvent(eventName, {
+				name: ep.name,
+				prop: ep,
+				detail: change,
+			});
 		}
-		else {
-			let queue = this.eventDispatchQueue ?? [];
-			queue.push(event);
-			this.eventDispatchQueue = queue;
+
+		// Update all props that depend on this one. Use forSpec so a dependent
+		// that hasn't been materialized yet (e.g. during the constructor's
+		// initial iteration) gets created on demand.
+		let dependentSpecs = this.spec.dependents[ep.name] ?? [];
+		for (let depSpec of dependentSpecs) {
+			let dep = this.forSpec(depSpec);
+			if (dep.dependsOn(ep)) {
+				dep.update(ep);
+			}
 		}
 	}
 
 	/**
-	 * Hold propchange event dispatch for an element; events are queued and flushed on resume.
-	 * @param {HTMLElement} element
+	 * Hold propchange event dispatch; events fired in the meantime are queued.
 	 */
 	pauseEvents () {
 		this.#paused = true;
 	}
 
 	/**
-	 * Resume propchange event dispatch for an element and flush any queued events.
-	 * @param {HTMLElement} element
+	 * Resume propchange event dispatch and flush any queued events.
 	 */
 	resumeEvents () {
 		this.#paused = false;
 
-		let queue = this.eventDispatchQueue;
-		if (!queue) {
-			return;
-		}
-
+		let queue = this.#eventQueue;
+		this.#eventQueue = [];
 		for (let event of queue) {
-			this.element.dispatchEvent?.(event);
-		}
-
-		this.eventDispatchQueue = [];
-	}
-
-	/**
-	 * Propagate an observed attribute change to every prop reflected from it.
-	 * @param {HTMLElement} element
-	 * @param {string} name Attribute name.
-	 * @param {string | null} [oldValue]
-	 */
-	attributeChanged (element, name, oldValue) {
-		if (!element.isConnected || element.ignoredAttributes.has(name)) {
-			// We process attributes all at once when the element is connected
-			return;
-		}
-
-		// Find relevant props
-		let propsFromAttribute = [...this.values()].filter(spec => spec.reflect.from === name);
-
-		for (let prop of propsFromAttribute) {
-			prop.set(element, element.getAttribute(name), {
-				source: "attribute",
-				name,
-				oldAttributeValue: oldValue,
-			});
+			this.element.dispatchEvent(event);
 		}
 	}
 
 	/**
-	 * Fire propchange events for `prop` and cascade updates to any dependents.
-	 * @param {Prop} prop The prop that changed.
-	 * @param {Object} change Change descriptor (see {@link Prop#set}).
+	 * Dispatch (or queue, if paused) a propchange-style event.
+	 * @param {string} eventName
+	 * @param {{name: string, prop: ElementProp, detail: Object}} eventProps
 	 */
-	propChanged (prop, change) {
-		// Source-first: fire before cascading so listeners hear the written prop first.
-		let eventNames = ["propchange", ...(prop.eventNames ?? [])];
-		for (let eventName of eventNames) {
-			this.firePropChangeEvent(this.element, eventName, {
-				name: prop.name,
-				prop,
-				detail: change,
-			});
+	#firePropChangeEvent (eventName, eventProps) {
+		let event = new PropChangeEvent(eventName, eventProps);
+
+		if (this.#paused) {
+			this.#eventQueue.push(event);
 		}
-
-		// Update all props that have this prop as a dependency
-		let dependents = this.dependents[prop.name] ?? new Set();
-
-		for (let dependent of dependents) {
-			if (dependent.dependsOn(prop, this.element)) {
-				dependent.update(this.element, prop);
-			}
+		else {
+			this.element.dispatchEvent(event);
 		}
 	}
 }

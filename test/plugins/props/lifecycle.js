@@ -1,5 +1,3 @@
-import { props as propsSymbol } from "../../../src/plugins/props/index.js";
-
 export default {
 	name: "Disconnect / reconnect lifecycle",
 
@@ -38,14 +36,13 @@ export default {
 				element.a = 1; // fires immediately
 				let beforePause = log.length;
 
-				let props = element.constructor[propsSymbol];
-				props.pauseEvents(element);
+				element.props.pauseEvents();
 
 				element.b = "x";
 				element.a = 2;
 
 				let duringPause = log.length - beforePause;
-				props.resumeEvents(element);
+				element.props.resumeEvents();
 
 				return { duringPause, afterResume: log };
 			},
