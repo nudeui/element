@@ -21,6 +21,7 @@ let Self = class Prop {
 			return spec;
 		}
 
+		this.spec = spec;
 		this.name = name;
 		this.props = props;
 
