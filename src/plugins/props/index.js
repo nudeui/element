@@ -5,7 +5,6 @@ import { defineOwnProperty } from "xtensible/util";
 import { defineLazyProperty } from "../../util/lazy.js";
 
 export const { props } = symbols.known;
-const { observedAttributes } = symbols.known;
 
 const hooks = {
 	setup () {
