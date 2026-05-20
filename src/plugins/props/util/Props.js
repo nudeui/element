@@ -1,6 +1,5 @@
-import { sortObject } from "../util.js";
+import { sortObject, isRegularFunction, capitalize } from "../util.js";
 import Prop from "./Prop.js";
-import PropChangeEvent from "./PropChangeEvent.js";
 
 export default class Props extends Map {
 	/**
@@ -30,7 +29,7 @@ export default class Props extends Map {
 	 * @returns {string[]} Unique attribute names that any reflected prop reads from.
 	 */
 	get observedAttributes () {
-		let attributes = [...this.values()].map(spec => spec.fromAttribute).filter(Boolean);
+		let attributes = [...this.values()].map(spec => spec.reflect.from).filter(Boolean);
 		return [...new Set(attributes)];
 	}
 
@@ -52,7 +51,22 @@ export default class Props extends Map {
 		this.updateDependents();
 	}
 
+	/**
+	 * Low level method to create one prop. Does not call updateDependents()
+	 * @param {string} name
+	 * @param {Object} spec
+	 * @returns
+	 */
 	createProp (name, spec) {
+		if (isRegularFunction(spec.default) && !("defaultProp" in spec)) {
+			// Create a prop for the default value so that dependencies are tracked and change events are fired for it
+			delete spec.default;
+			spec.defaultProp = this.createProp("default" + capitalize(name), {
+				get: spec.default,
+			});
+			// No need to call updateDependents() here, it will be called anyway at the end of this
+		}
+
 		let prop = new Prop(name, spec, this);
 		this.set(name, prop);
 		Object.defineProperty(this.Class.prototype, name, prop.getDescriptor());
@@ -137,138 +151,5 @@ export default class Props extends Map {
 				this.dependents[name] = new Set(props);
 			}
 		}
-	}
-
-	/**
-	 * Propagate an observed attribute change to every prop reflected from it.
-	 * @param {HTMLElement} element
-	 * @param {string} name Attribute name.
-	 * @param {string | null} [oldValue]
-	 */
-	attributeChanged (element, name, oldValue) {
-		if (!element.isConnected || element.ignoredAttributes.has(name)) {
-			// We process attributes all at once when the element is connected
-			return;
-		}
-
-		// Find relevant props
-		let propsFromAttribute = [...this.values()].filter(spec => spec.fromAttribute === name);
-
-		for (let prop of propsFromAttribute) {
-			prop.set(element, element.getAttribute(name), {
-				source: "attribute",
-				name,
-				oldAttributeValue: oldValue,
-			});
-		}
-	}
-
-	/**
-	 * Elements currently holding propchange event dispatch.
-	 * @type {WeakSet<HTMLElement>}
-	 */
-	#paused = new WeakSet();
-
-	/**
-	 * Per-element queue of propchange events awaiting dispatch while paused or before init.
-	 * @type {WeakMap<HTMLElement, PropChangeEvent[]>}
-	 */
-	eventDispatchQueue = new WeakMap();
-
-	/**
-	 * Fire propchange events for `prop` and cascade updates to any dependents.
-	 * @param {HTMLElement} element
-	 * @param {Prop} prop The prop that changed.
-	 * @param {Object} change Change descriptor (see {@link Prop#set}).
-	 */
-	propChanged (element, prop, change) {
-		// Source-first: fire before cascading so listeners hear the written prop first.
-		let eventNames = ["propchange", ...(prop.eventNames ?? [])];
-		for (let eventName of eventNames) {
-			this.firePropChangeEvent(element, eventName, {
-				name: prop.name,
-				prop,
-				detail: change,
-			});
-		}
-
-		// Update all props that have this prop as a dependency
-		let dependents = this.dependents[prop.name] ?? new Set();
-
-		for (let dependent of dependents) {
-			if (dependent.dependsOn(prop, element)) {
-				dependent.update(element, prop);
-			}
-		}
-	}
-
-	/**
-	 * Dispatch (or queue, if paused or not yet initialized) a propchange-style event.
-	 * @param {HTMLElement} element
-	 * @param {string} eventName
-	 * @param {{name: string, prop: Prop, detail: Object}} eventProps
-	 */
-	firePropChangeEvent (element, eventName, eventProps) {
-		let event = new PropChangeEvent(eventName, eventProps);
-
-		if (!this.#paused.has(element) && eventProps.prop.initialized) {
-			element.dispatchEvent?.(event);
-		}
-		else {
-			let queue = this.eventDispatchQueue.get(element) ?? [];
-			queue.push(event);
-			this.eventDispatchQueue.set(element, queue);
-		}
-	}
-
-	/**
-	 * Initialize all props for an element: read reflected attributes, apply defaults,
-	 * and flush any queued events.
-	 * @param {HTMLElement} element
-	 */
-	initializeFor (element) {
-		if (element.hasAttribute) {
-			// Update all reflected props from attributes at once
-			for (let name of this.observedAttributes) {
-				// Only process elements that have this attribute, or used to
-				if (element.hasAttribute(name)) {
-					this.attributeChanged(element, name);
-				}
-			}
-		}
-
-		// Fire propchange events for any props not already handled
-		for (let prop of this.values()) {
-			prop.initializeFor(element);
-		}
-
-		this.resumeEvents(element);
-	}
-
-	/**
-	 * Hold propchange event dispatch for an element; events are queued and flushed on resume.
-	 * @param {HTMLElement} element
-	 */
-	pauseEvents (element) {
-		this.#paused.add(element);
-	}
-
-	/**
-	 * Resume propchange event dispatch for an element and flush any queued events.
-	 * @param {HTMLElement} element
-	 */
-	resumeEvents (element) {
-		this.#paused.delete(element);
-
-		let queue = this.eventDispatchQueue.get(element);
-		if (!queue) {
-			return;
-		}
-
-		for (let event of queue) {
-			element.dispatchEvent?.(event);
-		}
-
-		this.eventDispatchQueue.delete(element);
 	}
 }

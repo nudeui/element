@@ -32,3 +32,16 @@ export function sortObject (obj, fn) {
 export function capitalize (str) {
 	return str[0].toUpperCase() + str.slice(1);
 }
+
+export function isArrowFunction (fn) {
+	return typeof fn === "function" && !fn.prototype;
+}
+
+/**
+ * Is a function that is not an arrow function
+ * @param {*} fn
+ * @returns {boolean}
+ */
+export function isRegularFunction (fn) {
+	return typeof fn === "function" && fn.prototype;
+}
