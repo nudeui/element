@@ -51,10 +51,12 @@ export default class ElementProps extends Map {
 
 		// Materialize an ElementProp for every spec. Each constructor
 		// self-registers and runs its own init (shadow / attr / default-fire),
-		// cascading to dependents via {@link forSpec} if needed — so wrappers
+		// cascading to dependents via {@link get} if needed — so wrappers
 		// that get created mid-cascade end up in the Map before this loop
 		// reaches them.
-		this.spec.forEach(spec => this.forSpec(spec));
+		for (let name of this.spec.keys()) {
+			this.get(name);
+		}
 
 		this.resumeEvents();
 	}
@@ -67,16 +69,24 @@ export default class ElementProps extends Map {
 	}
 
 	/**
-	 * Get the {@link ElementProp} for an arbitrary {@link Prop} spec, creating
-	 * it lazily if absent. Used by accessors installed on a superclass prototype
-	 * so they find a wrapper even when the element's class-level Props doesn't
-	 * include that prop (inheritance).
-	 * @param {Prop} spec
-	 * @returns {ElementProp}
+	 * Get the {@link ElementProp} wrapper for a prop by name, creating it on
+	 * demand from this element's own class-level {@link Props}.
+	 * @param {string} name
+	 * @returns {ElementProp | undefined}
 	 */
-	forSpec (spec) {
-		// ElementProp's constructor self-registers, so `new` alone is enough.
-		return super.get(spec.name) ?? new ElementProp(this, spec);
+	get (name) {
+		let ep = super.get(name);
+		if (ep) {
+			return ep;
+		}
+
+		let spec = this.spec.get(name);
+		if (spec) {
+			// ElementProp self-registers in our Map.
+			return new ElementProp(this, spec);
+		}
+
+		return undefined;
 	}
 
 	/**
@@ -116,12 +126,12 @@ export default class ElementProps extends Map {
 			});
 		}
 
-		// Update all props that depend on this one. Use forSpec so a dependent
-		// that hasn't been materialized yet (e.g. during the constructor's
-		// initial iteration) gets created on demand.
+		// Update all props that depend on this one. {@link get} materializes a
+		// dependent that hasn't been wrapped yet (e.g. during the constructor's
+		// initial iteration) on demand.
 		let dependentSpecs = this.spec.dependents[ep.name] ?? [];
 		for (let depSpec of dependentSpecs) {
-			let dep = this.forSpec(depSpec);
+			let dep = this.get(depSpec.name);
 			if (dep.dependsOn(ep)) {
 				dep.update(ep);
 			}

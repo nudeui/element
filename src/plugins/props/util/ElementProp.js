@@ -80,7 +80,7 @@ export default class ElementProp {
 		let raw;
 
 		if (spec.defaultProp) {
-			raw = this.props.forSpec(spec.defaultProp).get();
+			raw = this.props.get(spec.defaultProp.name).get();
 		}
 		else if (spec.default !== undefined) {
 			raw = resolveValue(spec.default, [element, element]);

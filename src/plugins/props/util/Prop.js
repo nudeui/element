@@ -78,21 +78,19 @@ let Self = class Prop {
 
 	/**
 	 * Build the prototype accessor descriptor for this prop.
-	 * Captures the Prop directly so subclass accessors keep working even when
-	 * the element's class-level {@link Props} doesn't include this prop
-	 * (inheritance) — the descriptor asks {@link ElementProps#forSpec} for
-	 * the matching wrapper without going through name lookup.
+	 * Looks up the per-element wrapper by name; {@link ElementProps#get} walks
+	 * the class chain so accessors installed on a superclass prototype still
+	 * resolve to the parent's Prop when the subclass's Props doesn't include
+	 * the name (inheritance).
 	 * @returns {PropertyDescriptor}
 	 */
 	getDescriptor () {
-		let prop = this;
 		let { name, get: computed, set: userSet } = this;
 		let descriptor = {
 			get () {
-				// Pre-mount: this.props isn't set up yet, no data property
-				// shadowing has been written either, so the prop genuinely has
-				// no value to read.
-				return this.props?.forSpec(prop).get();
+				// `this.props` lazily materializes via the plugin's `provides`
+				// accessor on first access.
+				return this.props.get(name)?.get();
 			},
 			enumerable: this.enumerable,
 			configurable: true,
@@ -100,21 +98,7 @@ let Self = class Prop {
 
 		if (!computed || userSet === true) {
 			descriptor.set = function (value) {
-				// TODO throw if this is the constructor class
-				if (this.props) {
-					this.props.forSpec(prop).set(value, { source: "property" });
-				}
-				else {
-					// Pre-mount write: install a shadowing data property. When
-					// ElementProps is later constructed, ElementProp#initialize
-					// will pick it up via shadow recovery (Object.hasOwn).
-					Object.defineProperty(this, name, {
-						value,
-						writable: true,
-						configurable: true,
-						enumerable: true,
-					});
-				}
+				this.props.get(name)?.set(value, { source: "property" });
 			};
 		}
 		else if (typeof userSet === "function") {
