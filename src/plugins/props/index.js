@@ -2,6 +2,7 @@ import Props from "./util/Props.js";
 import ElementProps from "./util/ElementProps.js";
 import { symbols } from "xtensible";
 import { defineOwnProperty } from "xtensible/util";
+import { defineLazyProperty } from "../../util/lazy.js";
 
 export const { props } = symbols.known;
 const { observedAttributes } = symbols.known;
@@ -21,32 +22,21 @@ const hooks = {
 		}
 	},
 
-	constructed () {
-		// Create the per-element ElementProps now, after the element constructor
-		// and all sync pre-mount setup has completed. The ElementProps
-		// constructor self-installs as `this.props` and runs the full mount
-		// pass (shadow recovery + attr-read + default-fire), then resumes
-		// event dispatch.
-		new ElementProps(this);
-	},
-
 	connected () {
-		this.props?.resumeEvents();
+		this.props.resumeEvents();
 	},
 
 	disconnected () {
-		this.props?.pauseEvents();
+		this.props.pauseEvents();
 	},
 
 	"attribute-changed" ({ name, oldValue }) {
-		// Pre-mount attribute writes (before `constructed` fires) leave the
-		// attribute on the element; ElementProps' constructor reads it during
-		// init. No need to handle them here.
-		this.props?.attributeChanged(name, oldValue);
+		this.props.attributeChanged(name, oldValue);
 	},
 };
 
 const provides = {
+	props: undefined, // see below
 
 	constructor: {
 		defineProps (def = this.props) {
@@ -77,6 +67,21 @@ const provides = {
 		},
 	},
 };
+
+/**
+ * Per-element collection of {@link ElementProp} wrappers, materialized on
+ * first access. The {@link ElementProps} constructor self-installs as the
+ * element's own `props` data property, shadowing this accessor from then on.
+ */
+defineLazyProperty(provides, "props", {
+	get () {
+		if (this.constructor.props) {
+			return new ElementProps(this);
+		}
+	},
+	configurable: true,
+	writable: true,
+});
 
 defineOwnProperty(provides.constructor, props, function () {
 	return new Props(this);
