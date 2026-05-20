@@ -194,7 +194,10 @@ export default class ElementProp {
 
 		if (change.source === "attribute") {
 			let attributeName = change.attributeName ?? spec.reflect.to;
-			let attributeValue = change.attributeValue ?? element.getAttribute(attributeName);
+			let attributeValue =
+				change.attributeValue !== undefined
+					? change.attributeValue
+					: element.getAttribute(attributeName);
 
 			if (attributeValue === null) {
 				element.removeAttribute(attributeName);
