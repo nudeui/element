@@ -1,6 +1,9 @@
+import { symbols } from "xtensible";
+import { getSuper } from "xtensible/util";
 import { sortObject, capitalize, inferDependencies } from "../util.js";
 import Prop from "./Prop.js";
 
+export const { props } = symbols.known;
 /**
  * Class-level collection of {@link Prop} specs for a custom element class.
  * Per-element state lives in {@link ElementProps}.
@@ -13,26 +16,46 @@ export default class Props extends Map {
 	 */
 	dependents = {};
 
+	parent = null;
+
 	/**
 	 * @param {Function} Class The class to define props for.
-	 * @param {Object} [props] Props to define, as a map of name → spec.
+	 * @param {Object} [specs] Props to define, as a map of name → spec.
 	 */
-	constructor (Class, props) {
+	constructor (Class, specs) {
 		super();
 
 		this.Class = Class;
 
-		if (props) {
-			this.add(props);
+		this.parent = getSuper(Class)?.[props] ?? null;
+
+		if (specs) {
+			this.add(specs);
 		}
 	}
 
-	/**
-	 * @returns {string[]} Unique attribute names that any reflected prop reads from.
-	 */
-	get observedAttributes () {
-		let attributes = [...this.values()].map(prop => prop.reflect.from).filter(Boolean);
-		return [...new Set(attributes)];
+	has (name) {
+		return super.has(name) || this.parent?.has(name);
+	}
+
+	get (name) {
+		return super.get(name) ?? this.parent?.get(name);
+	}
+
+	*allValues () {
+		if (this.parent) {
+			yield* this.parent.allValues();
+		}
+
+		yield* super.values();
+	}
+
+	*allKeys () {
+		if (this.parent) {
+			yield* this.parent.allKeys();
+		}
+
+		yield* super.keys();
 	}
 
 	/**

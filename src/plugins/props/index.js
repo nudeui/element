@@ -9,9 +9,7 @@ const { observedAttributes } = symbols.known;
 
 const hooks = {
 	setup () {
-		// Skip if the static observedAttributes getter already ran the install —
-		// it's the registration-time path that fires before any instance exists.
-		if (Object.hasOwn(this, "props") && !Object.hasOwn(this, observedAttributes)) {
+		if (Object.hasOwn(this, "props")) {
 			this.defineProps();
 		}
 	},
@@ -52,18 +50,11 @@ const provides = {
 		},
 
 		get observedAttributes () {
-			if (Object.hasOwn(this, observedAttributes)) {
-				return this[observedAttributes];
-			}
-
-			// Reserve the cache before defineProps so any consumer that reads
-			// Class.observedAttributes during the install (e.g., a define-props
-			// hook listener) gets the in-flight list instead of recursing.
-			this[observedAttributes] = [];
-			this.defineProps();
-
 			// FIXME how to combine with existing observedAttributes?
-			return (this[observedAttributes] = this[props].observedAttributes);
+			let attributes = [...this[props].allValues()]
+				.map(prop => prop.reflect.from)
+				.filter(Boolean);
+			return [...new Set(attributes)];
 		},
 	},
 };
@@ -84,7 +75,7 @@ defineLazyProperty(provides, "props", {
 });
 
 defineOwnProperty(provides.constructor, props, function () {
-	return new Props(this);
+	return new Props(this, this.props);
 });
 
 export default { hooks, provides };
