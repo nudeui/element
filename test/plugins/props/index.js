@@ -7,6 +7,7 @@ import propchange from "./propchange.js";
 import lifecycle from "./lifecycle.js";
 import inheritance from "./inheritance.js";
 import install from "./install.js";
+import observedAttributes from "./observed-attributes.js";
 
 export default {
 	name: "Props plugin",
@@ -43,5 +44,6 @@ export default {
 		},
 		inheritance,
 		install,
+		observedAttributes,
 	],
 };
