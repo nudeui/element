@@ -46,37 +46,40 @@ const hooks = {
 	},
 };
 
-const providesStatic = {
-	defineProps (def = this.props) {
-		if (def instanceof Props && def.Class === this) {
-			// Already defined
-			return null;
-		}
+const provides = {
 
-		let env = { props: def };
-		this.$hook("define-props", env);
+	constructor: {
+		defineProps (def = this.props) {
+			if (def instanceof Props && def.Class === this) {
+				// Already defined
+				return null;
+			}
 
-		this[props].add(env.props);
-	},
+			let env = { props: def };
+			this.$hook("define-props", env);
 
-	get observedAttributes () {
-		if (Object.hasOwn(this, observedAttributes)) {
-			return this[observedAttributes];
-		}
+			this[props].add(env.props);
+		},
 
-		// Reserve the cache before defineProps so any consumer that reads
-		// Class.observedAttributes during the install (e.g., a define-props
-		// hook listener) gets the in-flight list instead of recursing.
-		this[observedAttributes] = [];
-		this.defineProps();
+		get observedAttributes () {
+			if (Object.hasOwn(this, observedAttributes)) {
+				return this[observedAttributes];
+			}
 
-		// FIXME how to combine with existing observedAttributes?
-		return (this[observedAttributes] = this[props].observedAttributes);
+			// Reserve the cache before defineProps so any consumer that reads
+			// Class.observedAttributes during the install (e.g., a define-props
+			// hook listener) gets the in-flight list instead of recursing.
+			this[observedAttributes] = [];
+			this.defineProps();
+
+			// FIXME how to combine with existing observedAttributes?
+			return (this[observedAttributes] = this[props].observedAttributes);
+		},
 	},
 };
 
-defineOwnProperty(providesStatic, props, function () {
+defineOwnProperty(provides.constructor, props, function () {
 	return new Props(this);
 });
 
-export default { hooks, providesStatic };
+export default { hooks, provides };
