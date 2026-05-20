@@ -92,23 +92,9 @@ export default class Props extends Map {
 	}
 
 	/**
-	 * Resolve any `defaultProp: "name"` string references to actual {@link Prop} instances.
-	 * Done as a separate pass so a prop can reference another that hasn't been declared yet.
-	 */
-	#resolveDefaultProps () {
-		for (let prop of this.values()) {
-			if (typeof prop.defaultProp === "string") {
-				prop.defaultProp = this.get(prop.defaultProp);
-			}
-		}
-	}
-
-	/**
 	 * Rebuild the dependency graph and reorder props so dependents come after their dependencies.
 	 */
 	updateDependents () {
-		this.#resolveDefaultProps();
-
 		// Rebuild dependency graph
 		let dependents = {};
 

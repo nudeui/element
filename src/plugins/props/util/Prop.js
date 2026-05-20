@@ -33,7 +33,6 @@ let Self = class Prop {
 		this.enumerable = spec.enumerable ?? true;
 
 		this.default = spec.default;
-		this.defaultProp = spec.defaultProp ?? null;
 
 		if (spec.dependencies) {
 			this.dependencies = new Set(spec.dependencies);
@@ -66,6 +65,14 @@ let Self = class Prop {
 					return types[fnName](...args, this.type);
 				};
 		}
+	}
+
+	get defaultProp () {
+		if (typeof this.spec.defaultProp === "string") {
+			return this.props.get(this.spec.defaultProp);
+		}
+
+		return this.spec.defaultProp;
 	}
 
 	/**
