@@ -117,9 +117,7 @@ let Self = class Prop {
 			};
 		}
 		else if (typeof userSet === "function") {
-			descriptor.set = function (value) {
-				userSet.call(this, value);
-			};
+			descriptor.set = userSet;
 		}
 
 		return descriptor;
