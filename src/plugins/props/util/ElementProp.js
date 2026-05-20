@@ -209,7 +209,8 @@ export default class ElementProp {
 	 * @param {HTMLElement} element
 	 * @param {Prop} [dependency] The dependency whose change triggered this update.
 	 */
-	update (element, dependency) {
+	update (dependency) {
+		let element = this.element;
 		let oldValue = element.props[this.name];
 
 		if (dependency === this.defaultProp) {
