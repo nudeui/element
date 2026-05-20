@@ -1,12 +1,14 @@
-// import { restoreNativeCustomEvent } from "../../util/happy-dom.js";
+import { restoreNativeCustomEvent } from "../../util/happy-dom.js";
 import ElementFactory from "../../../src/element/factory.js";
 import { default as propsPlugin, props } from "../../../src/plugins/props/index.js";
 
-// restoreNativeCustomEvent();
+restoreNativeCustomEvent();
+
+let i = 0;
 
 export default {
 	name: "Inheritance",
-	beforeAll () {
+	beforeEach () {
 		class ParentElement extends ElementFactory(HTMLElement, [propsPlugin]) {
 			static props = {
 				parentOnly: { type: Number },
@@ -66,11 +68,11 @@ export default {
 			name: "Child inherits, overrides, and adds props",
 			description:
 				"Combines the #104 baseline (parent prop installs) with the override rule (child wins when both classes declare the same prop).",
-			beforeAll () {
-				this.parent.beforeAll.call(this);
+			beforeEach () {
+				this.parent.parent.beforeEach.call(this);
 				let { ParentElement, ChildElement } = this.data;
 
-				let tag = "nude-element-parent-props";
+				let tag = `nude-element-parent-props-${i++}`;
 				customElements.define(tag, ChildElement);
 				this.data.childElement = document.body.appendChild(document.createElement(tag));
 			},
