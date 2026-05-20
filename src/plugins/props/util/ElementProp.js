@@ -44,21 +44,19 @@ export default class ElementProp {
 	 */
 	get () {
 		let element = this.element;
-		let value = element.props[this.name];
+		let value = this.value;
 
 		if (value === undefined) {
 			this.update(element);
-			value = element.props[this.name];
+			value = this.value;
 		}
 
 		if (value === undefined) {
-			if (this.default !== undefined) {
-				if (this.defaultProp) {
-					value = this.defaultProp.get(element);
-				}
-				else {
-					value = resolveValue(this.default, [element, element]);
-				}
+			if (this.defaultProp) {
+				value = this.defaultProp.get(element);
+			}
+			else if (this.default !== undefined) {
+				value = resolveValue(this.default, [element, element]);
 
 				try {
 					value = this.parse(value);
