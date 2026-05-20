@@ -16,14 +16,6 @@ const provides = {
 
 		this.$hook("disconnected");
 	},
-
-	// Must be on the prototype before customElements.define runs — spec reads observedAttributes only if ACB is non-null.
-	attributeChangedCallback (name, oldValue, value) {
-		// super.attributeChangedCallback()
-		getSuperMethod(this, provides.attributeChangedCallback)?.call(this, name, oldValue, value);
-
-		this.$hook("attribute-changed", { name, oldValue, value });
-	},
 };
 
 export default { provides };

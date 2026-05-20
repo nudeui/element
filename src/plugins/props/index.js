@@ -1,7 +1,7 @@
 import Props from "./util/Props.js";
 import ElementProps from "./util/ElementProps.js";
 import { symbols } from "xtensible";
-import { defineOwnProperty } from "xtensible/util";
+import { defineOwnProperty, getSuperMethod } from "xtensible/util";
 import { defineLazyProperty } from "../../util/lazy.js";
 
 export const { props } = symbols.known;
@@ -34,6 +34,14 @@ const hooks = {
 
 const provides = {
 	props: undefined, // see below
+
+	// Must be on the prototype before customElements.define runs — spec reads observedAttributes only if ACB is non-null.
+	attributeChangedCallback (name, oldValue, value) {
+		// super.attributeChangedCallback()
+		getSuperMethod(this, provides.attributeChangedCallback)?.call(this, name, oldValue, value);
+
+		this.$hook("attribute-changed", { name, oldValue, value });
+	},
 
 	constructor: {
 		defineProps (def = this.props) {
