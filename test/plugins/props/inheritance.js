@@ -1,8 +1,5 @@
-import { restoreNativeCustomEvent } from "../../util/happy-dom.js";
 import ElementFactory from "../../../src/element/factory.js";
 import { default as propsPlugin, props } from "../../../src/plugins/props/index.js";
-
-restoreNativeCustomEvent();
 
 let i = 0;
 
