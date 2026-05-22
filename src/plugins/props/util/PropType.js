@@ -31,18 +31,39 @@ const callableBuiltins = new Set([
  */
 export default class PropType {
 	/**
-	 * Slot for type-specific method overrides supplied at registration:
-	 * `{equals?, parse?, stringify?}`. May be inherited via the instance
-	 * prototype chain; for derivatives that introduce their own override,
-	 * the constructor sets a new `Object.create(parent.spec)` so unspecified
-	 * slots still fall through.
-	 * @type {{equals?: Function, parse?: Function, stringify?: Function} | undefined}
+	 * The spec object this instance was constructed with — stored verbatim,
+	 * not cloned. Type-specific method overrides (`equals`, `parse`,
+	 * `stringify`) live here and are invoked by the prototype dispatchers
+	 * after walking the {@link super} chain.
+	 * @type {PropTypeSpec | undefined}
 	 */
 	spec;
 
+	/**
+	 * The next instance up the type chain — a registered singleton for
+	 * derivatives, or the class prototype for roots. Used by the dispatchers
+	 * to walk for inherited method overrides; subclasses and consumers can
+	 * walk it to inspect lineage.
+	 * @type {PropType | object | undefined}
+	 */
+	super;
+
 	/** @param {TSpec} [spec] */
-	constructor (spec = {}) {
+	constructor (spec) {
+		if (!spec) {
+			return this.constructor.any;
+		}
+
+		if (typeof spec !== "object") {
+			spec = { is: spec };
+		}
+
 		let { is, ...extras } = spec;
+
+		if (!is) {
+			return this.constructor.any;
+		}
+
 		is = PropType.normalizeIs(is);
 		let parent = PropType.registry.get(is);
 
@@ -52,10 +73,11 @@ export default class PropType {
 		}
 
 		let instance = parent ? Object.create(parent) : this;
-		// Only set `is` on the instance when there's no parent (root path).
-		// On the derivative path, `is` is inherited via the prototype chain
-		// (parent was looked up by this `is`, so they match).
-		if (is !== undefined && !parent) {
+		if (parent) {
+			instance.super = parent;
+		}
+		else {
+			instance.super = this.constructor.prototype;
 			instance.is = is;
 		}
 
@@ -89,7 +111,7 @@ export default class PropType {
 			return true;
 		}
 
-		for (let obj = this; obj; obj = Object.getPrototypeOf(obj)) {
+		for (let obj = this; obj; obj = obj.super) {
 			if (obj.spec?.equals) {
 				return obj.spec.equals.call(this, a, b);
 			}
@@ -107,7 +129,7 @@ export default class PropType {
 			return value;
 		}
 
-		for (let obj = this; obj; obj = Object.getPrototypeOf(obj)) {
+		for (let obj = this; obj; obj = obj.super) {
 			if (obj.spec?.parse) {
 				return obj.spec.parse.call(this, value);
 			}
@@ -131,7 +153,7 @@ export default class PropType {
 			return null;
 		}
 
-		for (let obj = this; obj; obj = Object.getPrototypeOf(obj)) {
+		for (let obj = this; obj; obj = obj.super) {
 			if (obj.spec?.stringify) {
 				return obj.spec.stringify.call(this, value);
 			}
@@ -146,7 +168,7 @@ export default class PropType {
 	/**
 	 * Option keys whose values are themselves type specs and should be
 	 * recursively resolved via {@link PropType.for}. Subclasses override
-	 * (e.g. `ListType` → `["values"]`).
+	 * (e.g. `IterableType` → `["values"]`).
 	 * @type {string[]}
 	 */
 	static nestedSpecKeys = [];
