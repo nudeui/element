@@ -24,7 +24,8 @@
 		".": "./src/index.js",
 		"./fn": "./src/index-fn.js",
 		"./plugins": "./src/plugins/index.js",
-		"./plugins/fn": "./src/plugins/index-fn.js"
+		"./plugins/fn": "./src/plugins/index-fn.js",
+		"./plugins/types": "./src/plugins/types.js"
 	},
 	"repository": {
 		"type": "git",

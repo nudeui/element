@@ -153,6 +153,59 @@ While `defaultKey` _can_ be a non-function, this is almost never what you want, 
 If `defaultValue` is provided, singular entries are considered keys, and `defaultValue` is used to generate the values.
 It can be either a constant (e.g. `true`) or a function, in which case it’s passed the key and the index as arguments.
 
+#### Custom types
+
+Types are *instances* of `PropType` (or one of its subclasses, `ListType` / `DictionaryType`). Each instance carries the spec it was constructed with — its constructor (`is`) and any type options — and supplies `equals` / `parse` / `stringify` either as methods on a subclass prototype, or as overrides passed via the constructor spec. A type is an abstract, prop-agnostic definition; the same instance is shared across every prop that references it.
+
+For most custom types, the simplest path is to register a spec object directly. Methods read options from `this.spec`:
+
+```js
+import { PropType } from "nude-element/plugins";
+
+PropType.register({
+    is: Color,
+    parse: value => (value instanceof Color ? value : new Color(value)),
+    equals: (a, b) => a === b || a?.equals?.(b),
+    stringify: value => value?.toString(),
+});
+```
+
+For types that need richer shared behavior (e.g. resolving nested type specs, or reusing logic across several constructors), subclass `PropType` — or one of the built-in bases `ListType` / `DictionaryType`:
+
+```js
+import { PropType, ListType } from "nude-element/plugins";
+
+class TupleType extends ListType {
+    // override / extend as needed; `this.spec` holds the merged spec,
+    // `this.values` is the resolved nested type
+}
+
+PropType.register(new TupleType({ is: Tuple, /* ...spec */ }));
+```
+
+**Derivative types.** A type spec with options beyond `is` produces a *derivative* type — a new `PropType` instance whose prototype is the registered singleton for that `is`. Lookups for unspecified options fall through to the parent via the JS prototype chain.
+
+```js
+import { PropType } from "nude-element/plugins";
+
+const NumberArray = PropType.for({ is: Array, values: Number });
+
+static props = {
+    points: { type: NumberArray },
+};
+```
+
+Inline specs in prop definitions work the same way — each occurrence produces its own derivative. Hoist a derivative into a `const` (as above) if you want every prop using it to share the same instance.
+
+The built-in type instances are also available by their native names from a separate endpoint:
+
+```js
+import * as Types from "nude-element/plugins/types";
+
+Types.Array; // the ArrayType singleton
+Types.Map;   // the MapType singleton
+```
+
 ### Attribute-property reflection
 
 The `reflect` property takes the following values:

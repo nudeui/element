@@ -5,6 +5,7 @@ import { defineOwnProperty, getSuperMethod } from "xtensible/util";
 import { defineLazyProperty } from "../../util/lazy.js";
 
 export const { props } = symbols.known;
+export * from "./types/index.js";
 
 const hooks = {
 	setup () {

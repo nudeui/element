@@ -1,48 +1,26 @@
-import { parse, stringify, equals } from "../util/types.js";
-import { split } from "./util.js";
+import ListType from "../util/ListType.js";
 
-function parseList (value, { values, ...options } = {}) {
-	if (typeof value === "string") {
-		value = split(value, options);
-	}
-	else {
-		value = Array.isArray(value) ? value : [value];
-	}
-
-	if (values) {
-		value = value.map(item => parse(item, values));
-	}
-
-	return value;
-}
-
-export const array = {
-	type: Array,
-	equals (a, b, { values } = {}) {
+export const ArrayType = ListType.register({
+	is: Array,
+	equals (a, b) {
 		if (a.length !== b.length) {
 			return false;
 		}
 
-		return a.every((item, i) => equals(item, b[i], values));
+		let { values } = this;
+		return a.every((item, i) => (values ? values.equals(item, b[i]) : item === b[i]));
 	},
-	parse: parseList,
-	stringify: (value, { values, separator = ",", joiner } = {}) => {
-		if (values) {
-			value = value.map(item => stringify(item, values));
-		}
-
-		if (!joiner) {
-			let trimmedSeparator = separator.trim();
-			joiner = (!trimmedSeparator || trimmedSeparator === "," ? "" : " ") + separator + " ";
-		}
-
-		return value.join(joiner);
+	parse (value) {
+		return this.parseItems(value);
 	},
-};
+	stringify (value) {
+		return this.joinItems(value);
+	},
+});
 
-export const set = {
-	type: Set,
-	equals (a, b, { values } = {}) {
+export const SetType = ListType.register({
+	is: Set,
+	equals (a, b) {
 		if (a.size !== b.size) {
 			return false;
 		}
@@ -55,19 +33,16 @@ export const set = {
 
 		return true;
 	},
-	parse (value, options) {
+	parse (value) {
 		if (value instanceof Set) {
-			if (options) {
-				let { values } = options;
-
-				if (values) {
-					// Parse values in place
-					for (let item of value) {
-						let parsed = parse(item, values);
-						if (parsed !== item) {
-							value.delete(item);
-							value.add(parsed);
-						}
+			let { values } = this;
+			if (values) {
+				// Parse values in place
+				for (let item of value) {
+					let parsed = values.parse(item);
+					if (parsed !== item) {
+						value.delete(item);
+						value.add(parsed);
 					}
 				}
 			}
@@ -75,19 +50,9 @@ export const set = {
 			return value;
 		}
 
-		let items = parseList(value, options);
-		return new Set(items);
+		return new Set(this.parseItems(value));
 	},
-	stringify: (value, { values, separator = ",", joiner } = {}) => {
-		if (values) {
-			value = value.map(item => stringify(item, values));
-		}
-
-		if (!joiner) {
-			let trimmedSeparator = separator.trim();
-			joiner = (!trimmedSeparator || trimmedSeparator === "," ? "" : " ") + separator + " ";
-		}
-
-		return value.join(joiner);
+	stringify (value) {
+		return this.joinItems([...value]);
 	},
-};
+});

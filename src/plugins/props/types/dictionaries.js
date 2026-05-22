@@ -1,63 +1,8 @@
-import { resolveValue, split } from "./util.js";
-import { parse, stringify, equals } from "../util/types.js";
+import DictionaryType from "../util/DictionaryType.js";
 
-function parseEntries (
-	value,
-	{ values, keys, separator = ", ", defaultValue = true, defaultKey, pairs } = {},
-) {
-	let entries = value;
-
-	if (typeof value === "string") {
-		entries = split(value, { separator, pairs });
-
-		entries = entries.map((entry, index) => {
-			let parts = entry.split(/(?<!\\):/);
-			let key, value;
-
-			if (parts.length >= 2) {
-				// Value contains colons
-				key = parts.shift();
-				value = parts.join(":");
-			}
-			else if (parts.length === 1) {
-				if (defaultKey) {
-					value = parts[0];
-					key = resolveValue(defaultKey, [null, value, index]);
-				}
-				else {
-					key = parts[0];
-					value = resolveValue(defaultValue, [null, key, index]);
-				}
-			}
-
-			[key, value] = [key, value].map(v => v?.trim?.() ?? v);
-
-			if (value === "false") {
-				value = false;
-			}
-
-			return [key, value];
-		});
-	}
-
-	entries = entries.map(([key, value]) => {
-		if (keys) {
-			key = parse(key, keys);
-		}
-
-		if (values) {
-			value = parse(value, values);
-		}
-
-		return [key, value];
-	});
-
-	return entries;
-}
-
-export const object = {
-	type: Object,
-	equals (a, b, { values } = {}) {
+export const ObjectType = DictionaryType.register({
+	is: Object,
+	equals (a, b) {
 		let aKeys = Object.keys(a);
 		let bKeys = Object.keys(b);
 
@@ -65,81 +10,67 @@ export const object = {
 			return false;
 		}
 
-		return aKeys.every(key => equals(a[key], b[key], values));
+		let { values } = this;
+		return aKeys.every(key => (values ? values.equals(a[key], b[key]) : a[key] === b[key]));
 	},
-
-	/**
-	 * Parses a simple microsyntax for declaring key-value options:
-	 * If no value is provided, it becomes `true`. The string "false" is parsed as `false`.
-	 * Escapes for separators are supported, via backslash.
-	 * @param {string} value
-	 * @param {Object} [options]
-	 * @param {Function} [options.values] The type to parse the values as
-	 * @param {string} [options.separator=","] The separator between entries.
-	 */
-	parse (value, options = {}) {
-		let entries;
+	parse (value) {
 		if (value instanceof Map) {
 			value = value.entries();
 		}
 		else if (typeof value === "object") {
-			if (options.values) {
+			let { values } = this;
+			if (values) {
 				for (let key in value) {
-					value[key] = parse(value[key], options.values);
+					value[key] = values.parse(value[key]);
 				}
 			}
 
 			return value;
 		}
 
-		entries = parseEntries(value, options);
-		return Object.fromEntries(entries);
+		return Object.fromEntries(this.parseEntries(value));
 	},
-
-	stringify (value, { values, separator = ", " } = {}) {
+	stringify (value) {
+		let { values } = this;
+		let { separator = ", " } = this.spec;
 		let entries = Object.entries(value);
 
 		if (values) {
-			entries = entries.map(([key, value]) => [key, stringify(value, values)]);
+			entries = entries.map(([key, val]) => [key, values.stringify(val)]);
 		}
 
-		return entries.map(([key, value]) => `${key}: ${value}`).join(separator);
+		return entries.map(([key, val]) => `${key}: ${val}`).join(separator);
 	},
-};
+});
 
-export const map = {
-	type: Map,
-	equals (a, b, { values } = {}) {
-		let aKeys = a.keys();
-		let bKeys = b.keys();
-
-		if (aKeys.length !== bKeys.length) {
+export const MapType = DictionaryType.register({
+	is: Map,
+	equals (a, b) {
+		if (a.size !== b.size) {
 			return false;
 		}
 
-		return aKeys.every(key => equals(a.get(key), b.get(key), values));
-	},
+		let { values } = this;
+		for (let [key, val] of a) {
+			if (!b.has(key)) {
+				return false;
+			}
 
-	/**
-	 * Parses a simple microsyntax for declaring key-value options:
-	 * If no value is provided, it becomes `true`. The string "false" is parsed as `false`.
-	 * Escapes for separators are supported, via backslash.
-	 * @param {string} value
-	 * @param {Object} [options]
-	 * @param {Function} [options.keys] The type to parse the keys as
-	 * @param {Function} [options.values] The type to parse the values as
-	 * @param {string} [options.separator=","] The separator between entries.
-	 */
-	parse (value, options) {
-		let entries;
+			let bVal = b.get(key);
+			if (values ? !values.equals(val, bVal) : val !== bVal) {
+				return false;
+			}
+		}
+
+		return true;
+	},
+	parse (value) {
 		if (value instanceof Map) {
-			if (options) {
-				let { keys, values } = options;
-				if (keys || values) {
-					for (let [key, value] of value) {
-						value.delete(key);
-						value.set(parse(key, keys), parse(value, values));
-					}
+			let { keys, values } = this;
+			if (keys || values) {
+				for (let [key, val] of value) {
+					value.delete(key);
+					value.set(keys?.parse(key) ?? key, values?.parse(val) ?? val);
 				}
 			}
 
@@ -149,20 +80,21 @@ export const map = {
 			value = Object.entries(value);
 		}
 
-		entries = parseEntries(value, options);
+		let entries = this.parseEntries(value);
 		return Array.isArray(entries) ? new Map(entries) : entries;
 	},
-
-	stringify (value, { keys, values, separator = ", " } = {}) {
-		let entries = value.entries();
+	stringify (value) {
+		let { keys, values } = this;
+		let { separator = ", " } = this.spec;
+		let entries = [...value.entries()];
 
 		if (keys || values) {
-			entries = entries.map(([key, value]) => [
-				stringify(key, keys),
-				stringify(value, values),
+			entries = entries.map(([key, val]) => [
+				keys ? keys.stringify(key) : key,
+				values ? values.stringify(val) : val,
 			]);
 		}
 
-		return entries.map(([key, value]) => `${key}: ${value}`).join(separator);
+		return entries.map(([key, val]) => `${key}: ${val}`).join(separator);
 	},
-};
+});
