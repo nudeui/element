@@ -5,5 +5,7 @@
  * `import * as Types from "nude-element/plugins/types"; Types.Array, Types.Map, ...`
  */
 
-export { ArrayType as Array, SetType as Set } from "./props/types/lists.js";
-export { ObjectType as Object, MapType as Map } from "./props/types/dictionaries.js";
+export { default as Array } from "./props/types/array.js";
+export { default as Set } from "./props/types/set.js";
+export { default as Object } from "./props/types/object.js";
+export { default as Map } from "./props/types/map.js";

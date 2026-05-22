@@ -1,10 +1,11 @@
 import PropType from "../src/plugins/props/util/PropType.js";
-import ListType from "../src/plugins/props/util/ListType.js";
-import DictionaryType from "../src/plugins/props/util/DictionaryType.js";
+import IterableType from "../src/plugins/props/types/iterable.js";
 // Side-effect imports register the built-in types.
 import "../src/plugins/props/types/index.js";
-import { ArrayType, SetType } from "../src/plugins/props/types/lists.js";
-import { ObjectType, MapType } from "../src/plugins/props/types/dictionaries.js";
+import ArrayType from "../src/plugins/props/types/array.js";
+import SetType from "../src/plugins/props/types/set.js";
+import ObjectType from "../src/plugins/props/types/object.js";
+import MapType from "../src/plugins/props/types/map.js";
 
 const NumberType = PropType.for(Number);
 const StringType = PropType.for(String);
@@ -88,8 +89,8 @@ export default {
 					expect: true,
 				},
 				{
-					name: "Derivative is an instance of its abstract base class",
-					run: () => PropType.for({ is: Array, values: Number }) instanceof ListType,
+					name: "Derivative inherits from its abstract base type",
+					run: () => PropType.for({ is: Array, values: Number }).isA(IterableType),
 					expect: true,
 				},
 				{
@@ -338,7 +339,7 @@ export default {
 							is: Array,
 							values: { is: Array, values: Number },
 						});
-						return t.values instanceof ListType
+						return t.values.isA(IterableType)
 							&& t.values.is === Array
 							&& t.values.values === NumberType;
 					},
@@ -351,7 +352,7 @@ export default {
 							is: Array,
 							values: { is: Set, values: Number },
 						});
-						return t.values instanceof ListType
+						return t.values.isA(IterableType)
 							&& t.values.is === Set;
 					},
 					expect: true,
@@ -441,22 +442,22 @@ export default {
 					expect: true,
 				},
 				{
-					name: "ListType.register produces a ListType",
+					name: "register with extends: IterableType produces an Iterable derivative",
 					run () {
 						class FooList {}
-						let t = ListType.register({ is: FooList });
-						let result = t instanceof ListType;
+						let t = PropType.register({ is: FooList, extends: IterableType });
+						let result = t.isA(IterableType);
 						PropType.registry.delete(FooList);
 						return result;
 					},
 					expect: true,
 				},
 				{
-					name: "DictionaryType.register produces a DictionaryType",
+					name: "register with extends: MapType produces a Map derivative",
 					run () {
 						class FooDict {}
-						let t = DictionaryType.register({ is: FooDict });
-						let result = t instanceof DictionaryType;
+						let t = PropType.register({ is: FooDict, extends: MapType });
+						let result = t.isA(MapType);
 						PropType.registry.delete(FooDict);
 						return result;
 					},

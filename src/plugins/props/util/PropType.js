@@ -10,17 +10,29 @@ const callableBuiltins = new Set([
 ]);
 
 /**
+ * Standard methods with dedicated dispatchers on the prototype. Any other
+ * function found in a spec is auto-wrapped into a generic super-walk dispatcher
+ * at construction time, so abstract types can publish helpers (e.g. `items`,
+ * `entries`) that descendants invoke as plain `this.x(…)` calls.
+ */
+const standardMethods = new Set(["equals", "parse", "stringify"]);
+
+/**
  * Type adapter for prop values: defines equality, parsing from raw input
  * (typically attribute strings), and stringification back to attributes.
  *
  * A `PropType` instance is an *abstract*, prop-agnostic type definition.
- * Built-in types are registered as singletons keyed on their JS constructor
- * in {@link PropType.registry}. {@link PropType.for} dispatches lookups and
- * delegates derivative construction to the constructor.
+ * The {@link registry} holds every registered type — concrete types are keyed
+ * on their JS constructor (`is`), abstract types on their string `name`.
+ * {@link PropType.for} dispatches lookups and delegates derivative
+ * construction to the constructor.
  *
  * Derivatives are created via `Object.create(parent)` so every property
  * lookup (options + the {@link spec} method-override slot) walks the JS
- * prototype chain naturally — no merging, no copies.
+ * prototype chain naturally — no merging, no copies. The parent is picked
+ * from `spec.extends` if present, otherwise from the registry entry for
+ * `spec.is`, allowing the chain parent to differ from the produced JS type
+ * (e.g. `{is: Array, extends: IterableType}`).
  *
  * Type-specific `equals` / `parse` / `stringify` supplied at registration
  * are stored under `instance.spec`. The prototype methods on this class
@@ -40,10 +52,10 @@ export default class PropType {
 	spec;
 
 	/**
-	 * The next instance up the type chain — a registered singleton for
-	 * derivatives, or the class prototype for roots. Used by the dispatchers
-	 * to walk for inherited method overrides; subclasses and consumers can
-	 * walk it to inspect lineage.
+	 * The next instance up the type chain — the parent picked from
+	 * `spec.extends` or `registry.get(spec.is)`, or the class prototype
+	 * for roots. Used by the dispatchers to walk for inherited method
+	 * overrides; subclasses and consumers can walk it to inspect lineage.
 	 * @type {PropType | object | undefined}
 	 */
 	super;
@@ -58,39 +70,60 @@ export default class PropType {
 			spec = { is: spec };
 		}
 
-		let { is, ...extras } = spec;
+		let { is, extends: parentSpec, name, ...extras } = spec;
 
-		if (!is) {
+		if (!is && !parentSpec && !name) {
 			return this.constructor.any;
 		}
 
-		is = PropType.normalizeIs(is);
-		let parent = PropType.registry.get(is);
+		let normalizedIs = is ? PropType.normalizeIs(is) : undefined;
+		let parent = parentSpec
+			? PropType.for(parentSpec)
+			: (normalizedIs ? PropType.registry.get(normalizedIs) : undefined);
 
-		// Pure lookup: `{is: Array}` with no extras returns the registered singleton.
-		if (parent && Object.keys(extras).length === 0) {
+		// Pure lookup: a bare `{is: X}` or `{extends: Y}` (no other keys) is
+		// just a request for the already-registered singleton.
+		let hasExtras = name !== undefined || Object.keys(extras).length > 0;
+		if (parent && !hasExtras && !(normalizedIs && parentSpec)) {
 			return parent;
 		}
 
 		let instance = parent ? Object.create(parent) : this;
-		if (parent) {
-			instance.super = parent;
+		instance.super = parent ?? this.constructor.prototype;
+		if (normalizedIs) {
+			instance.is = normalizedIs;
 		}
-		else {
-			instance.super = this.constructor.prototype;
-			instance.is = is;
-		}
-
 		instance.spec = spec;
 
-		// Resolve nested type specs and store them as own properties so
-		// type-specific code reads them as `this.values` / `this.keys` (the
-		// resolved PropType instances). Every other spec field — methods,
-		// separators, defaults, etc. — stays in `spec` and is read via
-		// `this.spec.X` by type-specific code and the dispatchers.
-		for (let key of instance.constructor.nestedSpecKeys ?? []) {
+		// Resolve sub-types and store them as own properties so type-specific
+		// code reads them as `this.values` / `this.keys` (the resolved
+		// PropType instances). The `subTypes` list itself is promoted to an
+		// own property when the spec declares it, so descendants inherit it
+		// via the JS prototype chain — and a child that declares its own
+		// `subTypes` replaces the inherited list outright. Unspecified
+		// sub-types default to {@link PropType.any}, set at the root
+		// abstract and inherited the same way, so consumers can write
+		// `this.values.parse(v)` unconditionally.
+		if (spec.subTypes) {
+			instance.subTypes = spec.subTypes;
+		}
+		for (let key of instance.subTypes ?? []) {
 			if (spec[key] !== undefined) {
 				instance[key] = PropType.for(spec[key]);
+			}
+			else if (!(key in instance)) {
+				instance[key] = PropType.any;
+			}
+		}
+
+		// Auto-wrap non-standard spec methods (e.g. `items`, `entries`) into
+		// generic super-walk dispatchers, so callers invoke them as plain
+		// `this.x(…)` — same shape as the standard methods, no class needed.
+		for (let key in spec) {
+			if (typeof spec[key] === "function" && !standardMethods.has(key) && !(key in instance)) {
+				instance[key] = function (...args) {
+					return this.dispatch(key, ...args);
+				};
 			}
 		}
 
@@ -162,34 +195,66 @@ export default class PropType {
 		return String(value);
 	}
 
-	/** @type {Map<Function, PropType>} */
+	/**
+	 * Walk the super chain looking for the named method in each `spec`, and
+	 * invoke the first one found with `this` bound to the original receiver.
+	 * Backs the auto-wrapped helper dispatchers; consumers normally call the
+	 * generated wrappers (`this.items(…)`) rather than this directly.
+	 * @param {string} method
+	 * @param {...unknown} args
+	 * @returns {unknown}
+	 */
+	dispatch (method, ...args) {
+		for (let obj = this; obj; obj = obj.super) {
+			if (obj.spec?.[method]) {
+				return obj.spec[method].apply(this, args);
+			}
+		}
+	}
+
+	/**
+	 * Is this type a kind of `other` — i.e. is `other` somewhere in the
+	 * super chain (or is it `this` itself)? Replaces `instanceof` checks
+	 * that no longer apply now that abstract types are PropType instances
+	 * rather than JS classes.
+	 * @param {PropType} other
+	 * @returns {boolean}
+	 */
+	isA (other) {
+		for (let obj = this; obj; obj = obj.super) {
+			if (obj === other) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	get [Symbol.toStringTag] () {
+		return (this.spec?.name ?? this.is?.name ?? "Prop") + "Type";
+	}
+
+	/** @type {Map<Function | string, PropType>} */
 	static registry = new Map();
 
 	/**
-	 * Option keys whose values are themselves type specs and should be
-	 * recursively resolved via {@link PropType.for}. Subclasses override
-	 * (e.g. `IterableType` → `["values"]`).
-	 * @type {string[]}
-	 */
-	static nestedSpecKeys = [];
-
-	/**
 	 * Shared fallback returned by {@link PropType.for} when no type is
-	 * specified or matched. Subclasses inherit via the class chain.
+	 * specified or matched.
 	 * @type {PropType}
 	 */
 	static any = new PropType();
 
 	/**
-	 * Register a type: constructs an instance (via `new this(spec)`) and
-	 * stores it in {@link PropType.registry} keyed on `spec.is`. Returns
-	 * the registered instance.
+	 * Register a type: constructs an instance and stores it in
+	 * {@link PropType.registry} keyed on `spec.is` (constructor) or
+	 * `spec.name` (for abstract types with no `is`). Returns the
+	 * registered instance.
 	 * @param {PropTypeSpec} spec
 	 * @returns {PropType}
 	 */
 	static register (spec) {
 		let instance = new this(spec);
-		this.registry.set(instance.is, instance);
+		let key = instance.is ?? spec.name;
+		this.registry.set(key, instance);
 		return instance;
 	}
 
@@ -197,9 +262,10 @@ export default class PropType {
 	 * Resolve any user-facing type identifier into a {@link PropType}.
 	 *
 	 *   - PropType instance → returned as-is.
-	 *   - constructor / string → registry lookup (string resolved via `globalThis`).
-	 *   - object spec → constructs a derivative if it carries extras beyond `is`,
-	 *     otherwise returns the registered singleton.
+	 *   - constructor / string → registry lookup (string resolved via
+	 *     `globalThis` first, then by name).
+	 *   - object spec → constructor short-circuits to the singleton if no
+	 *     extras, otherwise builds a derivative.
 	 *   - null / undefined → `options.fallback` (default: the generic instance).
 	 *
 	 * @param {SpecifiedType} input
@@ -216,31 +282,41 @@ export default class PropType {
 		}
 
 		if (typeof input === "object") {
-			let { is, ...extras } = input;
-			if (Object.keys(extras).length > 0) {
-				return new this(input);
-			}
-			input = is;
+			return new this(input);
 		}
 
 		return this.registry.get(PropType.normalizeIs(input)) ?? fallback;
 	}
 
 	/**
-	 * Resolve an `is` identifier to its JS constructor. Strings are looked
-	 * up in `globalThis`; everything else passes through. The single source
-	 * of string-to-constructor resolution in the class.
+	 * Resolve an `is` identifier to its registry key. Strings are first tried
+	 * as `globalThis` lookups (catches built-in constructors like `"Array"`);
+	 * anything else (including named-only abstracts like `"Iterable"`) passes
+	 * through as the bare string.
 	 * @param {Function | string | undefined} is
-	 * @returns {Function | undefined}
+	 * @returns {Function | string | undefined}
 	 */
 	static normalizeIs (is) {
-		return typeof is === "string" ? (globalThis[is] ?? is) : is;
+		if (typeof is !== "string") {
+			return is;
+		}
+		let resolved = globalThis[is];
+		return typeof resolved === "function" ? resolved : is;
 	}
 }
 
 /**
  * @typedef {object} PropTypeSpec
  * @property {Function | string} [is] JS constructor (or its global name).
+ * @property {PropType | string} [extends] Explicit parent in the chain — used
+ *   when the parent differs from `registry.get(is)` (e.g. concrete types
+ *   extending an abstract).
+ * @property {string} [name] Registry key for abstract types with no `is`.
+ * @property {string[]} [subTypes] Spec keys whose values are themselves type
+ *   specs and should be resolved to PropType instances at construction time.
+ *   Inherited from the nearest ancestor that declares it — the child's list
+ *   replaces (not extends) the parent's. Unspecified keys default to
+ *   {@link PropType.any}.
  * @property {(this: PropType, a: unknown, b: unknown) => boolean} [equals]
  * @property {(this: PropType, value: unknown) => unknown} [parse]
  * @property {(this: PropType, value: unknown) => (string | null)} [stringify]

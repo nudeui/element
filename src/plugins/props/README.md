@@ -155,7 +155,7 @@ It can be either a constant (e.g. `true`) or a function, in which case it’s pa
 
 #### Custom types
 
-Types are *instances* of `PropType` (or one of its subclasses, `ListType` / `DictionaryType`). Each instance carries the spec it was constructed with — its constructor (`is`) and any type options — and supplies `equals` / `parse` / `stringify` either as methods on a subclass prototype, or as overrides passed via the constructor spec. A type is an abstract, prop-agnostic definition; the same instance is shared across every prop that references it.
+Types are *instances* of the single `PropType` class. Each instance carries the spec it was constructed with — its constructor (`is`) and any type options — and supplies `equals` / `parse` / `stringify` as overrides on the spec. `IterableType` is an abstract `PropType` instance registered by `name`; concrete types like `Array`, `Set`, and `Map` declare `extends: IterableType` to inherit its parsing behavior via the JS prototype chain. `Object` further extends `Map` since it's a constrained dictionary realization. A type is an abstract, prop-agnostic definition; the same instance is shared across every prop that references it.
 
 For most custom types, the simplest path is to register a spec object directly. Methods read options from `this.spec`:
 
@@ -170,20 +170,23 @@ PropType.register({
 });
 ```
 
-For types that need richer shared behavior (e.g. resolving nested type specs, or reusing logic across several constructors), subclass `PropType` — or one of the built-in bases `ListType` / `DictionaryType`:
+For types that need richer shared behavior (e.g. resolving nested type specs, or reusing parsing logic), `extends` an existing abstract or concrete — `IterableType` for any iterable, `MapType` for dictionary-shaped types:
 
 ```js
-import { PropType, ListType } from "nude-element/plugins";
+import { PropType, IterableType } from "nude-element/plugins";
 
-class TupleType extends ListType {
-    // override / extend as needed; `this.spec` holds the merged spec,
+PropType.register({
+    is: Tuple,
+    extends: IterableType,
+    // override / extend as needed; `this.spec` holds the spec,
     // `this.values` is the resolved nested type
-}
-
-PropType.register(new TupleType({ is: Tuple, /* ...spec */ }));
+    parse (value) {
+        return new Tuple(...IterableType.spec.parse.call(this, value));
+    },
+});
 ```
 
-**Derivative types.** A type spec with options beyond `is` produces a *derivative* type — a new `PropType` instance whose prototype is the registered singleton for that `is`. Lookups for unspecified options fall through to the parent via the JS prototype chain.
+**Derivative types.** A type spec with options beyond `is` produces a *derivative* type — a new `PropType` instance whose prototype is the registered singleton for that `is` (or the abstract named via `extends`). Lookups for unspecified options fall through to the parent via the JS prototype chain.
 
 ```js
 import { PropType } from "nude-element/plugins";

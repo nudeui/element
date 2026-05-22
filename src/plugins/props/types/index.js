@@ -1,8 +1,12 @@
 // Side-effect imports register the built-in types' singletons.
+// Order matters: `iterable` must register before the concrete types that
+// `extends` it (array, set, map); `map` before `object` (since object extends map).
 import "./basic.js";
-import "./lists.js";
-import "./dictionaries.js";
+import "./iterable.js";
+import "./array.js";
+import "./set.js";
+import "./map.js";
+import "./object.js";
 
 export { default as PropType } from "../util/PropType.js";
-export { default as ListType } from "../util/ListType.js";
-export { default as DictionaryType } from "../util/DictionaryType.js";
+export { default as IterableType } from "./iterable.js";
