@@ -58,7 +58,16 @@ export default class PropType {
 	 * overrides; subclasses and consumers can walk it to inspect lineage.
 	 * @type {PropType | object | undefined}
 	 */
-	super;
+	super = this.constructor.prototype;
+
+	/**
+	 * Resolve sub-types and store them as own properties so type-specific
+	 * code reads them as `this.values` / `this.keys` (the resolved PropType instances).
+	 * Unspecified sub-types default to {@link PropType.any}
+	 * so consumers can use type methods unconditionally.
+	 * @type {Array<string> | undefined}
+	 */
+	subTypes;
 
 	/** @param {TSpec} [spec] */
 	constructor (spec) {
@@ -76,64 +85,60 @@ export default class PropType {
 			return this.constructor.any;
 		}
 
-		let normalizedIs = is ? PropType.normalizeIs(is) : undefined;
+		is = is ? PropType.normalizeIs(is) : undefined;
 		let parent = parentSpec
 			? PropType.for(parentSpec)
-			: normalizedIs
-				? PropType.registry.get(normalizedIs)
+			: is
+				? PropType.registry.get(is)
 				: undefined;
 
 		// Pure lookup: a bare `{is: X}` or `{extends: Y}` (no other keys) is
 		// just a request for the already-registered singleton.
 		let hasExtras = name !== undefined || Object.keys(extras).length > 0;
-		if (parent && !hasExtras && !(normalizedIs && parentSpec)) {
+		if (parent && !hasExtras && !(is && parentSpec)) {
 			return parent;
 		}
 
-		let instance = parent ? Object.create(parent) : this;
-		instance.super = parent ?? this.constructor.prototype;
-		if (normalizedIs) {
-			instance.is = normalizedIs;
+		if (parent) {
+			return parent.from(spec);
 		}
+
+		this.spec = spec;
+		this.init();
+	}
+
+	from (spec) {
+		let instance = Object.create(this);
+		instance.super = this;
 		instance.spec = spec;
-
-		// Resolve sub-types and store them as own properties so type-specific
-		// code reads them as `this.values` / `this.keys` (the resolved
-		// PropType instances). The `subTypes` list itself is promoted to an
-		// own property when the spec declares it, so descendants inherit it
-		// via the JS prototype chain — and a child that declares its own
-		// `subTypes` replaces the inherited list outright. Unspecified
-		// sub-types default to {@link PropType.any}, set at the root
-		// abstract and inherited the same way, so consumers can write
-		// `this.values.parse(v)` unconditionally.
-		if (spec.subTypes) {
-			instance.subTypes = spec.subTypes;
-		}
-		for (let key of instance.subTypes ?? []) {
-			if (spec[key] !== undefined) {
-				instance[key] = PropType.for(spec[key]);
-			}
-			else if (!(key in instance)) {
-				instance[key] = PropType.any;
-			}
-		}
-
-		// Auto-wrap non-standard spec methods (e.g. `items`, `entries`) into
-		// generic super-walk dispatchers, so callers invoke them as plain
-		// `this.x(…)` — same shape as the standard methods, no class needed.
-		for (let key in spec) {
-			if (
-				typeof spec[key] === "function" &&
-				!standardMethods.has(key) &&
-				!(key in instance)
-			) {
-				instance[key] = function (...args) {
-					return this.dispatch(key, ...args);
-				};
-			}
-		}
-
+		instance.init();
 		return instance;
+	}
+
+	init () {
+		let { spec } = this;
+
+		for (let key in spec) {
+			if (key in this.constructor.prototype) {
+				this["spec_" + key] = spec[key];
+			}
+			else {
+				this[key] = spec[key];
+			}
+		}
+
+		if (Object.hasOwn(spec, "is")) {
+			this.is = this.constructor.normalizeIs(spec.is);
+		}
+
+		for (let key of this.subTypes ?? []) {
+			if (spec[key] !== undefined) {
+				this[key] = PropType.for(spec[key]);
+			}
+			else if (!(key in this)) {
+				this[key] = PropType.any;
+			}
+		}
 	}
 
 	/**
@@ -150,10 +155,8 @@ export default class PropType {
 			return true;
 		}
 
-		for (let obj = this; obj; obj = obj.super) {
-			if (obj.spec?.equals) {
-				return obj.spec.equals.call(this, a, b);
-			}
+		if (this.spec_equals) {
+			return this.spec_equals(a, b);
 		}
 
 		return typeof a.equals === "function" ? a.equals(b) : false;
@@ -168,10 +171,8 @@ export default class PropType {
 			return value;
 		}
 
-		for (let obj = this; obj; obj = obj.super) {
-			if (obj.spec?.parse) {
-				return obj.spec.parse.call(this, value);
-			}
+		if (this.spec_parse) {
+			return this.spec_parse(value);
 		}
 
 		let Type = this.is;
@@ -192,30 +193,11 @@ export default class PropType {
 			return null;
 		}
 
-		for (let obj = this; obj; obj = obj.super) {
-			if (obj.spec?.stringify) {
-				return obj.spec.stringify.call(this, value);
-			}
+		if (this.spec_stringify) {
+			return this.spec_stringify(value);
 		}
 
 		return String(value);
-	}
-
-	/**
-	 * Walk the super chain looking for the named method in each `spec`, and
-	 * invoke the first one found with `this` bound to the original receiver.
-	 * Backs the auto-wrapped helper dispatchers; consumers normally call the
-	 * generated wrappers (`this.items(…)`) rather than this directly.
-	 * @param {string} method
-	 * @param {...unknown} args
-	 * @returns {unknown}
-	 */
-	dispatch (method, ...args) {
-		for (let obj = this; obj; obj = obj.super) {
-			if (obj.spec?.[method]) {
-				return obj.spec[method].apply(this, args);
-			}
-		}
 	}
 
 	/**
@@ -236,7 +218,19 @@ export default class PropType {
 	}
 
 	get [Symbol.toStringTag] () {
-		return (this.spec?.name ?? this.is?.name ?? "Prop") + "Type";
+		if (this.name) {
+			return this.name;
+		}
+
+		if (this.is) {
+			return this.is?.name ?? this.is;
+		}
+
+		if (this.super !== this.constructor.prototype) {
+			return this.super[Symbol.toStringTag];
+		}
+
+		return this.constructor.name;
 	}
 
 	/** @type {Map<Function | string, PropType>} */
