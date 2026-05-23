@@ -79,7 +79,9 @@ export default class PropType {
 		let normalizedIs = is ? PropType.normalizeIs(is) : undefined;
 		let parent = parentSpec
 			? PropType.for(parentSpec)
-			: (normalizedIs ? PropType.registry.get(normalizedIs) : undefined);
+			: normalizedIs
+				? PropType.registry.get(normalizedIs)
+				: undefined;
 
 		// Pure lookup: a bare `{is: X}` or `{extends: Y}` (no other keys) is
 		// just a request for the already-registered singleton.
@@ -120,7 +122,11 @@ export default class PropType {
 		// generic super-walk dispatchers, so callers invoke them as plain
 		// `this.x(…)` — same shape as the standard methods, no class needed.
 		for (let key in spec) {
-			if (typeof spec[key] === "function" && !standardMethods.has(key) && !(key in instance)) {
+			if (
+				typeof spec[key] === "function" &&
+				!standardMethods.has(key) &&
+				!(key in instance)
+			) {
 				instance[key] = function (...args) {
 					return this.dispatch(key, ...args);
 				};
