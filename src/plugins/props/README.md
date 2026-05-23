@@ -155,7 +155,7 @@ It can be either a constant (e.g. `true`) or a function, in which case it’s pa
 
 #### Custom types
 
-Types are *instances* of the single `PropType` class. Each instance carries the spec it was constructed with — its constructor (`is`) and any type options — and supplies `equals` / `parse` / `stringify` as overrides on the spec. `IterableType` is an abstract `PropType` instance registered by `name`; concrete types like `Array`, `Set`, and `Map` declare `extends: IterableType` to inherit its parsing behavior via the JS prototype chain. `Object` further extends `Map` since it's a constrained dictionary realization. A type is an abstract, prop-agnostic definition; the same instance is shared across every prop that references it.
+Types are *instances* of the single `PropType` class. Each instance carries the spec it was constructed with — its constructor (`is`), any type options, and any `equals` / `parse` / `stringify` overrides — and is shared across every prop that references it. An abstract type (`IterableType`) is a `PropType` instance registered by `name` rather than `is`; concrete types declare `extends: <abstract>` to inherit its parsing behavior via the JS prototype chain (e.g. `Array`, `Set`, and `Map` all extend `IterableType`, and `Object` extends `Map`).
 
 For most custom types, the simplest path is to register a spec object directly. Methods read options from `this.spec`:
 
@@ -170,7 +170,7 @@ PropType.register({
 });
 ```
 
-For types that need richer shared behavior (e.g. resolving nested type specs, or reusing parsing logic), `extends` an existing abstract or concrete — `IterableType` for any iterable, `MapType` for dictionary-shaped types:
+For types that reuse the iterable / dictionary parsing infrastructure, `extends` an existing abstract — `IterableType` for any iterable, `MapType` for any key→value mapping. Inside method overrides, `this.values` (and `this.keys` for dictionaries) is the resolved nested type — defaulting to `PropType.any`, so you can call `this.values.parse(v)` unconditionally.
 
 ```js
 import { PropType, IterableType } from "nude-element/plugins";
@@ -178,15 +178,13 @@ import { PropType, IterableType } from "nude-element/plugins";
 PropType.register({
     is: Tuple,
     extends: IterableType,
-    // override / extend as needed; `this.spec` holds the spec,
-    // `this.values` is the resolved nested type
     parse (value) {
         return new Tuple(...IterableType.spec.parse.call(this, value));
     },
 });
 ```
 
-**Derivative types.** A type spec with options beyond `is` produces a *derivative* type — a new `PropType` instance whose prototype is the registered singleton for that `is` (or the abstract named via `extends`). Lookups for unspecified options fall through to the parent via the JS prototype chain.
+**Derivative types.** A type spec with options beyond `is` produces a *derivative* — a new `PropType` instance whose prototype chain points to the registered singleton for that `is` (or the abstract named via `extends`). Lookups for unspecified options fall through to the parent via the JS prototype chain.
 
 ```js
 import { PropType } from "nude-element/plugins";
@@ -208,6 +206,8 @@ import * as Types from "nude-element/plugins/types";
 Types.Array; // the ArrayType singleton
 Types.Map;   // the MapType singleton
 ```
+
+For the full spec-key reference, the abstract-type helper methods (`parseItems`, `parseEntries`), and the public API surface, see [`types/README.md`](./types/README.md).
 
 ### Attribute-property reflection
 
