@@ -18,6 +18,6 @@ export default PropType.register({
 		return true;
 	},
 	parse (value) {
-		return new Set(Iterable.spec.parse.call(this, value));
+		return new Set(this.parsedItems(value));
 	},
 });

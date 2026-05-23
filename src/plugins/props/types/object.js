@@ -18,13 +18,14 @@ export default PropType.register({
 		if (value && typeof value === "object" && !value[Symbol.iterator]) {
 			value = Object.entries(value);
 		}
-		let result = {};
-		for (let [k, v] of this.parseEntries(value)) {
-			result[this.keys.parse(k)] = this.values.parse(v);
-		}
-		return result;
+		return Object.fromEntries(this.parsedEntries(value));
 	},
 	stringify (value) {
-		return MapType.spec.stringify.call(this, Object.entries(value));
+		let { separator = ", " } = this.spec;
+		let parts = [];
+		for (let [k, v] of Object.entries(value)) {
+			parts.push(`${this.keys.stringify(k)}: ${this.values.stringify(v)}`);
+		}
+		return parts.join(separator);
 	},
 });

@@ -3,15 +3,16 @@ import { split } from "../util/split.js";
 
 /**
  * Abstract type for any iterable. The parsing pipeline is two streaming
- * generators: {@link parseItems} yields raw items (no type parsing), and
- * {@link parse} yields each item through `this.values`. Concrete types
- * (Array, Set, …) `extends: Iterable` and pipe the {@link parse}
- * iterator straight into their own container — every input flows through
- * the chain exactly once, no intermediate arrays.
+ * generators feeding a terminal step: {@link parseItems} yields raw items
+ * (no type parsing); {@link parsedItems} yields each item through
+ * `this.values`; {@link parse} materializes into an `Array`. Concrete
+ * types (Array, Set, …) `extends: Iterable` — Array inherits `parse`
+ * unchanged; Set overrides `parse` to wrap `this.parsedItems(value)` into
+ * a `Set`. Each input value flows through the chain exactly once.
  *
  * `MapType` extends this and reuses `parseItems` to grab the raw string
  * parts, then splits each on `:` in its own `parseEntries` to yield
- * `[key, value]` tuples. Distinct names because the return types differ.
+ * `[key, value]` tuples.
  */
 const Iterable = PropType.register({
 	name: "Iterable",
@@ -39,14 +40,27 @@ const Iterable = PropType.register({
 
 	/**
 	 * Yield each item from {@link parseItems} through `this.values`.
+	 * The intermediate generator that concrete types (Set, …) consume into
+	 * their own container.
 	 * @this {PropType}
 	 * @param {string | Iterable<unknown> | unknown} value
 	 * @returns {Iterator<unknown>}
 	 */
-	*parse (value) {
+	*parsedItems (value) {
 		for (let v of this.parseItems(value)) {
 			yield this.values.parse(v);
 		}
+	},
+
+	/**
+	 * Materialize {@link parsedItems} into an `Array`. Inherited by ArrayType
+	 * unchanged; SetType overrides to wrap into a `Set`.
+	 * @this {PropType}
+	 * @param {string | Iterable<unknown> | unknown} value
+	 * @returns {unknown[]}
+	 */
+	parse (value) {
+		return [...this.parsedItems(value)];
 	},
 
 	/**

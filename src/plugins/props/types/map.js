@@ -66,10 +66,23 @@ const MapType = PropType.register({
 	},
 
 	/**
-	 * Apply `this.keys` / `this.values` to each entry from
-	 * {@link parseEntries} and materialize into a `Map`. ObjectType
-	 * overrides with the same loop body but materializes via
-	 * `Object.fromEntries`.
+	 * Yield each `[k, v]` from {@link parseEntries} with `this.keys` and
+	 * `this.values` applied to the respective halves. The intermediate
+	 * generator that concrete types (Object, …) consume into their own
+	 * container.
+	 * @this {PropType}
+	 * @param {string | Iterable<[unknown, unknown]>} value
+	 * @returns {Iterator<[unknown, unknown]>}
+	 */
+	*parsedEntries (value) {
+		for (let [k, v] of this.parseEntries(value)) {
+			yield [this.keys.parse(k), this.values.parse(v)];
+		}
+	},
+
+	/**
+	 * Materialize {@link parsedEntries} into a `Map`. ObjectType overrides
+	 * to wrap via `Object.fromEntries`.
 	 * @this {PropType}
 	 * @param {string | Iterable<[unknown, unknown]> | object} value
 	 * @returns {Map<unknown, unknown>}
@@ -78,11 +91,7 @@ const MapType = PropType.register({
 		if (value && typeof value === "object" && !value[Symbol.iterator]) {
 			value = Object.entries(value);
 		}
-		let result = new Map();
-		for (let [k, v] of this.parseEntries(value)) {
-			result.set(this.keys.parse(k), this.values.parse(v));
-		}
-		return result;
+		return new Map(this.parsedEntries(value));
 	},
 
 	/**

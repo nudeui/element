@@ -10,43 +10,37 @@ const callableBuiltins = new Set([
 ]);
 
 /**
- * Standard methods with dedicated dispatchers on the prototype. Any other
- * function found in a spec is auto-wrapped into a generic super-walk dispatcher
- * at construction time, so abstract types can publish helpers (e.g. `items`,
- * `entries`) that descendants invoke as plain `this.x(…)` calls.
- */
-const standardMethods = new Set(["equals", "parse", "stringify"]);
-
-/**
  * Type adapter for prop values: defines equality, parsing from raw input
  * (typically attribute strings), and stringification back to attributes.
  *
  * A `PropType` instance is an *abstract*, prop-agnostic type definition.
  * The {@link registry} holds every registered type — concrete types are keyed
  * on their JS constructor (`is`), abstract types on their string `name`.
- * {@link PropType.for} dispatches lookups and delegates derivative
- * construction to the constructor.
+ * {@link PropType.for} resolves any user-facing identifier into a PropType
+ * and delegates derivative construction to the constructor.
  *
- * Derivatives are created via `Object.create(parent)` so every property
- * lookup (options + the {@link spec} method-override slot) walks the JS
- * prototype chain naturally — no merging, no copies. The parent is picked
- * from `spec.extends` if present, otherwise from the registry entry for
- * `spec.is`, allowing the chain parent to differ from the produced JS type
- * (e.g. `{is: Array, extends: Iterable}`).
+ * Derivatives are created via `Object.create(parent)`, and every spec
+ * property is lifted onto the instance during {@link init} (overrides that
+ * collide with prototype names — `equals`, `parse`, `stringify`, etc. —
+ * are stored under a `spec_` prefix). Lookups then walk the JS prototype
+ * chain naturally: a derivative inherits whatever its parent set, and
+ * its own values shadow as expected.
  *
- * Type-specific `equals` / `parse` / `stringify` supplied at registration
- * are stored under `instance.spec`. The prototype methods on this class
- * handle the shared null/identity short-circuits and delegate to that spec
- * when present, so type definitions stay free of boilerplate.
+ * The parent is picked from `spec.extends` if present, otherwise from the
+ * registry entry for `spec.is`, allowing the chain parent to differ from
+ * the produced JS type (e.g. `{is: Array, extends: Iterable}`).
+ *
+ * The prototype `equals` / `parse` / `stringify` methods handle the shared
+ * null/identity short-circuits and then call `this.spec_<name>(…)` if
+ * present, so type definitions stay free of boilerplate.
  *
  * @template {PropTypeSpec} [TSpec=PropTypeSpec]
  */
 export default class PropType {
 	/**
 	 * The spec object this instance was constructed with — stored verbatim,
-	 * not cloned. Type-specific method overrides (`equals`, `parse`,
-	 * `stringify`) live here and are invoked by the prototype dispatchers
-	 * after walking the {@link super} chain.
+	 * not cloned, alongside the lifted `spec_<name>` copies of any method
+	 * overrides it carried.
 	 * @type {PropTypeSpec | undefined}
 	 */
 	spec;
@@ -54,8 +48,9 @@ export default class PropType {
 	/**
 	 * The next instance up the type chain — the parent picked from
 	 * `spec.extends` or `registry.get(spec.is)`, or the class prototype
-	 * for roots. Used by the dispatchers to walk for inherited method
-	 * overrides; subclasses and consumers can walk it to inspect lineage.
+	 * for roots. Distinct from `Object.getPrototypeOf(this)` only for
+	 * root instances (where the JS prototype is the class prototype).
+	 * Consumers can walk it to inspect lineage (see {@link isA}).
 	 * @type {PropType | object | undefined}
 	 */
 	super = this.constructor.prototype;
@@ -107,6 +102,12 @@ export default class PropType {
 		this.init();
 	}
 
+	/**
+	 * Create a new type that inherits from this one.
+	 * Mainly used internally.
+	 * @param {PropTypeSpec} spec
+	 * @returns
+	 */
 	from (spec) {
 		let instance = Object.create(this);
 		instance.super = this;
