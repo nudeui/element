@@ -155,7 +155,7 @@ It can be either a constant (e.g. `true`) or a function, in which case it’s pa
 
 #### Custom types
 
-Types are *instances* of the single `PropType` class. Each instance carries the spec it was constructed with — its constructor (`is`), any type options, and any `equals` / `parse` / `stringify` overrides — and is shared across every prop that references it. An abstract type (`IterableType`) is a `PropType` instance registered by `name` rather than `is`; concrete types declare `extends: <abstract>` to inherit its parsing behavior via the JS prototype chain (e.g. `Array`, `Set`, and `Map` all extend `IterableType`, and `Object` extends `Map`).
+Types are *instances* of the single `PropType` class. Each instance carries the spec it was constructed with — its constructor (`is`), any type options, and any `equals` / `parse` / `stringify` overrides — and is shared across every prop that references it. An abstract type (`Iterable`) is a `PropType` instance registered by `name` rather than `is`; concrete types declare `extends: <abstract>` to inherit its parsing behavior via the JS prototype chain (e.g. `Array`, `Set`, and `Map` all extend `Iterable`, and `Object` extends `Map`).
 
 For most custom types, the simplest path is to register a spec object directly. Methods read options from `this.spec`:
 
@@ -170,16 +170,16 @@ PropType.register({
 });
 ```
 
-For types that reuse the iterable / dictionary parsing infrastructure, `extends` an existing abstract — `IterableType` for any iterable, `MapType` for any key→value mapping. Inside method overrides, `this.values` (and `this.keys` for dictionaries) is the resolved nested type — defaulting to `PropType.any`, so you can call `this.values.parse(v)` unconditionally.
+For types that reuse the iterable / dictionary parsing infrastructure, `extends` an existing abstract — `Iterable` for any iterable, `MapType` for any key→value mapping. Inside method overrides, `this.values` (and `this.keys` for dictionaries) is the resolved nested type — defaulting to `PropType.any`, so you can call `this.values.parse(v)` unconditionally.
 
 ```js
-import { PropType, IterableType } from "nude-element/plugins";
+import { PropType, Iterable } from "nude-element/plugins";
 
 PropType.register({
     is: Tuple,
-    extends: IterableType,
+    extends: Iterable,
     parse (value) {
-        return new Tuple(...IterableType.spec.parse.call(this, value));
+        return new Tuple(...Iterable.spec.parse.call(this, value));
     },
 });
 ```

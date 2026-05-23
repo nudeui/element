@@ -1,11 +1,11 @@
 import PropType from "../util/PropType.js";
-import IterableType from "./iterable.js";
+import Iterable from "./iterable.js";
 
 const entrySplitter = /(?<!\\):/;
 
 /**
  * Concrete type for `Map`, which also serves as the canonical dictionary in
- * JS. Extends {@link IterableType}: reuses the parent's `parseItems` to grab
+ * JS. Extends {@link Iterable}: reuses the parent's `parseItems` to grab
  * raw string parts, then splits each on `:` in {@link parseEntries} to yield
  * raw `[key, value]` tuples (already-tuple input flows through unchanged).
  * {@link parse} applies `this.keys` / `this.values` to each entry and
@@ -16,7 +16,7 @@ const entrySplitter = /(?<!\\):/;
  */
 const MapType = PropType.register({
 	is: Map,
-	extends: IterableType,
+	extends: Iterable,
 	subTypes: ["keys", "values"],
 
 	/**

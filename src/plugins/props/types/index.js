@@ -9,4 +9,4 @@ import "./map.js";
 import "./object.js";
 
 export { default as PropType } from "../util/PropType.js";
-export { default as IterableType } from "./iterable.js";
+export { default as Iterable } from "./iterable.js";

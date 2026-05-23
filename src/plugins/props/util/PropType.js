@@ -32,7 +32,7 @@ const standardMethods = new Set(["equals", "parse", "stringify"]);
  * prototype chain naturally — no merging, no copies. The parent is picked
  * from `spec.extends` if present, otherwise from the registry entry for
  * `spec.is`, allowing the chain parent to differ from the produced JS type
- * (e.g. `{is: Array, extends: IterableType}`).
+ * (e.g. `{is: Array, extends: Iterable}`).
  *
  * Type-specific `equals` / `parse` / `stringify` supplied at registration
  * are stored under `instance.spec`. The prototype methods on this class

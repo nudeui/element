@@ -33,7 +33,7 @@ All built-ins are exported as singletons under their JS constructor names from `
 
 | Method                       | Yields                                                                                                        |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `IterableType.parseItems`    | Raw items: strings split via the pair-aware splitter, iterables consumed verbatim, scalars wrapped. No `values.parse` applied. |
+| `Iterable.parseItems`        | Raw items: strings split via the pair-aware splitter, iterables consumed verbatim, scalars wrapped. No `values.parse` applied. |
 | `MapType.parseEntries`       | Raw `[key, value]` tuples: built on `parseItems`, with `:`-splitting (escaped `\:` preserved) and shorthand-entry handling via `defaultKey` / `defaultValue` / `"false"`-coercion. |
 
 Both are generators. Concrete types consume them with the appropriate terminal container constructor (`Array.from`, `new Set`, `new Map`, `Object.fromEntries`) so each input value flows through the chain exactly once — no intermediate arrays.

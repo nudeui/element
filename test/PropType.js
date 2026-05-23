@@ -1,5 +1,5 @@
 import PropType from "../src/plugins/props/util/PropType.js";
-import IterableType from "../src/plugins/props/types/iterable.js";
+import Iterable from "../src/plugins/props/types/iterable.js";
 // Side-effect imports register the built-in types.
 import "../src/plugins/props/types/index.js";
 import ArrayType from "../src/plugins/props/types/array.js";
@@ -90,7 +90,7 @@ export default {
 				},
 				{
 					name: "Derivative inherits from its abstract base type",
-					run: () => PropType.for({ is: Array, values: Number }).isA(IterableType),
+					run: () => PropType.for({ is: Array, values: Number }).isA(Iterable),
 					expect: true,
 				},
 				{
@@ -339,7 +339,7 @@ export default {
 							is: Array,
 							values: { is: Array, values: Number },
 						});
-						return t.values.isA(IterableType)
+						return t.values.isA(Iterable)
 							&& t.values.is === Array
 							&& t.values.values === NumberType;
 					},
@@ -352,7 +352,7 @@ export default {
 							is: Array,
 							values: { is: Set, values: Number },
 						});
-						return t.values.isA(IterableType)
+						return t.values.isA(Iterable)
 							&& t.values.is === Set;
 					},
 					expect: true,
@@ -442,11 +442,11 @@ export default {
 					expect: true,
 				},
 				{
-					name: "register with extends: IterableType produces an Iterable derivative",
+					name: "register with extends: Iterable produces an Iterable derivative",
 					run () {
 						class FooList {}
-						let t = PropType.register({ is: FooList, extends: IterableType });
-						let result = t.isA(IterableType);
+						let t = PropType.register({ is: FooList, extends: Iterable });
+						let result = t.isA(Iterable);
 						PropType.registry.delete(FooList);
 						return result;
 					},

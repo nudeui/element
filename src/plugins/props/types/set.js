@@ -1,9 +1,9 @@
 import PropType from "../util/PropType.js";
-import IterableType from "./iterable.js";
+import Iterable from "./iterable.js";
 
 export default PropType.register({
 	is: Set,
-	extends: IterableType,
+	extends: Iterable,
 	equals (a, b) {
 		if (a.size !== b.size) {
 			return false;
@@ -18,6 +18,6 @@ export default PropType.register({
 		return true;
 	},
 	parse (value) {
-		return new Set(IterableType.spec.parse.call(this, value));
+		return new Set(Iterable.spec.parse.call(this, value));
 	},
 });

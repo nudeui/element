@@ -5,7 +5,7 @@ import { split } from "../util/split.js";
  * Abstract type for any iterable. The parsing pipeline is two streaming
  * generators: {@link parseItems} yields raw items (no type parsing), and
  * {@link parse} yields each item through `this.values`. Concrete types
- * (Array, Set, …) `extends: IterableType` and pipe the {@link parse}
+ * (Array, Set, …) `extends: Iterable` and pipe the {@link parse}
  * iterator straight into their own container — every input flows through
  * the chain exactly once, no intermediate arrays.
  *
@@ -13,7 +13,7 @@ import { split } from "../util/split.js";
  * parts, then splits each on `:` in its own `parseEntries` to yield
  * `[key, value]` tuples. Distinct names because the return types differ.
  */
-const IterableType = PropType.register({
+const Iterable = PropType.register({
 	name: "Iterable",
 	subTypes: ["values"],
 
@@ -95,7 +95,7 @@ const IterableType = PropType.register({
 	},
 });
 
-export default IterableType;
+export default Iterable;
 
 /**
  * @typedef {import("../util/PropType.js").SpecifiedType} SpecifiedType
@@ -108,5 +108,5 @@ export default IterableType;
  *   separator?: string,
  *   joiner?: string,
  *   pairs?: object,
- * }} IterableTypeSpec
+ * }} IterableSpec
  */

@@ -1,10 +1,10 @@
 import PropType from "../util/PropType.js";
-import IterableType from "./iterable.js";
+import Iterable from "./iterable.js";
 
 export default PropType.register({
 	is: Array,
-	extends: IterableType,
+	extends: Iterable,
 	parse (value) {
-		return [...IterableType.spec.parse.call(this, value)];
+		return [...Iterable.spec.parse.call(this, value)];
 	},
 });
