@@ -142,7 +142,7 @@ export default class PropType {
 	 * @returns {boolean}
 	 */
 	equals (a, b) {
-		if (a == null || b == null) {
+		if (a === null || b === null || a === undefined || b === undefined) {
 			return a === b;
 		}
 
@@ -164,7 +164,7 @@ export default class PropType {
 	 * @returns {unknown}
 	 */
 	parse (value) {
-		if (value == null) {
+		if (value === null || value === undefined) {
 			return value;
 		}
 
@@ -188,7 +188,7 @@ export default class PropType {
 	 * @returns {string | null}
 	 */
 	stringify (value) {
-		if (value == null) {
+		if (value === null || value === undefined) {
 			return null;
 		}
 
