@@ -60,7 +60,7 @@ const Iterable = PropType.register({
 	 * @returns {unknown[]}
 	 */
 	parse (value) {
-		return [...this.parsedItems(value)];
+		return new this.is(this.parsedItems(value));
 	},
 
 	/**

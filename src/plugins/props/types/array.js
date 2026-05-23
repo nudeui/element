@@ -4,4 +4,7 @@ import Iterable from "./iterable.js";
 export default PropType.register({
 	is: Array,
 	extends: Iterable,
+	parse (value) {
+		return [...this.parsedItems(value)];
+	},
 });

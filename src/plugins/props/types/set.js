@@ -17,7 +17,4 @@ export default PropType.register({
 
 		return true;
 	},
-	parse (value) {
-		return new Set(this.parsedItems(value));
-	},
 });
