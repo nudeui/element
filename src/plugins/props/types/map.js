@@ -91,7 +91,7 @@ const MapType = PropType.register({
 		if (value && typeof value === "object" && !value[Symbol.iterator]) {
 			value = Object.entries(value);
 		}
-		return new Map(this.parsedEntries(value));
+		return new this.is(this.parsedEntries(value));
 	},
 
 	/**
