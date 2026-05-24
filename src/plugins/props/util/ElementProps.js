@@ -13,6 +13,31 @@ export default class ElementProps extends Map {
 	#paused = true;
 
 	/**
+	 * Whether propchange-style event dispatch is currently held. While `true`,
+	 * fired events are queued; flipping to `false` flushes the queue in order.
+	 */
+	get paused () {
+		return this.#paused;
+	}
+
+	set paused (value) {
+		value = Boolean(value);
+		if (value === this.#paused) {
+			return;
+		}
+
+		this.#paused = value;
+
+		if (!value) {
+			let queue = this.#eventQueue;
+			this.#eventQueue = [];
+			for (let event of queue) {
+				this.element.dispatchEvent(event);
+			}
+		}
+	}
+
+	/**
 	 * Attributes currently being written reflexively by an {@link ElementProp};
 	 * the resulting attributeChangedCallback should be ignored.
 	 * @type {Set<string>}
@@ -58,7 +83,7 @@ export default class ElementProps extends Map {
 			this.get(name);
 		}
 
-		this.resumeEvents();
+		this.paused = false;
 	}
 
 	/**
@@ -135,26 +160,6 @@ export default class ElementProps extends Map {
 			if (dep.dependsOn(ep)) {
 				dep.update(ep);
 			}
-		}
-	}
-
-	/**
-	 * Hold propchange event dispatch; events fired in the meantime are queued.
-	 */
-	pauseEvents () {
-		this.#paused = true;
-	}
-
-	/**
-	 * Resume propchange event dispatch and flush any queued events.
-	 */
-	resumeEvents () {
-		this.#paused = false;
-
-		let queue = this.#eventQueue;
-		this.#eventQueue = [];
-		for (let event of queue) {
-			this.element.dispatchEvent(event);
 		}
 	}
 

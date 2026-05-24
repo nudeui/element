@@ -27,7 +27,7 @@ export default {
 			},
 		},
 		{
-			name: "pauseEvents holds dispatch until resumeEvents drains in order",
+			name: "paused = true holds dispatch until paused = false drains in order",
 			run () {
 				let { element } = this.data;
 				let log = [];
@@ -36,13 +36,13 @@ export default {
 				element.a = 1; // fires immediately
 				let beforePause = log.length;
 
-				element.props.pauseEvents();
+				element.props.paused = true;
 
 				element.b = "x";
 				element.a = 2;
 
 				let duringPause = log.length - beforePause;
-				element.props.resumeEvents();
+				element.props.paused = false;
 
 				return { duringPause, afterResume: log };
 			},

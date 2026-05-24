@@ -20,11 +20,11 @@ const hooks = {
 	},
 
 	connected () {
-		this.props.resumeEvents();
+		this.props.paused = false;
 	},
 
 	disconnected () {
-		this.props.pauseEvents();
+		this.props.paused = true;
 	},
 
 	"attribute-changed" ({ name, oldValue }) {
