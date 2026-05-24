@@ -12,71 +12,48 @@ const StringType = PropType.for(String);
 
 export default {
 	name: "PropType",
+	expect: ArrayType,
 	tests: [
 		{
 			name: "for() — pure lookup returns the registered singleton",
+			run: input => PropType.for(input),
 			tests: [
-				{
-					name: "By constructor",
-					run: () => PropType.for(Array) === ArrayType,
-					expect: true,
-				},
-				{
-					name: "By global name string",
-					run: () => PropType.for("Array") === ArrayType,
-					expect: true,
-				},
-				{
-					name: "By bare spec {is: ctor}",
-					run: () => PropType.for({ is: Array }) === ArrayType,
-					expect: true,
-				},
-				{
-					name: "By bare spec {is: 'name'}",
-					run: () => PropType.for({ is: "Array" }) === ArrayType,
-					expect: true,
-				},
-				{
-					name: "PropType instance passes through",
-					run: () => PropType.for(ArrayType) === ArrayType,
-					expect: true,
-				},
+				{ name: "By constructor", arg: Array },
+				{ name: "By global name string", arg: "Array" },
+				{ name: "By bare spec {is: ctor}", arg: { is: Array } },
+				{ name: "By bare spec {is: 'name'}", arg: { is: "Array" } },
+				{ name: "PropType instance passes through", arg: ArrayType },
 				{
 					name: "Lookup is idempotent across calls",
-					run: () => PropType.for(Array) === PropType.for(Array),
-					expect: true,
+					check: () => PropType.for(Array) === PropType.for(Array),
 				},
 				{
 					name: "undefined yields a fallback that is a PropType",
-					run: () => PropType.for(undefined) instanceof PropType,
-					expect: true,
+					check: () => PropType.for(undefined) instanceof PropType,
 				},
 				{
 					name: "null yields the same fallback as undefined",
-					run: () => PropType.for(undefined) === PropType.for(null),
-					expect: true,
+					arg: null,
+					expect: PropType.for(undefined),
 				},
 				{
 					name: "Custom fallback honored",
-					run: () => PropType.for(undefined, { fallback: ArrayType }) === ArrayType,
-					expect: true,
+					run: () => PropType.for(undefined, { fallback: ArrayType }),
 				},
 				{
 					name: "Unregistered constructor yields the default fallback",
-					run () {
+					check () {
 						class Unknown {}
 						return PropType.for(Unknown) === PropType.for(undefined);
 					},
-					expect: true,
 				},
 				{
 					name: "Built-in singletons match their named exports",
-					run: () =>
-						PropType.for(Array) === ArrayType
-						&& PropType.for(Set) === SetType
-						&& PropType.for(Object) === ObjectType
-						&& PropType.for(Map) === MapType,
-					expect: true,
+					check: () =>
+						PropType.for(Array) === ArrayType &&
+						PropType.for(Set) === SetType &&
+						PropType.for(Object) === ObjectType &&
+						PropType.for(Map) === MapType,
 				},
 			],
 		},
@@ -85,44 +62,38 @@ export default {
 			tests: [
 				{
 					name: "Specs with options produce a fresh instance, not the singleton",
-					run: () => PropType.for({ is: Array, values: Number }) !== ArrayType,
-					expect: true,
+					check: () => PropType.for({ is: Array, values: Number }) !== ArrayType,
 				},
 				{
 					name: "Derivative inherits from its abstract base type",
-					run: () => PropType.for({ is: Array, values: Number }).isA(Iterable),
-					expect: true,
+					check: () => PropType.for({ is: Array, values: Number }).isA(Iterable),
 				},
 				{
 					name: "Derivative reports the correct is",
-					run: () => PropType.for({ is: Array, values: Number }).is === Array,
-					expect: true,
+					check: () => PropType.for({ is: Array, values: Number }).is === Array,
 				},
 				{
 					name: "Nested option specs resolve to PropType instances",
-					run () {
+					check () {
 						let t = PropType.for({ is: Array, values: Number });
 						return t.values === NumberType;
 					},
-					expect: true,
 				},
 				{
 					name: "No caching: repeated calls yield distinct derivatives",
-					run () {
+					check () {
 						let t1 = PropType.for({ is: Array, values: Number });
 						let t2 = PropType.for({ is: Array, values: Number });
 						return t1 !== t2;
 					},
-					expect: true,
 				},
 				{
 					name: "But nested singletons are shared across calls",
-					run () {
+					check () {
 						let t1 = PropType.for({ is: Array, values: Number });
 						let t2 = PropType.for({ is: Array, values: Number });
 						return t1.values === t2.values;
 					},
-					expect: true,
 				},
 				{
 					name: "Mutating a derivative does not affect the singleton",
@@ -184,8 +155,7 @@ export default {
 				},
 				{
 					name: "equals: null vs null is true",
-					run: () => PropType.for(Array).equals(null, null),
-					expect: true,
+					check: () => PropType.for(Array).equals(null, null),
 				},
 				{
 					name: "equals: null vs undefined is false",
@@ -194,11 +164,10 @@ export default {
 				},
 				{
 					name: "equals: identity short-circuit",
-					run () {
+					check () {
 						let a = [1, 2];
 						return PropType.for(Array).equals(a, a);
 					},
-					expect: true,
 				},
 			],
 		},
@@ -221,11 +190,10 @@ export default {
 				},
 				{
 					name: "Array<Number> equality with matching contents",
-					run () {
+					check () {
 						let t = PropType.for({ is: Array, values: Number });
 						return t.equals([1, 2, 3], [1, 2, 3]);
 					},
-					expect: true,
 				},
 				{
 					name: "Array<Number> equality with different length",
@@ -246,21 +214,29 @@ export default {
 				{
 					name: "Derivative with custom separator parses with it",
 					run () {
-						return PropType.for({ is: Array, values: Number, separator: ";" }).parse("1; 2; 3");
+						return PropType.for({ is: Array, values: Number, separator: ";" }).parse(
+							"1; 2; 3",
+						);
 					},
 					expect: [1, 2, 3],
 				},
 				{
 					name: "Derivative with custom separator stringifies with it (no auto-spacing)",
 					run () {
-						return PropType.for({ is: Array, values: Number, separator: ";" }).stringify([1, 2, 3]);
+						return PropType.for({
+							is: Array,
+							values: Number,
+							separator: ";",
+						}).stringify([1, 2, 3]);
 					},
 					expect: "1;2;3",
 				},
 				{
 					name: "Derivative with custom joiner stringifies with it",
 					run () {
-						return PropType.for({ is: Array, values: Number, joiner: " " }).stringify([1, 2, 3]);
+						return PropType.for({ is: Array, values: Number, joiner: " " }).stringify([
+							1, 2, 3,
+						]);
 					},
 					expect: "1 2 3",
 				},
@@ -279,37 +255,50 @@ export default {
 				{
 					name: "Object<String, Number> parses microsyntax",
 					run () {
-						return PropType.for({ is: Object, keys: String, values: Number }).parse("a: 1, b: 2");
+						return PropType.for({ is: Object, keys: String, values: Number }).parse(
+							"a: 1, b: 2",
+						);
 					},
 					expect: { a: 1, b: 2 },
 				},
 				{
 					name: "Map<String, Number> parses to a Map with correct entries",
 					run () {
-						let m = PropType.for({ is: Map, keys: String, values: Number }).parse("a: 1, b: 2");
+						let m = PropType.for({ is: Map, keys: String, values: Number }).parse(
+							"a: 1, b: 2",
+						);
 						return [m instanceof Map, m.get("a"), m.get("b")];
 					},
 					expect: [true, 1, 2],
 				},
 				{
 					name: "Nested key and value types are resolved",
-					run () {
+					check () {
 						let t = PropType.for({ is: Map, keys: String, values: Number });
 						return t.keys === StringType && t.values === NumberType;
 					},
-					expect: true,
 				},
 				{
 					name: "Derivative with custom separator parses with it",
 					run () {
-						return PropType.for({ is: Object, keys: String, values: Number, separator: ";" }).parse("a: 1; b: 2");
+						return PropType.for({
+							is: Object,
+							keys: String,
+							values: Number,
+							separator: ";",
+						}).parse("a: 1; b: 2");
 					},
 					expect: { a: 1, b: 2 },
 				},
 				{
 					name: "Derivative with custom separator stringifies with it",
 					run () {
-						return PropType.for({ is: Object, keys: String, values: Number, separator: " | " }).stringify({ a: 1, b: 2 });
+						return PropType.for({
+							is: Object,
+							keys: String,
+							values: Number,
+							separator: " | ",
+						}).stringify({ a: 1, b: 2 });
 					},
 					expect: "a: 1 | b: 2",
 				},
@@ -323,7 +312,9 @@ export default {
 				{
 					name: "Derivative with defaultKey uses it for keyless entries",
 					run () {
-						return PropType.for({ is: Object, defaultKey: (v, i) => i }).parse("a, b, c");
+						return PropType.for({ is: Object, defaultKey: (v, i) => i }).parse(
+							"a, b, c",
+						);
 					},
 					expect: { 0: "a", 1: "b", 2: "c" },
 				},
@@ -334,28 +325,27 @@ export default {
 			tests: [
 				{
 					name: "Array<Array<Number>> — inner type is resolved correctly",
-					run () {
+					check () {
 						let t = PropType.for({
 							is: Array,
 							values: { is: Array, values: Number },
 						});
-						return t.values.isA(Iterable)
-							&& t.values.is === Array
-							&& t.values.values === NumberType;
+						return (
+							t.values.isA(Iterable) &&
+							t.values.is === Array &&
+							t.values.values === NumberType
+						);
 					},
-					expect: true,
 				},
 				{
 					name: "Array<Set<Number>> — inner type is the SetType derivative",
-					run () {
+					check () {
 						let t = PropType.for({
 							is: Array,
 							values: { is: Set, values: Number },
 						});
-						return t.values.isA(Iterable)
-							&& t.values.is === Set;
+						return t.values.isA(Iterable) && t.values.is === Set;
 					},
-					expect: true,
 				},
 			],
 		},
@@ -369,8 +359,7 @@ export default {
 				},
 				{
 					name: "Boolean.parse(any non-null) → true",
-					run: () => PropType.for(Boolean).parse("anything"),
-					expect: true,
+					check: () => PropType.for(Boolean).parse("anything"),
 				},
 				{
 					name: "Boolean.stringify(true) → empty string",
@@ -389,8 +378,7 @@ export default {
 				},
 				{
 					name: "Number.equals: NaN === NaN",
-					run: () => PropType.for(Number).equals(NaN, NaN),
-					expect: true,
+					check: () => PropType.for(Number).equals(NaN, NaN),
 				},
 				{
 					name: "Number.equals: 1 vs 2 false",
@@ -414,16 +402,15 @@ export default {
 				},
 				{
 					name: "Function stringify throws",
-					run () {
+					check () {
 						try {
 							PropType.for(Function).stringify(() => {});
-							return "no throw";
+							return false;
 						}
 						catch (e) {
 							return e instanceof TypeError;
 						}
 					},
-					expect: true,
 				},
 			],
 		},
@@ -432,36 +419,33 @@ export default {
 			tests: [
 				{
 					name: "After register, for() returns the registered instance",
-					run () {
+					check () {
 						class Foo {}
 						let registered = PropType.register({ is: Foo });
 						let result = PropType.for(Foo) === registered;
 						PropType.registry.delete(Foo);
 						return result;
 					},
-					expect: true,
 				},
 				{
 					name: "register with extends: Iterable produces an Iterable derivative",
-					run () {
+					check () {
 						class FooList {}
 						let t = PropType.register({ is: FooList, extends: Iterable });
 						let result = t.isA(Iterable);
 						PropType.registry.delete(FooList);
 						return result;
 					},
-					expect: true,
 				},
 				{
 					name: "register with extends: MapType produces a Map derivative",
-					run () {
+					check () {
 						class FooDict {}
 						let t = PropType.register({ is: FooDict, extends: MapType });
 						let result = t.isA(MapType);
 						PropType.registry.delete(FooDict);
 						return result;
 					},
-					expect: true,
 				},
 				{
 					name: "Registered parse is actually invoked",
