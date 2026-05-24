@@ -1,3 +1,6 @@
+/**
+ * Constructors that should be called as functions
+ */
 const callableBuiltins = new Set([
 	String,
 	Number,
@@ -7,6 +10,7 @@ const callableBuiltins = new Set([
 	Function,
 	Symbol,
 	BigInt,
+	RegExp,
 ]);
 
 /**
