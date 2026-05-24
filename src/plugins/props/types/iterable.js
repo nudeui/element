@@ -42,6 +42,11 @@ const Iterable = PropType.register({
 	 * Yield each item from {@link parseItems} through `this.values`.
 	 * The intermediate generator that concrete types (Set, …) consume into
 	 * their own container.
+	 *
+	 * @todo Inline into {@link parse} via
+	 *   `this.parseItems(value).map(v => this.values.parse(v))` once
+	 *   `Iterator.prototype.map` is reliably available (Baseline 2025).
+	 *
 	 * @this {PropType}
 	 * @param {string | Iterable<unknown> | unknown} value
 	 * @returns {Iterator<unknown>}

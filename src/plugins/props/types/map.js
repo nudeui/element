@@ -70,6 +70,11 @@ const MapType = PropType.register({
 	 * `this.values` applied to the respective halves. The intermediate
 	 * generator that concrete types (Object, …) consume into their own
 	 * container.
+	 *
+	 * @todo Inline into {@link parse} via
+	 *   `this.parseEntries(value).map(([k, v]) => [this.keys.parse(k), this.values.parse(v)])`
+	 *   once `Iterator.prototype.map` is reliably available (Baseline 2025).
+	 *
 	 * @this {PropType}
 	 * @param {string | Iterable<[unknown, unknown]>} value
 	 * @returns {Iterator<[unknown, unknown]>}
