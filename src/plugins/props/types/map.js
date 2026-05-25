@@ -51,7 +51,9 @@ const MapType = PropType.register({
 					v = typeof defaultValue === "function" ? defaultValue(k, index) : defaultValue;
 				}
 				k = k?.trim?.() ?? k;
+				k = k?.replaceAll?.("\\:", ":") ?? k;
 				v = v?.trim?.() ?? v;
+				v = v?.replaceAll?.("\\:", ":") ?? v;
 				if (v === "false") {
 					v = false;
 				}

@@ -356,6 +356,24 @@ export default {
 					},
 					expect: { 0: "a", 1: "b", 2: "c" },
 				},
+				{
+					name: "Escaped colons",
+					run (input) {
+						return PropType.for({ is: Object }).parse(input);
+					},
+					tests: [
+						{
+							name: "In values",
+							arg: "url: https\\://example.com",
+							expect: { url: "https://example.com" },
+						},
+						{
+							name: "In keys",
+							arg: "foo\\:bar: baz",
+							expect: { "foo:bar": "baz" },
+						},
+					],
+				},
 			],
 		},
 		{
