@@ -1,11 +1,16 @@
 import Props from "./util/Props.js";
+import Prop from "./util/Prop.js";
 import ElementProps from "./util/ElementProps.js";
+import ElementProp from "./util/ElementProp.js";
 import { symbols } from "xtensible";
 import { defineOwnProperty, getSuperMethod } from "xtensible/util";
 import { defineLazyProperty } from "../../util/lazy.js";
+import PropType from "./util/PropType.js";
+import "./types/index.js";
 
 export const { props } = symbols.known;
-export * from "./types/index.js";
+
+export { PropType, Props, Prop, ElementProps, ElementProp };
 
 const hooks = {
 	setup () {
