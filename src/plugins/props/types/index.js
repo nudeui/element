@@ -1,6 +1,4 @@
 // Side-effect imports register the built-in types' singletons.
-// Order matters: `iterable` must register before the concrete types that
-// `extends` it (array, set, map); `map` before `object` (since object extends map).
 import "./basic.js";
 import "./iterable.js";
 import "./array.js";
