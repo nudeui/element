@@ -267,8 +267,10 @@ export default class PropType {
 	 * Resolve any user-facing type identifier into a {@link PropType}.
 	 *
 	 *   - PropType instance → returned as-is.
-	 *   - constructor / string → registry lookup (string resolved via
-	 *     `globalThis` first, then by name).
+	 *   - constructor → registry lookup, falling back to a fresh `{is: input}`
+	 *     derivative so unregistered constructors still carry their `is`.
+	 *   - string → resolved via `globalThis` first, then registry; bare strings
+	 *     that match neither hit `options.fallback` (typo / missing import).
 	 *   - object spec → constructor short-circuits to the singleton if no
 	 *     extras, otherwise builds a derivative.
 	 *   - null / undefined → `options.fallback` (default: the generic instance).
@@ -290,7 +292,18 @@ export default class PropType {
 			return new this(input);
 		}
 
-		return this.registry.get(PropType.normalizeIs(input)) ?? fallback;
+		let is = PropType.normalizeIs(input);
+		let registered = this.registry.get(is);
+		if (registered) {
+			return registered;
+		}
+
+		// Unregistered constructor → build a derivative so `is` is preserved
+		// and the default parse/stringify/equals can use it. Bare strings
+		// (those `normalizeIs` couldn't resolve to a function) fall through
+		// to the fallback since they almost always indicate a typo or missing
+		// import.
+		return typeof is === "function" ? new this({ is }) : fallback;
 	}
 
 	/**
