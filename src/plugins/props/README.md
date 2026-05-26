@@ -155,13 +155,19 @@ It can be either a constant (e.g. `true`) or a function, in which case it’s pa
 
 #### Custom types
 
-Types are _instances_ of the single `PropType` class. Each instance carries the spec it was constructed with — its constructor (`is`), any type options, and any `equals` / `parse` / `stringify` overrides — and is shared across every prop that references it. An abstract type (`Iterable`) is a `PropType` instance registered by `name` rather than `is`; concrete types declare `extends: <abstract>` to inherit its parsing behavior via the JS prototype chain (e.g. `Array`, `Set`, and `Map` all extend `Iterable`, and `Object` extends `Map`).
+Types are _instances_ of the single `PropType` class. Each instance carries the spec it was constructed with — its constructor (`is`), any `equals` / `parse` / `stringify` overrides, and any additional type options they may use (e.g. Iterables use a `separator` option as well).
 
-For most custom types, the simplest path is to register a spec object directly. Methods read options from `this.spec`:
+Types without an `is` property are _abstract_ — they don't correspond to a specific JS constructor, but just define behavior that concrete types can inherit via the JS prototype chain. `Iterable` is a current example (though in the future it may use `is: Iterator`).
+
+Most constructors do not actually need registering.
+For example, consider [Color.js](https://colorjs.io/) `Color` objects.
+
+It may be tempting to do something like this:
 
 ```js
 import { PropType } from "nude-element/props";
 
+// ❌ Don't do this
 PropType.register({
 	is: Color,
 	parse: value => (value instanceof Color ? value : new Color(value)),
@@ -170,7 +176,15 @@ PropType.register({
 });
 ```
 
-For types that reuse the iterable / dictionary parsing infrastructure, `extends` an existing abstract — `Iterable` for any iterable, `MapType` for any key→value mapping. Inside method overrides, `this.values` (and `this.keys` for dictionaries) is the resolved nested type — defaulting to `PropType.any`, so you can call `this.values.parse(v)` unconditionally.
+However, none of this is needed:
+
+- `parse()` automatically constructs an object of type `type.is` and the `Color` constructor already accepts strings
+- `Color` objects already have a good `toString()` method, which is called automatically
+- `equals()` already checks `a === b` and uses `a.equals(b)` if such a method is available.
+
+Using `type: Color` in the prop definition is enough to get all the benefits of type-aware parsing, stringifying, and equality checking for free.
+
+For custom types that represent more complex objects, you may want to register them as extending an existing type, e.g. `Iterable` for any list of values, or `Map` for any key→value mapping.
 
 ```js
 import { PropType } from "nude-element/props";
@@ -195,7 +209,7 @@ static props = {
 
 Inline specs in prop definitions work the same way — each occurrence produces its own derivative. Hoist a derivative into a `const` (as above) if you want every prop using it to share the same instance.
 
-For the full spec-key reference, the abstract-type helper methods (`parseItems`, `parseEntries`), and the public API surface, see [`types/README.md`](./types/README.md).
+For the full spec-key reference, the abstract-type helper methods (`parseItems`, `parseEntries`), and the public API surface, see [`types`](./types/README.md).
 
 ### Attribute-property reflection
 
