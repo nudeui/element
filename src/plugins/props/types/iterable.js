@@ -116,10 +116,7 @@ const Iterable = PropType.register({
 
 export default Iterable;
 
-/**
- * @typedef {import("../util/PropType.js").SpecifiedType} SpecifiedType
- * @typedef {import("../util/PropType.js").PropTypeSpec} PropTypeSpec
- */
+/** @import { SpecifiedType, PropTypeSpec } from "../util/PropType.js" */
 
 /**
  * @typedef {PropTypeSpec & {

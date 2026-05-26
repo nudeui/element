@@ -34,3 +34,11 @@ PropType.register({
 		throw new TypeError("Cannot stringify Function");
 	},
 });
+
+/** @import { PropTypeSpec } from "../util/PropType.js" */
+
+/**
+ * @typedef {PropTypeSpec & {
+ *   arguments?: string[],
+ * }} FunctionTypeSpec
+ */

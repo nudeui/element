@@ -147,10 +147,7 @@ const MapType = PropType.register({
 
 export default MapType;
 
-/**
- * @typedef {import("../util/PropType.js").SpecifiedType} SpecifiedType
- * @typedef {import("../util/PropType.js").PropTypeSpec} PropTypeSpec
- */
+/** @import { SpecifiedType, PropTypeSpec } from "../util/PropType.js" */
 
 /**
  * @typedef {PropTypeSpec & {
