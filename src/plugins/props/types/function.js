@@ -1,23 +1,6 @@
 import PropType from "../util/PropType.js";
 
-PropType.register({
-	is: Boolean,
-	parse (value) {
-		return value !== null;
-	},
-	stringify (value) {
-		return value ? "" : null;
-	},
-});
-
-PropType.register({
-	is: Number,
-	equals (a, b) {
-		return Number.isNaN(a) && Number.isNaN(b);
-	},
-});
-
-PropType.register({
+export default PropType.register({
 	is: Function,
 	equals (a, b) {
 		return a.toString() === b.toString();

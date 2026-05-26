@@ -1,5 +1,7 @@
 // Side-effect imports register the built-in types' singletons.
-import "./basic.js";
+import "./boolean.js";
+import "./number.js";
+import "./function.js";
 import "./iterable.js";
 import "./array.js";
 import "./set.js";
