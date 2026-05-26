@@ -10,6 +10,21 @@ import MapType from "../src/plugins/props/types/map.js";
 const NumberType = PropType.for(Number);
 const StringType = PropType.for(String);
 
+// Stand-in for any custom class a user might pass as `type` without registering
+// it (the README's Color.js example). Constructs from a string, has its own
+// toString and equals — enough to exercise the default parse/stringify/equals.
+class Unknown {
+	constructor (value) {
+		this.value = value instanceof Unknown ? value.value : String(value);
+	}
+	toString () {
+		return this.value;
+	}
+	equals (other) {
+		return other instanceof Unknown && other.value === this.value;
+	}
+}
+
 export default {
 	name: "PropType",
 	expect: ArrayType,
@@ -41,11 +56,16 @@ export default {
 					run: () => PropType.for(undefined, { fallback: ArrayType }),
 				},
 				{
-					name: "Unregistered constructor yields the default fallback",
+					name: "Unregistered constructor yields a derivative carrying its `is`",
 					check () {
-						class Unknown {}
-						return PropType.for(Unknown) === PropType.for(undefined);
+						let t = PropType.for(Unknown);
+						return t instanceof PropType && t !== PropType.any && t.is === Unknown;
 					},
+				},
+				{
+					name: "Unresolvable string still yields the default fallback",
+					check: () =>
+						PropType.for("DefinitelyNotAGlobalOrRegisteredType") === PropType.for(undefined),
 				},
 				{
 					name: "Built-in singletons match their named exports",
@@ -411,6 +431,49 @@ export default {
 							return e instanceof TypeError;
 						}
 					},
+				},
+			],
+		},
+		{
+			name: "Custom constructors without registration",
+			tests: [
+				{
+					name: "parse(string) constructs an Unknown instance",
+					check: () => PropType.for(Unknown).parse("red") instanceof Unknown,
+				},
+				{
+					name: "parse(string) preserves the value",
+					run: () => PropType.for(Unknown).parse("red").toString(),
+					expect: "red",
+				},
+				{
+					name: "parse passes through existing Unknown instances",
+					check () {
+						let c = new Unknown("red");
+						return PropType.for(Unknown).parse(c) === c;
+					},
+				},
+				{
+					name: "stringify uses Unknown#toString",
+					run: () => PropType.for(Unknown).stringify(new Unknown("blue")),
+					expect: "blue",
+				},
+				{
+					name: "equals uses Unknown#equals for distinct-but-equal instances",
+					check: () =>
+						PropType.for(Unknown).equals(
+							new Unknown("red"),
+							new Unknown("red"),
+						),
+				},
+				{
+					name: "equals returns false for different Unknown instances",
+					run: () =>
+						PropType.for(Unknown).equals(
+							new Unknown("red"),
+							new Unknown("blue"),
+						),
+					expect: false,
 				},
 			],
 		},
