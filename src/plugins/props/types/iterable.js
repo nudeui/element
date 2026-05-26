@@ -28,7 +28,7 @@ const Iterable = PropType.register({
 	 */
 	*parseItems (value) {
 		if (typeof value === "string") {
-			yield* split(value, this.spec);
+			yield* split(value, this);
 		}
 		else if (value?.[Symbol.iterator]) {
 			yield* value;
@@ -70,15 +70,13 @@ const Iterable = PropType.register({
 
 	/**
 	 * Stringify an iterable: each item passes through `this.values`, joined
-	 * by `spec.joiner` (falling back to `spec.separator`, default `", "`).
-	 * Whitespace is *not* added automatically — consumers who want spaces
-	 * include them in the joiner (or separator) themselves.
+	 * by `joiner` (falling back to `separator`, default `", "`).
 	 * @this {PropType}
 	 * @param {Iterable<unknown>} value
 	 * @returns {string}
 	 */
 	stringify (value) {
-		let { separator = ", ", joiner = separator } = this.spec;
+		let { separator = ", ", joiner = separator } = this;
 		let parts = [];
 		for (let v of value) {
 			parts.push(this.values.stringify(v));

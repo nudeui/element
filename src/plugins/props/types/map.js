@@ -22,7 +22,7 @@ const MapType = PropType.register({
 	/**
 	 * Yield raw `[key, value]` entries. Strings coming from {@link parseItems}
 	 * are split once on `:` (escaped `\:` preserved); shorthand entries with
-	 * no colon get filled in via `spec.defaultKey` or `spec.defaultValue`
+	 * no colon get filled in via `defaultKey` or `defaultValue`
 	 * (default `true`); the literal `"false"` becomes the boolean `false`.
 	 * Non-string items (e.g. an already-iterable of tuples) flow through
 	 * unchanged. No `keys.parse` / `values.parse` applied — that's
@@ -32,7 +32,7 @@ const MapType = PropType.register({
 	 * @returns {Iterator<[unknown, unknown]>}
 	 */
 	*parseEntries (value) {
-		let { defaultKey, defaultValue = true } = this.spec;
+		let { defaultKey, defaultValue = true } = this;
 		let index = 0;
 		for (let item of this.parseItems(value)) {
 			let k, v;
@@ -102,13 +102,13 @@ const MapType = PropType.register({
 	/**
 	 * Stringify an iterable of `[key, value]` entries into `"k: v, k: v"`.
 	 * Each half passes through `this.keys` / `this.values`; entries are
-	 * joined by `spec.separator` (default `", "`).
+	 * joined by `separator` (default `", "`).
 	 * @this {PropType}
 	 * @param {Iterable<[unknown, unknown]>} value
 	 * @returns {string}
 	 */
 	stringify (value) {
-		let { separator = ", " } = this.spec;
+		let { separator = ", " } = this;
 		let parts = [];
 		for (let [k, v] of value) {
 			parts.push(`${this.keys.stringify(k)}: ${this.values.stringify(v)}`);

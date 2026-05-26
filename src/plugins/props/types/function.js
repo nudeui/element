@@ -10,7 +10,7 @@ export default PropType.register({
 			return value;
 		}
 
-		return Function(...(this.spec.arguments ?? []), String(value));
+		return Function(...(this.arguments ?? []), String(value));
 	},
 	stringify () {
 		// Stringification is explicitly forbidden for functions.

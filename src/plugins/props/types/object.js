@@ -21,7 +21,7 @@ export default PropType.register({
 		return Object.fromEntries(this.parsedEntries(value));
 	},
 	stringify (value) {
-		let { separator = ", " } = this.spec;
+		let { separator = ", " } = this;
 		let parts = [];
 		for (let [k, v] of Object.entries(value)) {
 			parts.push(`${this.keys.stringify(k)}: ${this.values.stringify(v)}`);
