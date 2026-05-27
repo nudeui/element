@@ -3,8 +3,6 @@ import ElementProp from "./ElementProp.js";
 import PropChangeEvent from "./PropChangeEvent.js";
 import PropsChangeEvent from "./PropsChangeEvent.js";
 
-/** @import { PropChangeEventProps } from "./PropChangeEvent.js" */
-
 const { props } = symbols.known;
 
 /**
@@ -150,17 +148,52 @@ export default class ElementProps extends Map {
 	}
 
 	/**
-	 * Fire propchange events for `ep` and cascade updates to any dependents.
+	 * Fire a `propchange` event for `ep` and cascade updates to any dependents.
+	 *
+	 * The event is coalesced into the burst queue keyed by prop name: a
+	 * queued entry has its `value` updated and is moved to the end of
+	 * insertion order; otherwise a fresh event is created. When unpaused,
+	 * the event is dispatched synchronously and its `oldValue` rebases to
+	 * what the consumer was just told. The queue only retains entries with
+	 * work left — net-zero entries (nothing to tell the consumer AND no net
+	 * delta for the `propschange` drain) are dropped.
+	 *
 	 * @param {ElementProp} ep The prop that changed.
 	 * @param {Object} change Change descriptor (see {@link ElementProp#set}).
 	 */
 	propChanged (ep, change) {
 		// Source-first: fire before cascading so listeners hear the written prop first.
-		this.#firePropChangeEvent({
-			name: ep.name,
-			prop: ep,
-			...change,
-		});
+		let key = ep.name;
+		let event = this.#eventQueue.get(key);
+
+		if (event) {
+			// Coalesce: keep firstOldValue + oldValue (last-told), update value.
+			event.value = change.value;
+			// delete + set moves the entry to the end of insertion order.
+			this.#eventQueue.delete(key);
+		}
+		else {
+			event = new PropChangeEvent("propchange", { name: ep.name, prop: ep, ...change });
+		}
+
+		if (!this.#paused) {
+			this.element.dispatchEvent(event);
+			// Rebase: consumer now knows about the current value.
+			event.oldValue = event.value;
+		}
+
+		// Keep only if there's work left: something still to tell the consumer,
+		// OR a non-zero net effect for the `propschange` drain. If the consumer
+		// was told an intermediate value, the entry stays so resume can dispatch
+		// the revert (propschange still skips it — #drain filters by firstOldValue).
+		let { spec } = ep;
+		if (
+			!spec.equals(event.oldValue, event.value)
+			|| !spec.equals(event.value, event.firstOldValue)
+		) {
+			this.#eventQueue.set(key, event);
+			queueMicrotask(() => this.#drain());
+		}
 
 		// Update all props that depend on this one. {@link get} materializes a
 		// dependent that hasn't been wrapped yet (e.g. during the constructor's
@@ -172,50 +205,6 @@ export default class ElementProps extends Map {
 				dep.update(ep);
 			}
 		}
-	}
-
-	/**
-	 * Coalesce a `propchange` event into the burst queue and, when unpaused,
-	 * dispatch it synchronously. Reuses the queued event object across
-	 * dispatches in the same burst — `value` updates to the latest stored
-	 * value and `oldValue` rebases to what the consumer was last told.
-	 *
-	 * @param {PropChangeEventProps} eventProps
-	 */
-	#firePropChangeEvent (eventProps) {
-		let key = eventProps.name;
-		let event = this.#eventQueue.get(key);
-
-		if (event) {
-			// Coalesce: keep firstOldValue + oldValue (last-told), update value.
-			event.value = eventProps.value;
-			// delete + set moves the entry to the end of insertion order.
-			this.#eventQueue.delete(key);
-		}
-		else {
-			event = new PropChangeEvent("propchange", eventProps);
-		}
-
-		if (!this.#paused) {
-			this.element.dispatchEvent(event);
-			// Rebase: consumer now knows about the current value.
-			event.oldValue = event.value;
-		}
-
-		let { spec } = event.prop;
-		// Drop only when both axes are zero: nothing left to tell the
-		// consumer AND the burst's net effect is zero. If the consumer was
-		// told an intermediate value, the entry stays so resume can dispatch
-		// the revert (propschange still skips it — #drain filters by firstOldValue).
-		if (
-			spec.equals(event.oldValue, event.value)
-			&& spec.equals(event.value, event.firstOldValue)
-		) {
-			return;
-		}
-
-		this.#eventQueue.set(key, event);
-		queueMicrotask(() => this.#drain());
 	}
 
 	/**
