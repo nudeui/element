@@ -43,5 +43,29 @@ export default {
 			},
 			expect: [42, 42],
 		},
+		{
+			name: "defaultProp invalidates cache (#125)",
+			description:
+				"The defaultProp early-return in update() must invalidate the cached value when the prop also has a getter.",
+			run () {
+				let { element } = this.data;
+				let before = element.computed;
+				element.source = "b";
+				let after = element.computed;
+				return [before, after];
+			},
+			arg: {
+				props: {
+					source: { default: "a" },
+					computed: {
+						get () {
+							return this.source.toUpperCase();
+						},
+						defaultProp: "source",
+					},
+				},
+			},
+			expect: ["A", "B"],
+		},
 	],
 };
