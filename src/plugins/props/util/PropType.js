@@ -214,12 +214,8 @@ export default class PropType {
 	 * @returns {boolean}
 	 */
 	isA (other) {
-		for (let obj = this; obj; obj = obj.super) {
-			if (obj === other) {
-				return true;
-			}
-		}
-		return false;
+		other = PropType.for(other);
+		return this === other || Object.prototype.isPrototypeOf.call(other, this);
 	}
 
 	get [Symbol.toStringTag] () {
