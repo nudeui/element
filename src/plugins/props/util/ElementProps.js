@@ -54,13 +54,12 @@ export default class ElementProps extends Map {
 	ignoredAttributes = new Set();
 
 	/**
-	 * Coalesced propchange-style events keyed by `${eventName}::${propName}`.
-	 * Each entry is the event that would be dispatched right now for that
-	 * (event, prop) pair: `oldValue` is what was last told to the consumer
-	 * (or the burst-start value if never dispatched), `value` is the current
-	 * stored value, and `firstOldValue` is the sticky burst-start value used
-	 * by the `propschange` drain. `event.target` is non-null once the event
-	 * has been dispatched at least once.
+	 * Coalesced `propchange` events keyed by prop name. Each entry is the
+	 * event that would be dispatched right now for that prop: `oldValue` is
+	 * what was last told to the consumer (or the burst-start value if never
+	 * dispatched), `value` is the current stored value, and `firstOldValue`
+	 * is the sticky burst-start value used by the `propschange` drain.
+	 * `event.target` is non-null once the event has been dispatched at least once.
 	 * @type {Map<string, PropChangeEvent>}
 	 */
 	#eventQueue = new Map();
@@ -157,14 +156,11 @@ export default class ElementProps extends Map {
 	 */
 	propChanged (ep, change) {
 		// Source-first: fire before cascading so listeners hear the written prop first.
-		let eventNames = ["propchange", ...(ep.spec.eventNames ?? [])];
-		for (let eventName of eventNames) {
-			this.#firePropChangeEvent(eventName, {
-				name: ep.name,
-				prop: ep,
-				...change,
-			});
-		}
+		this.#firePropChangeEvent({
+			name: ep.name,
+			prop: ep,
+			...change,
+		});
 
 		// Update all props that depend on this one. {@link get} materializes a
 		// dependent that hasn't been wrapped yet (e.g. during the constructor's
@@ -179,16 +175,15 @@ export default class ElementProps extends Map {
 	}
 
 	/**
-	 * Coalesce a propchange-style event into the burst queue and, when unpaused,
+	 * Coalesce a `propchange` event into the burst queue and, when unpaused,
 	 * dispatch it synchronously. Reuses the queued event object across
 	 * dispatches in the same burst — `value` updates to the latest stored
 	 * value and `oldValue` rebases to what the consumer was last told.
 	 *
-	 * @param {string} eventName
 	 * @param {PropChangeEventProps} eventProps
 	 */
-	#firePropChangeEvent (eventName, eventProps) {
-		let key = `${eventName}::${eventProps.name}`;
+	#firePropChangeEvent (eventProps) {
+		let key = eventProps.name;
 		let event = this.#eventQueue.get(key);
 
 		if (event) {
@@ -198,7 +193,7 @@ export default class ElementProps extends Map {
 			this.#eventQueue.delete(key);
 		}
 		else {
-			event = new PropChangeEvent(eventName, eventProps);
+			event = new PropChangeEvent("propchange", eventProps);
 		}
 
 		if (!this.#paused) {
@@ -235,13 +230,9 @@ export default class ElementProps extends Map {
 
 		let changed = new Map();
 		for (let event of this.#eventQueue.values()) {
-			// Alias eventNames are listener-side conveniences; only canonical
-			// propchange feeds the bunch. Net-zero entries are dropped — they
-			// only exist so resume could dispatch a revert to the consumer.
-			if (
-				event.type === "propchange"
-				&& !event.prop.spec.equals(event.value, event.firstOldValue)
-			) {
+			// Net-zero entries are dropped — they only exist so resume could
+			// dispatch a revert to the consumer.
+			if (!event.prop.spec.equals(event.value, event.firstOldValue)) {
 				changed.set(event.name, event.firstOldValue);
 			}
 		}

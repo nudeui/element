@@ -187,37 +187,5 @@ export default {
 				[["v", 0]],
 			],
 		},
-		{
-			name: "Per-event-name aliases dedup independently and don't feed propschange",
-			async run () {
-				let { element } = this.data;
-				element.v = 1; // stored old before the burst
-				let aliasLog = [];
-				element.addEventListener("valuechange", e =>
-					aliasLog.push([e.name, e.oldValue, e.value]));
-				await flush();
-				let propschangeCountBefore = this.data.propsEvents.length;
-
-				element.props.paused = true;
-				element.v = 2;
-				element.v = 3;
-				element.props.paused = false;
-
-				await flush();
-				return {
-					alias: aliasLog,
-					propschange: this.data.propsEvents.slice(propschangeCountBefore),
-				};
-			},
-			arg: {
-				props: {
-					v: { type: Number, default: 0, eventNames: ["valuechange"] },
-				},
-			},
-			expect: {
-				alias: [["v", 1, 3]],
-				propschange: [[["v", 1]]],
-			},
-		},
 	],
 };
