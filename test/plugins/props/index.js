@@ -1,4 +1,4 @@
-import { default as propsPlugin } from "../../../src/plugins/props/index.js";
+import { default as propsPlugin } from "../../../src/plugins/props/base.js";
 import { defineElement } from "../../util/dom.js";
 import reflection from "./reflection.js";
 import defaults from "./defaults.js";

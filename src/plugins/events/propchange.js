@@ -5,7 +5,7 @@
 
 import { symbols } from "xtensible";
 import base, { events } from "./base.js";
-import { props } from "../props/index.js";
+import { props } from "../props/base.js";
 import PropChangeEvent from "../props/util/PropChangeEvent.js";
 
 const { propchange } = symbols.new;

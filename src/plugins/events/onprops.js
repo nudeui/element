@@ -1,7 +1,7 @@
 /**
  * Add on* props for UI events, just like native UI events
  */
-import propsPlugin from "../props/index.js";
+import propsPlugin from "../props/base.js";
 import base from "./base.js";
 import { symbols } from "xtensible";
 import { defineOwnProperty } from "xtensible/util";

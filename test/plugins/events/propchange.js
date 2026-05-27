@@ -1,5 +1,5 @@
 import { defineElement } from "../../util/dom.js";
-import { default as propsPlugin } from "../../../src/plugins/props/index.js";
+import { default as propsPlugin } from "../../../src/plugins/props/base.js";
 import { default as propschangePlugin } from "../../../src/plugins/props/propschange.js";
 import { default as eventsPlugin } from "../../../src/plugins/events/index.js";
 

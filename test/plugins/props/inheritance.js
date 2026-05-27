@@ -1,5 +1,5 @@
 import ElementFactory from "../../../src/element/factory.js";
-import { default as propsPlugin, props } from "../../../src/plugins/props/index.js";
+import { default as propsPlugin, props } from "../../../src/plugins/props/base.js";
 
 let i = 0;
 

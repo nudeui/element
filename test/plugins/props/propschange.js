@@ -3,7 +3,7 @@
  * events settles. Tests await `Promise.resolve()` (or a microtask) to let the
  * drain run before asserting.
  */
-import { default as propsPlugin } from "../../../src/plugins/props/index.js";
+import { default as propsPlugin } from "../../../src/plugins/props/base.js";
 import { default as propschangePlugin } from "../../../src/plugins/props/propschange.js";
 import { defineElement } from "../../util/dom.js";
 

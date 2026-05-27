@@ -8,7 +8,7 @@
  * `propschange`, mirroring Lit's `updated(changedProperties)`.
  */
 
-import propsPlugin from "./index.js";
+import propsPlugin from "./base.js";
 
 const dependencies = [propsPlugin];
 
