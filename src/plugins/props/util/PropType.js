@@ -1,3 +1,5 @@
+import { defineLazyProperty } from "../../../util/lazy.js";
+
 /**
  * Constructors that should be called as functions
  */
@@ -48,16 +50,6 @@ export default class PropType {
 	 * @type {PropTypeSpec | undefined}
 	 */
 	spec;
-
-	/**
-	 * The next instance up the type chain — the parent picked from
-	 * `spec.extends` or `registry.get(spec.is)`, or the class prototype
-	 * for roots. Distinct from `Object.getPrototypeOf(this)` only for
-	 * root instances (where the JS prototype is the class prototype).
-	 * Consumers can walk it to inspect lineage (see {@link isA}).
-	 * @type {PropType | object | undefined}
-	 */
-	super = this.constructor.prototype;
 
 	/**
 	 * Resolve sub-types and store them as own properties so type-specific
@@ -114,7 +106,7 @@ export default class PropType {
 	 */
 	from (spec) {
 		let instance = Object.create(this);
-		instance.super = this;
+		instance.parent = this;
 		instance.spec = spec;
 		instance.init();
 		return instance;
@@ -124,8 +116,8 @@ export default class PropType {
 		let { spec } = this;
 
 		for (let key in spec) {
-			if (key in this.constructor.prototype) {
-				this["spec_" + key] = spec[key];
+			if ("get_" + key in this) {
+				this[key] = this["get_" + key](spec[key]);
 			}
 			else {
 				this[key] = spec[key];
@@ -146,63 +138,67 @@ export default class PropType {
 		}
 	}
 
-	/**
-	 * @param {unknown} a
-	 * @param {unknown} b
-	 * @returns {boolean}
-	 */
-	equals (a, b) {
-		if (a === null || b === null || a === undefined || b === undefined) {
-			return a === b;
-		}
+	get_equals (specEquals) {
+		return function equals (a, b) {
+			if (a === null || b === null || a === undefined || b === undefined) {
+				return a === b;
+			}
 
-		if (a === b) {
-			return true;
-		}
+			if (a === b) {
+				return true;
+			}
 
-		if (this.spec_equals) {
-			return this.spec_equals(a, b);
-		}
+			if (specEquals) {
+				return specEquals.call(this, a, b);
+			}
 
-		return typeof a.equals === "function" ? a.equals(b) : false;
+			return typeof a.equals === "function" ? a.equals(b) : false;
+		};
+	}
+	static {
+		this.prototype.equals = this.prototype.get_equals();
 	}
 
-	/**
-	 * @param {unknown} value
-	 * @returns {unknown}
-	 */
-	parse (value) {
-		if (value === null || value === undefined) {
-			return value;
-		}
+	get_parse (specParse) {
+		return function parse (value) {
+			if (value === null || value === undefined) {
+				return value;
+			}
 
-		if (this.spec_parse) {
-			return this.spec_parse(value);
-		}
+			if (specParse) {
+				return specParse.call(this, value);
+			}
 
-		let Type = this.is;
-		if (!Type || value instanceof Type) {
-			return value;
-		}
+			let Type = this.is;
+			if (!Type || value instanceof Type) {
+				return value;
+			}
 
-		return callableBuiltins.has(Type) ? Type(value) : new Type(value);
+			return callableBuiltins.has(Type) ? Type(value) : new Type(value);
+		};
+	}
+	static {
+		this.prototype.parse = this.prototype.get_parse();
 	}
 
 	/**
 	 * Null/undefined produce `null` (signaling attribute removal).
-	 * @param {unknown} value
-	 * @returns {string | null}
 	 */
-	stringify (value) {
-		if (value === null || value === undefined) {
-			return null;
-		}
+	get_stringify (specStringify) {
+		return function stringify (value) {
+			if (value === null || value === undefined) {
+				return null;
+			}
 
-		if (this.spec_stringify) {
-			return this.spec_stringify(value);
-		}
+			if (specStringify) {
+				return specStringify.call(this, value);
+			}
 
-		return String(value);
+			return String(value);
+		};
+	}
+	static {
+		this.prototype.stringify = this.prototype.get_stringify();
 	}
 
 	/**
@@ -325,6 +321,28 @@ export default class PropType {
 		}
 		let resolved = globalThis[is];
 		return typeof resolved === "function" ? resolved : is;
+	}
+
+	static {
+		this.prototype.super = this.prototype;
+		defineLazyProperty(this.prototype, "super", function () {
+			let self = this;
+			let proto = this.parent ? this.parent : this.constructor.prototype;
+			return new Proxy(Object.create(proto), {
+				get (target, key, receiver) {
+					let val = target[key];
+
+					if (typeof val !== "function" || Object.hasOwn(target, key)) {
+						return val;
+					}
+
+					return (target[key] = function (...args) {
+						let thisArg = this === receiver ? self : this;
+						return val.apply(thisArg, args);
+					});
+				},
+			});
+		});
 	}
 }
 

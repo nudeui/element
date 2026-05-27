@@ -496,6 +496,61 @@ export default {
 			],
 		},
 		{
+			name: "super",
+			tests: [
+				{
+					name: "super.X returns parent's data even when child overrides it",
+					check () {
+						class Box {}
+						PropType.register({ is: Box, hint: "from-parent" });
+						let child = PropType.for({ is: Box, hint: "from-child" });
+						let result = child.super.hint === "from-parent" && child.hint === "from-child";
+						PropType.registry.delete(Box);
+						return result;
+					},
+				},
+				{
+					name: "super.method() runs parent's method with this = self",
+					check () {
+						class Box {}
+						let calledWith;
+						PropType.register({
+							is: Box,
+							parse (value) {
+								calledWith = this;
+								return value;
+							},
+						});
+						let child = PropType.for({ is: Box, other: "extra" });
+						child.super.parse("anything");
+						let result = calledWith === child;
+						PropType.registry.delete(Box);
+						return result;
+					},
+				},
+				{
+					name: "super.parse() does not recurse when called from a child's parse override",
+					run () {
+						class Box {}
+						PropType.register({
+							is: Box,
+							parse: value => "parent:" + value,
+						});
+						let child = PropType.for({
+							is: Box,
+							parse (value) {
+								return "child(" + this.super.parse(value) + ")";
+							},
+						});
+						let result = child.parse("hi");
+						PropType.registry.delete(Box);
+						return result;
+					},
+					expect: "child(parent:hi)",
+				},
+			],
+		},
+		{
 			name: "register()",
 			tests: [
 				{
