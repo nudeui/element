@@ -135,6 +135,50 @@ export default {
 			},
 		},
 		{
+			name: "Paused burst: A,A,A,B,B,A coalesces sequentially into three dispatches",
+			description:
+				"Consecutive runs for the same prop merge; B between A-runs splits them, so the consumer hears A then B then A again.",
+			async run () {
+				let { element } = this.data;
+				element.a = 0; // establish stored values before the burst
+				element.b = 0;
+				await flush();
+				let propchangeLog = [];
+				element.addEventListener("propchange", e =>
+					propchangeLog.push([e.name, e.oldValue, e.value]));
+				let propschangeCountBefore = this.data.propsEvents.length;
+
+				element.props.paused = true;
+				element.a = 1;
+				element.a = 2;
+				element.a = 3;
+				element.b = 10;
+				element.b = 20;
+				element.a = 7;
+				element.props.paused = false;
+
+				await flush();
+				return {
+					propchanges: propchangeLog,
+					propschange: this.data.propsEvents.slice(propschangeCountBefore),
+				};
+			},
+			arg: {
+				props: {
+					a: { type: Number, default: 0 },
+					b: { type: Number, default: 0 },
+				},
+			},
+			expect: {
+				propchanges: [
+					["a", 0, 3],
+					["b", 0, 20],
+					["a", 3, 7],
+				],
+				propschange: [[["a", 0], ["b", 0]]],
+			},
+		},
+		{
 			name: "Paused burst: one rebased propchange + one propschange on resume",
 			async run () {
 				let { element } = this.data;

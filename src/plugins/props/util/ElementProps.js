@@ -12,9 +12,10 @@ export default class ElementProps extends Map {
 	#paused = true;
 
 	/**
-	 * Whether propchange-style event dispatch is currently held. While `true`,
-	 * fired events are coalesced per (eventName, propName) in the burst queue;
-	 * flipping to `false` dispatches every undispatched event in queue order.
+	 * Whether `propchange` dispatch is currently held. While `true`, writes
+	 * append to the burst queue without dispatching; flipping to `false`
+	 * sequentially coalesces undispatched runs (same prop in a row) and
+	 * dispatches one event per run.
 	 */
 	get paused () {
 		return this.#paused;
@@ -29,22 +30,7 @@ export default class ElementProps extends Map {
 		this.#paused = value;
 
 		if (!value) {
-			for (let event of this.#eventQueue.values()) {
-				// Stale consumer view: oldValue ≠ value means we haven't told
-				// the consumer about the current value yet.
-				if (!event.prop.spec.equals(event.oldValue, event.value)) {
-					this.element.dispatchEvent(event);
-					// Rebase: consumer now knows about the current value.
-					event.oldValue = event.value;
-				}
-			}
-
-			// Drains scheduled while paused exited early without firing
-			// propschange. Queue a fresh one so the bunched event still fires
-			// after the resume flush settles.
-			if (this.#eventQueue.size > 0) {
-				queueMicrotask(() => this.#drain());
-			}
+			this.#flushPending();
 		}
 	}
 
@@ -52,15 +38,21 @@ export default class ElementProps extends Map {
 	ignoredAttributes = new Set();
 
 	/**
-	 * Coalesced `propchange` events keyed by prop name. Each entry is the
-	 * event that would be dispatched right now for that prop: `oldValue` is
-	 * what was last told to the consumer (or the burst-start value if never
-	 * dispatched), `value` is the current stored value, and `firstOldValue`
-	 * is the sticky burst-start value used by the `propschange` drain.
-	 * `event.target` is non-null once the event has been dispatched at least once.
-	 * @type {Map<string, PropChangeEvent>}
+	 * Paused-pending `propchange` events in write order. Empty during
+	 * unpaused operation — live writes go straight through
+	 * {@link #firePropChangeEvent}.
+	 * @type {PropChangeEvent[]}
 	 */
-	#eventQueue = new Map();
+	#eventQueue = [];
+
+	/**
+	 * Per-prop burst tracking for `propschange`. Each entry holds the prop's
+	 * burst-start `oldValue` (sticky), latest dispatched `value`, and spec.
+	 * Populated by {@link #firePropChangeEvent} on every dispatch; consumed
+	 * and cleared by {@link #drain} when the microtask fires `propschange`.
+	 * @type {Map<string, {firstOldValue: *, value: *, spec: import("./Prop.js").default}>}
+	 */
+	#propschangeEntries = new Map();
 
 	/**
 	 * Construct the per-element collection and run the mount-time init pass.
@@ -148,51 +140,20 @@ export default class ElementProps extends Map {
 	}
 
 	/**
-	 * Fire a `propchange` event for `ep` and cascade updates to any dependents.
-	 *
-	 * The event is coalesced into the burst queue keyed by prop name: a
-	 * queued entry has its `value` updated and is moved to the end of
-	 * insertion order; otherwise a fresh event is created. When unpaused,
-	 * the event is dispatched synchronously and its `oldValue` rebases to
-	 * what the consumer was just told. The queue only retains entries with
-	 * work left — net-zero entries (nothing to tell the consumer AND no net
-	 * delta for the `propschange` drain) are dropped.
-	 *
+	 * Either dispatch a `propchange` synchronously or queue it for resume,
+	 * then cascade updates to any dependents.
 	 * @param {ElementProp} ep The prop that changed.
 	 * @param {Object} change Change descriptor (see {@link ElementProp#set}).
 	 */
 	propChanged (ep, change) {
 		// Source-first: fire before cascading so listeners hear the written prop first.
-		let key = ep.name;
-		let event = this.#eventQueue.get(key);
+		let event = new PropChangeEvent("propchange", { name: ep.name, prop: ep, ...change });
 
-		if (event) {
-			// Coalesce: keep firstOldValue + oldValue (last-told), update value.
-			event.value = change.value;
-			// delete + set moves the entry to the end of insertion order.
-			this.#eventQueue.delete(key);
+		if (this.#paused) {
+			this.#eventQueue.push(event);
 		}
 		else {
-			event = new PropChangeEvent("propchange", { name: ep.name, prop: ep, ...change });
-		}
-
-		if (!this.#paused) {
-			this.element.dispatchEvent(event);
-			// Rebase: consumer now knows about the current value.
-			event.oldValue = event.value;
-		}
-
-		// Keep only if there's work left: something still to tell the consumer,
-		// OR a non-zero net effect for the `propschange` drain. If the consumer
-		// was told an intermediate value, the entry stays so resume can dispatch
-		// the revert (propschange still skips it — #drain filters by firstOldValue).
-		let { spec } = ep;
-		if (
-			!spec.equals(event.oldValue, event.value)
-			|| !spec.equals(event.value, event.firstOldValue)
-		) {
-			this.#eventQueue.set(key, event);
-			queueMicrotask(() => this.#drain());
+			this.#firePropChangeEvent(event);
 		}
 
 		// Update all props that depend on this one. {@link get} materializes a
@@ -208,24 +169,88 @@ export default class ElementProps extends Map {
 	}
 
 	/**
-	 * Build the net change map from the burst queue and fire `propschange`.
-	 * No-op while paused or after another drain already cleared the queue —
-	 * the {@link paused} setter queues a fresh drain on resume.
+	 * Dispatch a single `propchange` event and update `propschange` tracking.
+	 * Skips no-op events (oldValue === value), which only arise as the result
+	 * of coalescing a paused round-trip; live writes are already filtered
+	 * upstream by {@link ElementProp#set}.
+	 *
+	 * @param {PropChangeEvent} event
+	 */
+	#firePropChangeEvent (event) {
+		let { spec } = event.prop;
+		if (spec.equals(event.oldValue, event.value)) {
+			return;
+		}
+
+		this.element.dispatchEvent(event);
+
+		let entry = this.#propschangeEntries.get(event.name);
+		if (entry) {
+			entry.value = event.value;
+			return;
+		}
+
+		// First entry of a fresh burst schedules the propschange drain.
+		if (this.#propschangeEntries.size === 0) {
+			queueMicrotask(() => this.#drain());
+		}
+		this.#propschangeEntries.set(event.name, {
+			firstOldValue: event.oldValue,
+			value: event.value,
+			spec,
+		});
+	}
+
+	/**
+	 * Walk the paused queue in write order, in-place coalescing consecutive
+	 * same-prop events (a run like `A A B A` keeps three entries, not two),
+	 * then dispatch each surviving entry. Called synchronously from the
+	 * `paused` setter on resume.
+	 */
+	#flushPending () {
+		// In-place coalesce consecutive same-prop entries: collapse later
+		// events into the run's first one, keeping its burst-start oldValue.
+		let writeIdx = 0;
+		let lastName = null;
+		for (let event of this.#eventQueue) {
+			if (event.name === lastName) {
+				let prev = this.#eventQueue[writeIdx - 1];
+				let { oldValue } = prev;
+				Object.assign(prev, event);
+				prev.oldValue = oldValue;
+			}
+			else {
+				this.#eventQueue[writeIdx++] = event;
+				lastName = event.name;
+			}
+		}
+		this.#eventQueue.length = writeIdx;
+
+		// Dispatch the coalesced events. Detach first so listener-induced
+		// writes during dispatch don't get re-coalesced into this pass.
+		let queue = this.#eventQueue;
+		this.#eventQueue = [];
+		for (let event of queue) {
+			this.#firePropChangeEvent(event);
+		}
+	}
+
+	/**
+	 * Fire `propschange` with the net first→last delta per prop. No-op while
+	 * paused or when no propchange dispatched during the burst.
 	 */
 	#drain () {
-		if (this.#paused) {
+		if (this.#paused || this.#propschangeEntries.size === 0) {
 			return;
 		}
 
 		let changed = new Map();
-		for (let event of this.#eventQueue.values()) {
-			// Net-zero entries are dropped — they only exist so resume could
-			// dispatch a revert to the consumer.
-			if (!event.prop.spec.equals(event.value, event.firstOldValue)) {
-				changed.set(event.name, event.firstOldValue);
+		for (let [name, { firstOldValue, value, spec }] of this.#propschangeEntries) {
+			if (!spec.equals(firstOldValue, value)) {
+				changed.set(name, firstOldValue);
 			}
 		}
-		this.#eventQueue.clear();
+		this.#propschangeEntries.clear();
 
 		if (changed.size > 0) {
 			this.element.dispatchEvent(new PropsChangeEvent("propschange", { changed }));

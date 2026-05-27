@@ -3,31 +3,22 @@
  * @property {string} name Prop name.
  * @property {import("./ElementProp.js").default} prop
  * @property {*} value Current stored value (parsed + converted).
- * @property {*} oldValue Value the consumer was last told about: the stored
- *   value before this change for a fresh dispatch, or the previously-dispatched
- *   value when the event is re-dispatched after a paused burst.
+ * @property {*} oldValue Stored value before this change, or — for a coalesced
+ *   resume dispatch — the burst-start value the consumer was last told.
  * @property {"default" | "property" | "attribute" | "get" | "convert"} source
  * @property {string} [attributeName] Set when `source === "attribute"` or a
  *   property write reflects to an attribute.
  * @property {string | null} [attributeValue]
  * @property {string | null} [oldAttributeValue]
- * @property {*} [firstOldValue] Stored value before the first change in the
- *   current burst. Stays sticky across rebasing of `oldValue` so the matching
- *   `propschange` drain can compute the net first→last delta. Defaults to
- *   `oldValue` on construction.
  *
  * @typedef {EventInit & PropChangeEventProps} PropChangeEventInit
  */
 
 /**
  * Per-prop change event. Fires synchronously inside a property/attribute
- * write, then again on resume after a paused burst settles. Fields are
- * direct properties — no `detail` wrapper.
- *
- * The same event object is reused across dispatches within a burst: `value`
- * tracks the latest stored value and `oldValue` rebases to whatever was last
- * dispatched, so listeners that stash the event will see those fields mutate
- * past their handler. Copy the fields if you need a snapshot.
+ * write, or on resume from a paused burst (sequentially coalesced). Fields
+ * are direct properties — no `detail` wrapper. Each dispatch gets a fresh
+ * event object; fields don't mutate past the handler.
  *
  * @implements {PropChangeEventProps}
  */
@@ -48,8 +39,6 @@ export default class PropChangeEvent extends Event {
 				this[key] = value;
 			}
 		}
-
-		this.firstOldValue ??= this.oldValue;
 	}
 
 	/**

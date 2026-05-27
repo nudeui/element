@@ -246,8 +246,6 @@ element.addEventListener("propchange", e => {
 });
 ```
 
-The event object is reused across dispatches within a burst, so `value` and `oldValue` will mutate past your handler if you stash the event. Copy the fields you need.
-
 Subclasses that define a `propChangedCallback(event)` method are auto-wired to `propchange`.
 
 ### `propschange` — coalesced, microtask-deferred
