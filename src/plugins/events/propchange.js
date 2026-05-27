@@ -51,8 +51,12 @@ const hooks = {
 			}
 
 			let prop = this.props.get(propName);
-			let detail = { source: "initial", value };
-			this.dispatchEvent(new PropChangeEvent(eventName, { name: propName, prop, detail }));
+			this.dispatchEvent(new PropChangeEvent(eventName, {
+				name: propName,
+				prop,
+				source: "initial",
+				value,
+			}));
 		}
 	},
 };

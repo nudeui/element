@@ -145,7 +145,7 @@ export default {
 			run () {
 				let { element } = this.data;
 				let log = [];
-				element.addEventListener("propchange", e => log.push([e.name, e.detail.value]));
+				element.addEventListener("propchange", e => log.push([e.name, e.value]));
 
 				element.v = "foo";
 				element.v = "bar";
@@ -162,6 +162,8 @@ export default {
 		},
 		{
 			name: "Writes that collapse to the same value after convert do not fire propchange",
+			description:
+				"v has no default — its mount-time state is genuinely undefined, so no mount propchange fires. Only the first write that produces a new floored value triggers an event.",
 			run () {
 				let { element } = this.data;
 				element.v = 5;
@@ -180,7 +182,6 @@ export default {
 				},
 			},
 			expect: [
-				["v", undefined],
 				["v", 5],
 				// the 5.4 and 5.9 writes do not fire
 			],

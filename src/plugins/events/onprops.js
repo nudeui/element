@@ -79,14 +79,12 @@ const hooks = {
 			let eventName = this.constructor[eventProps][event.name];
 			if (eventName) {
 				// Implement onEventName attributes/properties
-				let change = event.detail;
-
-				if (change.oldValue) {
-					this.removeEventListener(eventName, change.oldValue);
+				if (event.oldValue) {
+					this.removeEventListener(eventName, event.oldValue);
 				}
 
-				if (change.value) {
-					this.addEventListener(eventName, change.value);
+				if (event.value) {
+					this.addEventListener(eventName, event.value);
 				}
 			}
 		});

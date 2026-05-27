@@ -6,17 +6,20 @@ import { resolveValue } from "../util.js";
  * per-element behavior (get, set, update, cascade) for that prop.
  */
 export default class ElementProp {
-	/**
-	 * Current stored value. `undefined` means no explicit value has been set,
-	 * which triggers default resolution on read.
-	 */
+	/** Current stored value (cached resolved default, computed result, or explicit user write). */
 	value;
 
-	/**
-	 * Last value that was different from the current one (i.e. the value
-	 * before the most recent change that passed the equality check).
-	 */
+	/** Value prior to the most recent change. */
 	oldValue;
+
+	/**
+	 * Source of the current {@link value}: one of `"default"`, `"property"`,
+	 * `"attribute"`, `"get"`, `"convert"`, or `undefined` before any value lands.
+	 * `"property"` and `"attribute"` mark a user-owned value, which gates the
+	 * defaultProp cascade (see {@link dependsOn}) and the reflect-on-first-
+	 * explicit-write path in {@link set}.
+	 */
+	source;
 
 	/**
 	 * @param {ElementProps} props The owning per-element collection.
@@ -49,10 +52,12 @@ export default class ElementProp {
 			});
 		}
 		else if (!defaultProp && !computed) {
-			// Plain prop (value-or-function default, no `get`, no `defaultProp`).
-			// Computed / defaultProp'd props don't need this — they receive their
-			// initial value via the cascade from their dependencies.
-			this.changed({ source: "default" });
+			// Plain prop with a value-or-function default. Cache the resolved
+			// default into this.value so dependents reading it via the cascade
+			// see a real value, not undefined.
+			this.value = this.get();
+			this.source = "default";
+			this.changed({ source: "default", value: this.value, oldValue: undefined });
 		}
 	}
 
@@ -112,7 +117,7 @@ export default class ElementProp {
 	 * @param {{source?: string, name?: string, oldAttributeValue?: string | null}} [options]
 	 */
 	set (value, { source, name, oldAttributeValue } = {}) {
-		let { spec, element } = this;
+		let { spec } = this;
 		let parsed;
 
 		try {
@@ -136,8 +141,28 @@ export default class ElementProp {
 
 		parsed = this.convert(parsed);
 
+		let isUserWrite = source === "property" || source === "attribute";
+
+		let wasUserOwned = this.source === "property" || this.source === "attribute";
+
 		if (spec.equals(parsed, this.value)) {
+			// Same value. First explicit write of the cached default still needs
+			// to reflect to the attribute (issue #105) and take ownership so the
+			// defaultProp cascade stops tracking us, but no propchange fires —
+			// nothing actually changed.
+			if (isUserWrite && !wasUserOwned) {
+				this.source = source;
+				if (source === "property") {
+					this.#reflectToAttribute(parsed);
+				}
+			}
 			return;
+		}
+
+		// Don't let a non-user source (e.g. a "get" recompute) silently strip
+		// user ownership established by a prior property/attribute write.
+		if (isUserWrite || !wasUserOwned) {
+			this.source = source;
 		}
 
 		this.oldValue = this.value;
@@ -149,24 +174,10 @@ export default class ElementProp {
 			oldValue: this.oldValue,
 		};
 
-		if (source === "property" && spec.reflect.to) {
-			let attributeName = spec.reflect.to;
-			let attributeValue = spec.stringify(parsed);
-			let oldAttributeValue = element.getAttribute(attributeName);
-
-			if (oldAttributeValue !== attributeValue) {
-				// TODO what if another prop is reflected *from* this attribute?
-				Object.assign(change, { attributeName, attributeValue, oldAttributeValue });
-
-				let ignored = this.props.ignoredAttributes;
-				ignored.add(attributeName);
-				if (attributeValue === null) {
-					element.removeAttribute(attributeName);
-				}
-				else {
-					element.setAttribute(attributeName, attributeValue);
-				}
-				ignored.delete(attributeName);
+		if (source === "property") {
+			let reflected = this.#reflectToAttribute(parsed);
+			if (reflected) {
+				Object.assign(change, reflected);
 			}
 		}
 		else if (source === "attribute") {
@@ -178,6 +189,41 @@ export default class ElementProp {
 		}
 
 		this.changed(change);
+	}
+
+	/**
+	 * Mirror a property write to its `reflect.to` attribute, guarded against
+	 * the resulting attributeChangedCallback echo. No-op when reflection is
+	 * disabled or the attribute already has the stringified value.
+	 *
+	 * TODO what if another prop is reflected *from* this attribute?
+	 * @returns {{attributeName: string, attributeValue: string | null, oldAttributeValue: string | null} | null}
+	 *   Mirror metadata when the attribute changed, otherwise `null`.
+	 */
+	#reflectToAttribute (parsed) {
+		let { spec, element } = this;
+		let attributeName = spec.reflect.to;
+		if (!attributeName) {
+			return null;
+		}
+
+		let attributeValue = spec.stringify(parsed);
+		let oldAttributeValue = element.getAttribute(attributeName);
+		if (oldAttributeValue === attributeValue) {
+			return null;
+		}
+
+		let ignored = this.props.ignoredAttributes;
+		ignored.add(attributeName);
+		if (attributeValue === null) {
+			element.removeAttribute(attributeName);
+		}
+		else {
+			element.setAttribute(attributeName, attributeValue);
+		}
+		ignored.delete(attributeName);
+
+		return { attributeName, attributeValue, oldAttributeValue };
 	}
 
 	/**
@@ -206,9 +252,12 @@ export default class ElementProp {
 		let { spec } = this;
 
 		if (dependency && dependency.spec === spec.defaultProp) {
-			// The default prop changed; the resolved default may differ, but since
-			// we have no value of our own to update, just notify listeners.
-			this.changed({ source: "default" });
+			let oldValue = this.value;
+			this.value = dependency.value === undefined
+				? undefined
+				: this.convert(spec.parse(dependency.value));
+			this.source = "default";
+			this.changed({ source: "default", value: this.value, oldValue });
 			return;
 		}
 
@@ -224,7 +273,7 @@ export default class ElementProp {
 
 	/**
 	 * Whether this prop currently depends on `dep`'s value.
-	 * Includes the default-prop link only while this prop has no explicit value.
+	 * Includes the default-prop link only while this prop is not user-owned.
 	 * @param {ElementProp} dep
 	 * @returns {boolean}
 	 */
@@ -237,10 +286,11 @@ export default class ElementProp {
 			return true;
 		}
 
-		let { spec } = this;
+		let { spec, source } = this;
+		let userOwned = source === "property" || source === "attribute";
 		return (
 			spec.dependencies.has(dep.name) ||
-			(spec.defaultProp === dep.spec && this.value === undefined)
+			(spec.defaultProp === dep.spec && !userOwned)
 		);
 	}
 }

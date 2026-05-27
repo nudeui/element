@@ -20,8 +20,16 @@ const hooks = {
 	},
 
 	constructor () {
-		if (this.propChangedCallback && this.constructor[props]) {
+		if (!this.constructor[props]) {
+			return;
+		}
+
+		if (this.propChangedCallback) {
 			this.addEventListener("propchange", this.propChangedCallback);
+		}
+
+		if (this.updated) {
+			this.addEventListener("propschange", this.updated);
 		}
 	},
 

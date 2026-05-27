@@ -7,7 +7,7 @@ export default {
 
 	tests: [
 		{
-			name: "first_connected shortcut re-fire carries a detail",
+			name: "first_connected shortcut re-fire carries the value",
 			description: "Late-bound on*= handlers only see the catch-up re-fire (issue #106)",
 			run () {
 				let tag = defineElement({
@@ -19,15 +19,15 @@ export default {
 				// Declared via markup so the on*= handler binds late, like real
 				// consumer usage — it then sees only the first_connected catch-up.
 				let host = document.createElement("div");
-				host.innerHTML = `<${tag} onvaluechange="(this._log ??= []).push(event.detail)"></${tag}>`;
+				host.innerHTML = `<${tag} onvaluechange="(this._log ??= []).push({value: event.value, source: event.source})"></${tag}>`;
 				document.body.append(host);
 
 				let element = host.firstElementChild;
 				host.remove();
 
-				return (element._log ?? []).map(detail => Object.keys(detail ?? {}).length > 0);
+				return element._log ?? [];
 			},
-			expect: [true],
+			expect: [{ value: "x", source: "initial" }],
 		},
 	],
 };
