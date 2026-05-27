@@ -160,7 +160,12 @@ export default class ElementProp {
 
 				let ignored = this.props.ignoredAttributes;
 				ignored.add(attributeName);
-				this.applyChange({ ...change, source: "attribute" });
+				if (attributeValue === null) {
+					element.removeAttribute(attributeName);
+				}
+				else {
+					element.setAttribute(attributeName, attributeValue);
+				}
 				ignored.delete(attributeName);
 			}
 		}
@@ -182,41 +187,6 @@ export default class ElementProp {
 	convert (value) {
 		let { convert } = this.spec;
 		return convert ? convert.call(this.element, value) : value;
-	}
-
-	/**
-	 * Apply a change descriptor by writing through the matching attribute or property.
-	 * Used to mirror a change after the fact (e.g. to replay queued changes).
-	 * @param {Object} change
-	 */
-	applyChange (change) {
-		let { element, spec } = this;
-
-		if (change.source === "attribute") {
-			let attributeName = change.attributeName ?? spec.reflect.to;
-			let attributeValue =
-				change.attributeValue !== undefined
-					? change.attributeValue
-					: element.getAttribute(attributeName);
-
-			if (attributeValue === null) {
-				element.removeAttribute(attributeName);
-			}
-			else {
-				element.setAttribute(attributeName, attributeValue);
-			}
-		}
-		else if (change.source === "property") {
-			element[this.name] = change.value;
-		}
-		else if (change.source === "default") {
-			// Nothing to do: defaults resolve lazily on read.
-		}
-		else {
-			// Mixed
-			this.applyChange({ ...change, source: "attribute" });
-			this.applyChange({ ...change, source: "property" });
-		}
 	}
 
 	/**
