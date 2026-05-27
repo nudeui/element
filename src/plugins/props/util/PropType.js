@@ -288,8 +288,17 @@ export default class PropType {
 			return fallback;
 		}
 
+		// Bare `{is: X}` is equivalent to passing `X` directly — collapse it
+		// so both forms hit the same cached-lookup path. Anything richer
+		// produces a fresh derivative.
 		if (typeof input === "object") {
-			return new this(input);
+			let keys = Object.keys(input);
+			if (keys.length === 1 && keys[0] === "is") {
+				input = input.is;
+			}
+			else {
+				return new this(input);
+			}
 		}
 
 		let is = PropType.normalizeIs(input);
@@ -298,12 +307,12 @@ export default class PropType {
 			return registered;
 		}
 
-		// Unregistered constructor → build a derivative so `is` is preserved
-		// and the default parse/stringify/equals can use it. Bare strings
-		// (those `normalizeIs` couldn't resolve to a function) fall through
-		// to the fallback since they almost always indicate a typo or missing
-		// import.
-		return typeof is === "function" ? new this({ is }) : fallback;
+		// Unregistered constructor → register a fresh derivative so `is` is
+		// preserved and subsequent lookups return the same instance. Bare
+		// strings (those `normalizeIs` couldn't resolve to a function) fall
+		// through to the fallback since they almost always indicate a typo
+		// or missing import.
+		return typeof is === "function" ? this.register({ is }) : fallback;
 	}
 
 	/**

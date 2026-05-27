@@ -63,6 +63,24 @@ export default {
 					},
 				},
 				{
+					name: "Unregistered constructor lookup is idempotent across calls",
+					check: () => PropType.for(Unknown) === PropType.for(Unknown),
+				},
+				{
+					name: "Bare spec {is: X} is idempotent across calls",
+					check () {
+						class Fresh {}
+						return PropType.for({ is: Fresh }) === PropType.for({ is: Fresh });
+					},
+				},
+				{
+					name: "Constructor and bare spec forms resolve to the same instance",
+					check () {
+						class Cross {}
+						return PropType.for({ is: Cross }) === PropType.for(Cross);
+					},
+				},
+				{
 					name: "Unresolvable string still yields the default fallback",
 					check: () =>
 						PropType.for("DefinitelyNotAGlobalOrRegisteredType") === PropType.for(undefined),
