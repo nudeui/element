@@ -27,10 +27,6 @@ const hooks = {
 		if (this.propChangedCallback) {
 			this.addEventListener("propchange", this.propChangedCallback);
 		}
-
-		if (this.updated) {
-			this.addEventListener("propschange", this.updated);
-		}
 	},
 
 	connected () {

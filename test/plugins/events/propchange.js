@@ -1,5 +1,6 @@
 import { defineElement } from "../../util/dom.js";
 import { default as propsPlugin } from "../../../src/plugins/props/index.js";
+import { default as propschangePlugin } from "../../../src/plugins/props/propschange.js";
 import { default as eventsPlugin } from "../../../src/plugins/events/index.js";
 
 const flush = () => Promise.resolve();
@@ -34,7 +35,7 @@ export default {
 			description: "Burst dispatches one propchange (old=1, value=3); the alias mirrors it, propschange sees only [v, 1].",
 			async run () {
 				let tag = defineElement({
-					plugins: [propsPlugin, eventsPlugin],
+					plugins: [propsPlugin, propschangePlugin, eventsPlugin],
 					props: { v: { type: Number, default: 0 } },
 					events: { valuechange: { propchange: "v" } },
 				});

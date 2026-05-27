@@ -3,10 +3,38 @@
  * events settles. Tests await `Promise.resolve()` (or a microtask) to let the
  * drain run before asserting.
  */
+import { default as propsPlugin } from "../../../src/plugins/props/index.js";
+import { default as propschangePlugin } from "../../../src/plugins/props/propschange.js";
+import { defineElement } from "../../util/dom.js";
+
 const flush = () => Promise.resolve();
 
 export default {
-	name: "propschange events",
+	name: "propschange plugin",
+
+	beforeEach () {
+		let { props, attributes, mixin } = this.arg;
+		let tag = defineElement({ plugins: [propsPlugin, propschangePlugin], props, mixin });
+		let element = document.createElement(tag);
+
+		let events = [];
+		element.addEventListener("propchange", e => events.push([e.name, e.target[e.name]]));
+
+		let propsEvents = [];
+		element.addEventListener("propschange", e => propsEvents.push([...e.changed]));
+
+		for (let [name, value] of Object.entries(attributes ?? {})) {
+			element.setAttribute(name, value);
+		}
+
+		document.body.append(element);
+
+		Object.assign(this.data, { element, events, propsEvents });
+	},
+
+	afterEach () {
+		this.data.element.remove();
+	},
 
 	tests: [
 		{
@@ -175,7 +203,12 @@ export default {
 					["b", 0, 20],
 					["a", 3, 7],
 				],
-				propschange: [[["a", 0], ["b", 0]]],
+				propschange: [
+					[
+						["a", 0],
+						["b", 0],
+					],
+				],
 			},
 		},
 		{
@@ -226,10 +259,7 @@ export default {
 					};
 				},
 			},
-			expect: [
-				[["v", undefined]],
-				[["v", 0]],
-			],
+			expect: [[["v", undefined]], [["v", 0]]],
 		},
 	],
 };

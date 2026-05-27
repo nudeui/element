@@ -28,27 +28,22 @@ export default {
 				element.addEventListener("propchange", e =>
 					events.push([e.name, e.target[e.name]]));
 
-				// Snapshot as [name, oldValue] tuples so tests can compare with
-				// plain array equality.
-				let propsEvents = [];
-				element.addEventListener("propschange", e =>
-					propsEvents.push([...e.changed]));
-
 				for (let [name, value] of Object.entries(attributes ?? {})) {
 					element.setAttribute(name, value);
 				}
 
 				document.body.append(element);
 
-				Object.assign(this.data, { element, events, propsEvents });
+				Object.assign(this.data, { element, events });
 			},
 
 			afterEach () {
 				this.data.element.remove();
 			},
 
-			tests: [reflection, defaults, computed, propchange, propschange, lifecycle],
+			tests: [reflection, defaults, computed, propchange, lifecycle],
 		},
+		propschange,
 		inheritance,
 		install,
 		observedAttributes,

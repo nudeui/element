@@ -1,7 +1,6 @@
 import { symbols } from "xtensible";
 import ElementProp from "./ElementProp.js";
 import PropChangeEvent from "./PropChangeEvent.js";
-import PropsChangeEvent from "./PropsChangeEvent.js";
 
 const { props } = symbols.known;
 
@@ -44,15 +43,6 @@ export default class ElementProps extends Map {
 	 * @type {PropChangeEvent[]}
 	 */
 	#eventQueue = [];
-
-	/**
-	 * Per-prop burst tracking for `propschange`. Each entry holds the prop's
-	 * burst-start `oldValue` (sticky), latest dispatched `value`, and spec.
-	 * Populated by {@link #firePropChangeEvent} on every dispatch; consumed
-	 * and cleared by {@link #drain} when the microtask fires `propschange`.
-	 * @type {Map<string, {firstOldValue: *, value: *, spec: import("./Prop.js").default}>}
-	 */
-	#propschangeEntries = new Map();
 
 	/**
 	 * Construct the per-element collection and run the mount-time init pass.
@@ -169,36 +159,19 @@ export default class ElementProps extends Map {
 	}
 
 	/**
-	 * Dispatch a single `propchange` event and update `propschange` tracking.
-	 * Skips no-op events (oldValue === value), which only arise as the result
-	 * of coalescing a paused round-trip; live writes are already filtered
-	 * upstream by {@link ElementProp#set}.
+	 * Dispatch a single `propchange` event. Skips no-op events
+	 * (oldValue === value), which only arise as the result of coalescing
+	 * a paused round-trip; live writes are already filtered upstream by
+	 * {@link ElementProp#set}.
 	 *
 	 * @param {PropChangeEvent} event
 	 */
 	#firePropChangeEvent (event) {
-		let { spec } = event.prop;
-		if (spec.equals(event.oldValue, event.value)) {
+		if (event.prop.spec.equals(event.oldValue, event.value)) {
 			return;
 		}
 
 		this.element.dispatchEvent(event);
-
-		let entry = this.#propschangeEntries.get(event.name);
-		if (entry) {
-			entry.value = event.value;
-			return;
-		}
-
-		// First entry of a fresh burst schedules the propschange drain.
-		if (this.#propschangeEntries.size === 0) {
-			queueMicrotask(() => this.#drain());
-		}
-		this.#propschangeEntries.set(event.name, {
-			firstOldValue: event.oldValue,
-			value: event.value,
-			spec,
-		});
 	}
 
 	/**
@@ -232,28 +205,6 @@ export default class ElementProps extends Map {
 		this.#eventQueue = [];
 		for (let event of queue) {
 			this.#firePropChangeEvent(event);
-		}
-	}
-
-	/**
-	 * Fire `propschange` with the net first→last delta per prop. No-op while
-	 * paused or when no propchange dispatched during the burst.
-	 */
-	#drain () {
-		if (this.#paused || this.#propschangeEntries.size === 0) {
-			return;
-		}
-
-		let changed = new Map();
-		for (let [name, { firstOldValue, value, spec }] of this.#propschangeEntries) {
-			if (!spec.equals(firstOldValue, value)) {
-				changed.set(name, firstOldValue);
-			}
-		}
-		this.#propschangeEntries.clear();
-
-		if (changed.size > 0) {
-			this.element.dispatchEvent(new PropsChangeEvent("propschange", { changed }));
 		}
 	}
 }
