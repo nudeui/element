@@ -26,27 +26,30 @@ const callableBuiltins = new Set([
  * and delegates derivative construction to the constructor.
  *
  * Derivatives are created via `Object.create(parent)`, and every spec
- * property is lifted onto the instance during {@link init} (overrides that
- * collide with prototype names — `equals`, `parse`, `stringify`, etc. —
- * are stored under a `spec_` prefix). Lookups then walk the JS prototype
- * chain naturally: a derivative inherits whatever its parent set, and
- * its own values shadow as expected.
+ * property is lifted onto the instance during {@link init}. For keys that
+ * collide with shared behavior on the prototype (`equals`, `parse`,
+ * `stringify`), {@link init} consults a matching `get_<name>` transform on
+ * the prototype, which wraps the spec function with the shared null/identity
+ * short-circuits and super-walking behavior before lifting it. Lookups then
+ * walk the JS prototype chain naturally: a derivative inherits whatever its
+ * parent set, and its own values shadow as expected.
  *
  * The parent is picked from `spec.extends` if present, otherwise from the
  * registry entry for `spec.is`, allowing the chain parent to differ from
  * the produced JS type (e.g. `{is: Array, extends: Iterable}`).
  *
- * The prototype `equals` / `parse` / `stringify` methods handle the shared
- * null/identity short-circuits and then call `this.spec_<name>(…)` if
- * present, so type definitions stay free of boilerplate.
+ * Any other method on the spec is lifted verbatim; the {@link super} proxy
+ * lets it call into the next implementation up the chain via `this.super.x(…)`
+ * while keeping `this` bound to the original caller.
  *
  * @template {PropTypeSpec} [TSpec=PropTypeSpec]
  */
 export default class PropType {
 	/**
 	 * The spec object this instance was constructed with — stored verbatim,
-	 * not cloned, alongside the lifted `spec_<name>` copies of any method
-	 * overrides it carried.
+	 * not cloned. Every own key is also lifted onto the instance by
+	 * {@link init} (method overrides via the matching `get_<name>` transform
+	 * when one exists, everything else by direct copy).
 	 * @type {PropTypeSpec | undefined}
 	 */
 	spec;

@@ -36,9 +36,9 @@ All built-ins can be accessed via `PropType.for(name)` (see [props README](../RE
 | `Iterable.parseItems`  | Raw items: strings split via the pair-aware splitter, iterables consumed verbatim, scalars wrapped. No `values.parse` applied.                                                     |
 | `MapType.parseEntries` | Raw `[key, value]` tuples: built on `parseItems`, with `:`-splitting (escaped `\:` preserved) and shorthand-entry handling via `defaultKey` / `defaultValue` / `"false"`-coercion. |
 
-Both are generators. Concrete types consume them with the appropriate terminal container constructor (`Array.from`, `new Set`, `new Map`, `Object.fromEntries`) so each input value flows through the chain exactly once — no intermediate arrays.
+Both are generators. Concrete types consume them with the appropriate terminal container (spread into an array, `new Set`, `new Map`, `Object.fromEntries`) so each input value flows through the chain exactly once — no intermediate arrays.
 
-To call a parent's method from inside an override, use `ParentType.spec.method.call(this, …args)`. Doing it via `this.super.method(…)` would re-bind `this` to the parent and lose access to your derivative's `this.values` / `this.spec.separator`.
+To call a parent's method from inside an override, use `this.super.method(…)`. The `super` proxy walks the chain looking for the next implementation while keeping `this` bound to the derivative, so your override still sees its own `this.values` / `this.separator`. It also goes through the same `get_` wrappers as a normal call (e.g. the null-handling in `get_parse`), unlike a direct `ParentType.spec.method.call(this, …args)`.
 
 ## A parametrized custom type
 
@@ -50,7 +50,7 @@ import { PropType } from "nude-element/props";
 PropType.register({
     is: Length,
     parse (value) {
-        let unit = this.spec.unit ?? "px";
+        let unit = this.unit ?? "px";
         return value instanceof Length ? value : new Length(value, unit);
     },
     stringify: value => value?.toString(),
@@ -65,7 +65,7 @@ static props = {
 };
 ```
 
-`Pixels` and `Rems` are distinct PropType instances sharing the same `parse` (inherited via the prototype chain from the registered `Length` singleton), but each reads its own `this.spec.unit`.
+`Pixels` and `Rems` are distinct PropType instances sharing the same `parse` (inherited via the prototype chain from the registered `Length` singleton), but each reads its own `this.unit` (every spec key is lifted onto the instance by `init()`).
 
 ## Public API
 
