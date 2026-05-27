@@ -133,14 +133,19 @@ The `type` property can also take an object that sets both the type (via the `is
 listed below.
 All type options are optional.
 
-| Property       | Type                                       | Applies to                                             | Description                                                                              |
-| -------------- | ------------------------------------------ | ------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| `is`           | `Function` &#124; `string` &#124; `object` | _(All)_                                                | The type of the property.                                                                |
-| `values`       | `Function`                                 | Lists (`Array`, `Set`), Dictionaries (`Object`, `Map`) | The type of the items in the list.                                                       |
-| `keys`         | `Function`                                 | `Map`                                                  | The type of the keys in the dictionary.                                                  |
-| `defaultKey`   | `Function`                                 | Dictionaries (`Object`, `Map`)                         | Default key for entries with no label.                                                   |
-| `defaultValue` | (any)                                      | Dictionaries (`Object`, `Map`)                         | Default value for entries with no label. Ignored if `defaultKey` is set. Default: `true` |
-| `arguments`    | `string[]`                                 | `Function`                                             | The names of the arguments of the function. Default: `[]` (no arguments)                 |
+| Property       | Type                                       | Applies to                                                  | Description                                                                              |
+| -------------- | ------------------------------------------ | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `is`           | `Function` &#124; `string` &#124; `object` | _(All)_                                                     | The type of the property.                                                                |
+| `values`       | `Function`                                 | Iterables (`Array`, `Set`), Dictionaries (`Object`, `Map`)  | The type of the items in the list.                                                       |
+| `keys`         | `Function`                                 | Dictionaries (`Object`, `Map`)                              | The type of the keys in the dictionary.                                                  |
+| `separator`    | `string` &#124; `RegExp`                   | Iterables (`Array`, `Set`), Dictionaries (`Object`, `Map`)  | Separator between items when parsing strings. Default: `,` (pair-aware).                 |
+| `joiner`       | `string`                                   | Iterables (`Array`, `Set`), Dictionaries (`Object`, `Map`)  | String used between items when stringifying. Defaults to a normalized form of `separator`. |
+| `pairs`        | `object`                                   | Iterables (`Array`, `Set`), Dictionaries (`Object`, `Map`)  | Override the pair-aware splitter's bracket/quote table.                                  |
+| `defaultKey`   | `Function`                                 | Dictionaries (`Object`, `Map`)                              | Default key for entries with no label.                                                   |
+| `defaultValue` | (any)                                      | Dictionaries (`Object`, `Map`)                              | Default value for entries with no label. Ignored if `defaultKey` is set. Default: `true` |
+| `arguments`    | `string[]`                                 | `Function`                                                  | The names of the arguments of the function. Default: `[]` (no arguments)                 |
+
+See the [PropTypes reference](./types/README.md#built-in-types) for the full per-type breakdown.
 
 #### Default key/value in dictionaries
 
@@ -152,6 +157,64 @@ and `(v, i) => i` to make them default to numerical indices.
 While `defaultKey` _can_ be a non-function, this is almost never what you want, since that would create collisions.
 If `defaultValue` is provided, singular entries are considered keys, and `defaultValue` is used to generate the values.
 It can be either a constant (e.g. `true`) or a function, in which case it’s passed the key and the index as arguments.
+
+#### Custom types
+
+Types are _instances_ of the single `PropType` class. Each instance carries the spec it was constructed with — its constructor (`is`), any `equals` / `parse` / `stringify` overrides, and any additional type options they may use (e.g. Iterables use a `separator` option as well).
+
+Types without an `is` property are _abstract_ — they don't correspond to a specific JS constructor, but just define behavior that concrete types can inherit via the JS prototype chain. `Iterable` is a current example (though in the future it may use `is: Iterator`).
+
+Most constructors do not actually need registering.
+For example, consider [Color.js](https://colorjs.io/) `Color` objects.
+
+It may be tempting to do something like this:
+
+```js
+import { PropType } from "nude-element/props";
+
+// ❌ Don't do this
+PropType.register({
+	is: Color,
+	parse: value => (value instanceof Color ? value : new Color(value)),
+	equals: (a, b) => a === b || a?.equals?.(b),
+	stringify: value => value?.toString(),
+});
+```
+
+However, none of this is needed:
+
+- `parse()` automatically constructs an object of type `type.is` and the `Color` constructor already accepts strings
+- `Color` objects already have a good `toString()` method, which is called automatically
+- `equals()` already checks `a === b` and uses `a.equals(b)` if such a method is available.
+
+Using `type: Color` in the prop definition is enough to get all the benefits of type-aware parsing, stringifying, and equality checking for free.
+
+For custom types that represent more complex objects, you may want to register them as extending an existing type, e.g. `Iterable` for any list of values, or `Map` for any key→value mapping.
+
+```js
+import { PropType } from "nude-element/props";
+
+PropType.register({
+	is: Tuple,
+	extends: "Iterable",
+});
+```
+
+**Derivative types.** A type spec with options beyond `is` produces a _derivative_ — a new `PropType` instance whose prototype chain points to the registered singleton for that `is` (or the abstract named via `extends`). Lookups for unspecified options fall through to the parent via the JS prototype chain.
+
+```js
+import { PropType } from "nude-element/props";
+
+const NumberArray = PropType.for({ is: Array, values: Number });
+
+static props = {
+    points: { type: NumberArray },
+};
+```
+
+Inline specs in prop definitions work the same way — each occurrence produces its own derivative. Hoist a derivative into a `const` (as above) if you want every prop using it to share the same instance.
+
+For the full spec-key reference, the abstract-type helper methods (`parseItems`, `parseEntries`), and the public API surface, see [`types`](./types/README.md).
 
 ### Attribute-property reflection
 

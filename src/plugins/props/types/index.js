@@ -1,3 +1,12 @@
-export * from "./basic.js";
-export * from "./lists.js";
-export * from "./dictionaries.js";
+// Side-effect imports register the built-in types' singletons.
+import "./boolean.js";
+import "./number.js";
+import "./function.js";
+import "./iterable.js";
+import "./array.js";
+import "./set.js";
+import "./map.js";
+import "./object.js";
+
+export { default as PropType } from "../util/PropType.js";
+export { default as Iterable } from "./iterable.js";

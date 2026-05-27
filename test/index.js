@@ -1,3 +1,4 @@
+import PropType from "./PropType.js";
 import Prop from "./Prop.js";
 import Props from "./Props.js";
 import hooks from "./hooks.js";
@@ -6,5 +7,5 @@ import plugins from "./plugins/index.js";
 
 export default {
 	name: "All tests",
-	tests: [Prop, Props, hooks, split, plugins],
+	tests: [PropType, Prop, Props, hooks, split, plugins],
 };

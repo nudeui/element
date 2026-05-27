@@ -1,5 +1,5 @@
 import { inferDependencies } from "../util.js";
-import * as types from "./types.js";
+import { PropType } from "../types/index.js";
 
 /**
  * Class-level metadata for a single prop.
@@ -57,14 +57,10 @@ let Self = class Prop {
 			to: reflect.to === true ? name : reflect.to || undefined,
 		};
 
-		this.type = types.resolve(spec.type);
+		this.type = PropType.for(spec.type);
 
 		for (let fnName of ["equals", "stringify", "parse"]) {
-			this[fnName] =
-				spec[fnName] ??
-				function (...args) {
-					return types[fnName](...args, this.type);
-				};
+			this[fnName] = spec[fnName] ?? this.type[fnName].bind(this.type);
 		}
 	}
 

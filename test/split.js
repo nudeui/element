@@ -1,8 +1,8 @@
-import { split } from "../src/plugins/props/types/util.js";
+import { split } from "../src/plugins/props/util/split.js";
 
 export default {
 	name: "split()",
-	run: split,
+	run: (...args) => [...split(...args)],
 	tests: [
 		{
 			name: "Basic",
