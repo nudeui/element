@@ -3,6 +3,8 @@ import ElementProp from "./ElementProp.js";
 import PropChangeEvent from "./PropChangeEvent.js";
 import PropsChangeEvent from "./PropsChangeEvent.js";
 
+/** @import { PropChangeEventProps } from "./PropChangeEvent.js" */
+
 const { props } = symbols.known;
 
 /**
@@ -183,7 +185,7 @@ export default class ElementProps extends Map {
 	 * value and `oldValue` rebases to what the consumer was last told.
 	 *
 	 * @param {string} eventName
-	 * @param {{name: string, prop: ElementProp, value: *, oldValue: *, source: string, attributeName?: string, attributeValue?: string | null, oldAttributeValue?: string | null}} eventProps
+	 * @param {PropChangeEventProps} eventProps
 	 */
 	#firePropChangeEvent (eventName, eventProps) {
 		let key = `${eventName}::${eventProps.name}`;
