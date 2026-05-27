@@ -40,7 +40,7 @@ const hooks = {
 		}
 	},
 
-	first_connected () {
+	constructor () {
 		let aliases = this.constructor[propchange];
 		if (!aliases) {
 			return;
@@ -48,7 +48,9 @@ const hooks = {
 
 		// Re-dispatch every propchange as its declared alias event(s). The
 		// canonical event already inherits coalescing / pause-resume from
-		// ElementProps, so the alias rides along for free.
+		// ElementProps, so the alias rides along for free. Attaching in the
+		// `constructor` hook means we catch mount propchanges too — no
+		// synthesized catch-up needed.
 		this.addEventListener("propchange", event => {
 			let aliasNames = aliases[event.name];
 			if (!aliasNames) {
@@ -65,25 +67,6 @@ const hooks = {
 				}));
 			}
 		});
-
-		// Often propchange events have already fired by the time the event handlers are added
-		for (let propName in aliases) {
-			let value = this[propName];
-
-			if (value === undefined) {
-				continue;
-			}
-
-			let prop = this.props.get(propName);
-			for (let aliasName of aliases[propName]) {
-				this.dispatchEvent(new PropChangeEvent(aliasName, {
-					name: propName,
-					prop,
-					source: "initial",
-					value,
-				}));
-			}
-		}
 	},
 };
 

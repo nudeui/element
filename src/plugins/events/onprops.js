@@ -39,6 +39,12 @@ const hooks = {
 				continue;
 			}
 
+			// Capture the event name in the closure so each on* prop knows
+			// which event to attach/detach when its value changes. The
+			// `changed` callback runs synchronously inside the write — before
+			// `propchange` fires — so handlers set during prop init catch
+			// the mount-time propchanges that follow.
+			let eventName = name;
 			newProps[eventDef.onprop] = {
 				type: {
 					is: Function,
@@ -46,6 +52,14 @@ const hooks = {
 				},
 				reflect: {
 					from: true,
+				},
+				changed ({ oldValue, value }) {
+					if (oldValue) {
+						this.removeEventListener(eventName, oldValue);
+					}
+					if (value) {
+						this.addEventListener(eventName, value);
+					}
 				},
 			};
 
@@ -56,38 +70,6 @@ const hooks = {
 		if (Object.keys(newProps).length > 0) {
 			this.defineProps(newProps);
 		}
-	},
-
-	constructed () {
-		// Deal with existing values
-		if (!this.constructor[eventProps]) {
-			return;
-		}
-
-		for (let name in this.constructor[eventProps]) {
-			// Read any existing on* prop value
-			let value = this[name];
-
-			if (typeof value === "function") {
-				let eventName = this.constructor[eventProps][name];
-				this.addEventListener(eventName, value);
-			}
-		}
-
-		// Listen for changes
-		this.addEventListener("propchange", event => {
-			let eventName = this.constructor[eventProps][event.name];
-			if (eventName) {
-				// Implement onEventName attributes/properties
-				if (event.oldValue) {
-					this.removeEventListener(eventName, event.oldValue);
-				}
-
-				if (event.value) {
-					this.addEventListener(eventName, event.value);
-				}
-			}
-		});
 	},
 };
 

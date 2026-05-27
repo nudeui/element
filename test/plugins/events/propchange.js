@@ -9,8 +9,8 @@ export default {
 
 	tests: [
 		{
-			name: "first_connected shortcut re-fire carries the value",
-			description: "Late-bound on*= handlers only see the catch-up re-fire (issue #106)",
+			name: "Markup on*= handlers catch the mount-time alias dispatch",
+			description: "The on* prop's `changed` callback attaches the handler during prop init, before mount propchanges flush — so it receives the real mount alias with its original source (issue #106).",
 			run () {
 				let tag = defineElement({
 					plugins: [propsPlugin, eventsPlugin],
@@ -18,8 +18,6 @@ export default {
 					events: { valuechange: { propchange: "value" } },
 				});
 
-				// Declared via markup so the on*= handler binds late, like real
-				// consumer usage — it then sees only the first_connected catch-up.
 				let host = document.createElement("div");
 				host.innerHTML = `<${tag} onvaluechange="(this._log ??= []).push({value: event.value, source: event.source})"></${tag}>`;
 				document.body.append(host);
@@ -29,7 +27,7 @@ export default {
 
 				return element._log ?? [];
 			},
-			expect: [{ value: "x", source: "initial" }],
+			expect: [{ value: "x", source: "default" }],
 		},
 		{
 			name: "Shortcut events ride along on coalesced propchange and don't feed propschange",
