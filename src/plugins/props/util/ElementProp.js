@@ -251,7 +251,7 @@ export default class ElementProp {
 	update (dependency) {
 		let { spec } = this;
 
-		if (dependency && dependency.spec === spec.defaultProp) {
+		if (dependency && dependency.spec === spec.defaultProp && !spec.get) {
 			let oldValue = this.value;
 			this.value = dependency.value === undefined
 				? undefined
