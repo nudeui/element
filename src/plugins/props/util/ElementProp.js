@@ -253,9 +253,10 @@ export default class ElementProp {
 
 		if (dependency && dependency.spec === spec.defaultProp && !spec.get) {
 			let oldValue = this.value;
-			this.value = dependency.value === undefined
-				? undefined
-				: this.convert(spec.parse(dependency.value));
+			this.value =
+				dependency.value === undefined
+					? undefined
+					: this.convert(spec.parse(dependency.value));
 			this.source = "default";
 			this.changed({ source: "default", value: this.value, oldValue });
 			return;
@@ -288,9 +289,6 @@ export default class ElementProp {
 
 		let { spec, source } = this;
 		let userOwned = source === "property" || source === "attribute";
-		return (
-			spec.dependencies.has(dep.name) ||
-			(spec.defaultProp === dep.spec && !userOwned)
-		);
+		return spec.dependencies.has(dep.name) || (spec.defaultProp === dep.spec && !userOwned);
 	}
 }
