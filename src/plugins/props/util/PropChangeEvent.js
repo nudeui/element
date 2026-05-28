@@ -70,7 +70,7 @@ export default class PropChangeEvent extends Event {
 				target.setAttribute(this.attributeName, this.attributeValue);
 			}
 		}
-		else {
+		else if (this.source) {
 			target[this.name] = this.value;
 		}
 	}
