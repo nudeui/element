@@ -153,7 +153,7 @@ export default class ElementProps extends Map {
 		for (let depSpec of dependentSpecs) {
 			let dep = this.get(depSpec.name);
 			if (dep.dependsOn(ep)) {
-				dep.update(ep);
+				dep.update();
 			}
 		}
 	}

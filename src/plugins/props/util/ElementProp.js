@@ -2,22 +2,49 @@ import { resolveValue } from "../util.js";
 
 /**
  * Per-element wrapper around a {@link Prop} spec.
- * Holds the current and previous value for one prop on one element, and the
- * per-element behavior (get, set, update, cascade) for that prop.
+ * Holds the current input and derived value for one prop on one element, and
+ * the per-element behavior (get, set, update, cascade) for that prop.
+ *
+ * The two-slot model:
+ * - {@link internalValue} stores the user-supplied input (parsed, not yet
+ *   converted). `undefined` means "no user input; fall through to default."
+ * - {@link value} stores the derived/visible value: `convert(input)`, where
+ *   `input` is `internalValue` if set, otherwise the resolved default. It is
+ *   eagerly cached on every write and on every dep-cascade recompute.
+ *
+ * Separating the slots means a dep cascade re-derives `value` from the
+ * untouched `internalValue` rather than re-running `convert` on an
+ * already-converted value, which is incorrect for non-idempotent converts.
  */
 export default class ElementProp {
-	/** Current stored value (cached resolved default, computed result, or explicit user write). */
-	value;
+	/**
+	 * Parsed-but-not-converted input from a user write. `undefined` when no
+	 * user input has landed (the prop is showing its default), including after
+	 * an attribute removal collapses the input back to undefined.
+	 */
+	internalValue;
+
+	/**
+	 * Current derived value: `convert(internalValue ?? resolvedDefault)`.
+	 * Not declared as a class field so {@link Object.hasOwn} can distinguish
+	 * "never computed" from "computed to undefined" in the lazy {@link get}
+	 * path — `undefined` is a legitimately cacheable result.
+	 * @type {*}
+	 */
 
 	/** Value prior to the most recent change. */
 	oldValue;
 
 	/**
-	 * Source of the current {@link value}: one of `"default"`, `"property"`,
-	 * `"attribute"`, `"get"`, `"convert"`, or `undefined` before any value lands.
-	 * `"property"` and `"attribute"` mark a user-owned value, which gates the
-	 * defaultProp cascade (see {@link dependsOn}) and the reflect-on-first-
-	 * explicit-write path in {@link set}.
+	 * Origin label for the most recent user write: `"property"`, `"attribute"`,
+	 * or `undefined` if no write has ever landed (the mount-time default fires
+	 * with `undefined`). Persists across dep-cascade recomputes and across
+	 * attribute removal — describes the origin of the input shape, not whether
+	 * input is currently present. Use `internalValue !== undefined` to check
+	 * "is the prop user-owned right now?" (see {@link dependsOn}).
+	 *
+	 * Plugins may introduce additional source values via {@link set}; the
+	 * built-in code only emits `"property"`, `"attribute"`, or `undefined`.
 	 */
 	source;
 
@@ -34,7 +61,7 @@ export default class ElementProp {
 		// find this wrapper in the Map.
 		props.set(spec.name, this);
 
-		let { name, reflect, defaultProp, get: computed } = spec;
+		let { name, reflect } = spec;
 		let { element } = props;
 
 		if (Object.hasOwn(element, name)) {
@@ -51,13 +78,13 @@ export default class ElementProp {
 				name: reflect.from,
 			});
 		}
-		else if (!defaultProp && !computed) {
-			// Plain prop with a value-or-function default. Cache the resolved
-			// default into this.value so dependents reading it via the cascade
-			// see a real value, not undefined.
-			this.value = this.get();
-			this.source = "default";
-			this.changed({ source: this.source, value: this.value, oldValue: undefined });
+		else if (!spec.defaultProp && !spec.get) {
+			// Plain prop. Derive eagerly so dependents reading via the cascade
+			// see a real value, and fire a mount event for listeners.
+			// (defaultProp and get props get their mount event via cascade from
+			// their dependency, so the constructor doesn't fire here.)
+			this.value = this.#derive();
+			this.changed({ source: undefined, value: this.value, oldValue: undefined });
 		}
 	}
 
@@ -70,53 +97,77 @@ export default class ElementProp {
 	}
 
 	/**
-	 * Read this prop's current value, falling back to its default if unset.
+	 * Read this prop's current value, lazily deriving if the cache is empty.
+	 * `Object.hasOwn` is the sentinel because a legitimately-cached `undefined`
+	 * (e.g. a prop with no input and no default) must not trigger re-derivation
+	 * on every read.
 	 */
 	get () {
-		if (this.value === undefined) {
-			this.update();
+		if (!Object.hasOwn(this, "value")) {
+			this.value = this.#derive();
 		}
+		return this.value;
+	}
 
-		if (this.value !== undefined) {
-			return this.value;
-		}
-
+	/**
+	 * Compute the visible value from current state. Single source of truth for
+	 * derivation; called on writes (after updating {@link internalValue}), on
+	 * dep cascades, and on lazy reads.
+	 */
+	#derive () {
 		let { spec, element } = this;
-		let raw;
 
+		if (spec.get) {
+			// Computed prop. A pre-mount property/attribute write seeds
+			// internalValue (issue #14 bootstrap); honor it until update()
+			// clears it on the first dep-cascade recompute.
+			//
+			// Edge case: a computed prop with no declared deps never receives
+			// a cascade, so a bootstrap seed stays as the visible value forever
+			// — spec.get is effectively masked. Pre-mount writes to depless
+			// computeds are pathological config; the alternative (silently
+			// dropping the seed) seems worse.
+			let raw =
+				this.internalValue !== undefined
+					? this.internalValue
+					: spec.parse(spec.get.call(element));
+			return this.convert(raw);
+		}
+
+		if (this.internalValue !== undefined) {
+			return this.convert(this.internalValue);
+		}
+
+		// Fall back to default. `defaultProp` and `default` are two variants
+		// of the same concept; a function default with reactive deps is
+		// normalized to a synthetic defaultProp upstream (see Props#createProp),
+		// so most reactive defaults flow through the first branch. Reparse
+		// the resolved raw value to bridge it into this spec's shape.
+		let raw;
 		if (spec.defaultProp) {
 			raw = this.props.get(spec.defaultProp.name).get();
 		}
 		else if (spec.default !== undefined) {
 			raw = resolveValue(spec.default, [element, element]);
 		}
-		else {
-			return undefined;
-		}
 
-		let value;
-		try {
-			value = spec.parse(raw);
-		}
-		catch (e) {
-			console.warn(
-				"Failed to parse default value",
-				raw,
-				`for prop ${this.name}. Original error was: `,
-				e,
-			);
-			return null;
-		}
-
-		return this.convert(value);
+		return raw === undefined ? undefined : this.convert(spec.parse(raw));
 	}
 
 	/**
-	 * Write a value: parse, convert, store, and reflect to attribute when applicable.
+	 * Write a user-supplied value: parse, store as input, re-derive, reflect to
+	 * attribute when applicable.
 	 * @param {*} value Raw value (string from an attribute, any from a property write).
 	 * @param {{source?: string, name?: string, oldAttributeValue?: string | null}} [options]
 	 */
 	set (value, { source, name, oldAttributeValue } = {}) {
+		if (source !== "property" && source !== "attribute") {
+			// Non-user sources don't write through internalValue; they're
+			// derivations. Route to the cascade entry point.
+			this.update();
+			return;
+		}
+
 		let { spec } = this;
 		let parsed;
 
@@ -139,48 +190,42 @@ export default class ElementProp {
 			parsed = undefined;
 		}
 
-		parsed = this.convert(parsed);
+		this.internalValue = parsed;
+		let newValue = this.#derive();
 
-		let isUserWrite = source === "property" || source === "attribute";
+		let wasUserOwned = this.source !== undefined;
 
-		let wasUserOwned = this.source === "property" || this.source === "attribute";
-
-		if (spec.equals(parsed, this.value)) {
-			// Same value. First explicit write of the cached default still needs
-			// to reflect to the attribute (issue #105) and take ownership so the
-			// defaultProp cascade stops tracking us, but no propchange fires —
-			// nothing actually changed.
-			if (isUserWrite && !wasUserOwned) {
+		if (spec.equals(newValue, this.value)) {
+			// Same derived value. First explicit write of the cached default
+			// still needs to reflect to the attribute (issue #105) and shift
+			// ownership so the defaultProp cascade stops tracking us, but no
+			// propchange fires — nothing actually changed.
+			if (!wasUserOwned) {
 				this.source = source;
 				if (source === "property") {
-					this.#reflectToAttribute(parsed);
+					this.#reflectToAttribute(newValue);
 				}
 			}
 			return;
 		}
 
-		// Don't let a non-user source (e.g. a "get" recompute) silently strip
-		// user ownership established by a prior property/attribute write.
-		if (isUserWrite || !wasUserOwned) {
-			this.source = source;
-		}
-
 		this.oldValue = this.value;
-		this.value = parsed;
+		this.value = newValue;
+		this.source = source;
 
 		let change = {
 			source,
-			value: parsed,
+			value: newValue,
 			oldValue: this.oldValue,
 		};
 
 		if (source === "property") {
-			let reflected = this.#reflectToAttribute(parsed);
+			let reflected = this.#reflectToAttribute(newValue);
 			if (reflected) {
 				Object.assign(change, reflected);
 			}
 		}
-		else if (source === "attribute") {
+		else {
 			Object.assign(change, {
 				attributeName: name,
 				attributeValue: value,
@@ -245,36 +290,33 @@ export default class ElementProp {
 	}
 
 	/**
-	 * Recalculate this prop's value (for computed props or `convert`) and store it.
-	 * @param {ElementProp} [dependency] The dependency whose change triggered this update.
+	 * Recalculate the derived value from the existing input (does not touch
+	 * {@link internalValue}). Invoked when a dependency changes.
 	 */
-	update (dependency) {
+	update () {
 		let { spec } = this;
 
-		if (dependency && dependency.spec === spec.defaultProp && !spec.get) {
-			let oldValue = this.value;
-			this.value =
-				dependency.value === undefined
-					? undefined
-					: this.convert(spec.parse(dependency.value));
-			this.source = "default";
-			this.changed({ source: "default", value: this.value, oldValue });
+		// First recompute on a computed prop discards any bootstrap value:
+		// from here on, spec.get is the source of truth.
+		if (spec.get && this.internalValue !== undefined) {
+			this.internalValue = undefined;
+			this.source = undefined;
+		}
+
+		let newValue = this.#derive();
+
+		if (spec.equals(newValue, this.value)) {
 			return;
 		}
 
-		if (spec.get) {
-			let value = spec.get.call(this.element);
-			this.set(value, { source: "get" });
-		}
-
-		if (spec.convert && this.value !== undefined) {
-			this.set(this.convert(this.value), { source: "convert" });
-		}
+		this.oldValue = this.value;
+		this.value = newValue;
+		this.changed({ source: this.source, value: newValue, oldValue: this.oldValue });
 	}
 
 	/**
 	 * Whether this prop currently depends on `dep`'s value.
-	 * Includes the default-prop link only while this prop is not user-owned.
+	 * Includes the default-prop link only while this prop has no user input.
 	 * @param {ElementProp} dep
 	 * @returns {boolean}
 	 */
@@ -287,8 +329,8 @@ export default class ElementProp {
 			return true;
 		}
 
-		let { spec, source } = this;
-		let userOwned = source === "property" || source === "attribute";
+		let { spec } = this;
+		let userOwned = this.internalValue !== undefined;
 		return spec.dependencies.has(dep.name) || (spec.defaultProp === dep.spec && !userOwned);
 	}
 }

@@ -28,7 +28,7 @@ export default {
 
 				return element._log ?? [];
 			},
-			expect: [{ value: "x", source: "default" }],
+			expect: [{ value: "x", source: undefined }],
 		},
 		{
 			name: "Shortcut events ride along on coalesced propchange and don't feed propschange",

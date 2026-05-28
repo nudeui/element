@@ -161,6 +161,30 @@ export default {
 			],
 		},
 		{
+			name: "Convert re-runs on the original input when a non-default dep changes",
+			description:
+				"A prop with a convert that reads another reactive prop must re-derive from the user's input, not from the previously converted value. Regression for the two-slot refactor: the old single-slot model re-ran convert on the already-converted value, which compounded for non-idempotent converts.",
+			run () {
+				let { element } = this.data;
+				element.multiplier = 2;
+				element.v = 5; // 5 * 2 = 10
+				element.multiplier = 3; // should be 5 * 3 = 15, not 10 * 3 (or worse)
+				return element.v;
+			},
+			arg: {
+				props: {
+					multiplier: { type: Number, default: 1 },
+					v: {
+						type: Number,
+						convert (n) {
+							return n * this.multiplier;
+						},
+					},
+				},
+			},
+			expect: 15,
+		},
+		{
 			name: "Writes that collapse to the same value after convert do not fire propchange",
 			description:
 				"v has no default — its mount-time state is genuinely undefined, so no mount propchange fires. Only the first write that produces a new floored value triggers an event.",

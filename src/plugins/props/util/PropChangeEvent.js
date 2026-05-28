@@ -5,7 +5,16 @@
  * @property {*} value Current stored value (parsed + converted).
  * @property {*} oldValue Stored value before this change, or — for a coalesced
  *   resume dispatch — the burst-start value the consumer was last told.
- * @property {"default" | "property" | "attribute" | "get" | "convert"} source
+ * @property {"property" | "attribute" | undefined} source Origin label for
+ *   the most recent user write — `"property"`, `"attribute"`, or `undefined`
+ *   if no write has ever landed. Persists across dep-cascade recomputes
+ *   *and* across attribute removal: source describes the origin shape of the
+ *   prop's input, not whether input is currently present. A `source:
+ *   "property"` event can therefore mean either "user just wrote" or "user
+ *   wrote previously, and a cascade just recomputed the visible value" —
+ *   diff `value` vs `oldValue` if you need to tell them apart. Plugins may
+ *   introduce additional source values; the built-in code only emits the
+ *   three above.
  * @property {string} [attributeName] Set when `source === "attribute"` or a
  *   property write reflects to an attribute.
  * @property {string | null} [attributeValue]
@@ -44,6 +53,12 @@ export default class PropChangeEvent extends Event {
 	/**
 	 * Replay this change on a different element. Used to mirror a prop's
 	 * value onto a sub-element from a `propchange` listener.
+	 *
+	 * Only events whose `source` is `"property"` or `"attribute"` (i.e. a user
+	 * write) are mirrored — cascade-driven changes carry `source: undefined`
+	 * and are intentionally not replicated, since the target should be reached
+	 * by its own cascade if it shares the same dep graph.
+	 *
 	 * @param {Element} target Element to apply the change to.
 	 */
 	applyTo (target) {

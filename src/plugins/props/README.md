@@ -242,7 +242,7 @@ element.addEventListener("propchange", e => {
     e.name;      // prop name
     e.value;     // new stored value
     e.oldValue;  // previous stored value
-    e.source;    // "property" | "attribute" | "get" | "default" | …
+    e.source;    // "property" | "attribute" | undefined
 });
 ```
 
