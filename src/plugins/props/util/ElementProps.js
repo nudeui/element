@@ -181,16 +181,16 @@ export default class ElementProps extends Map {
 	 * `paused` setter on resume.
 	 */
 	#flushPending () {
-		// In-place coalesce consecutive same-prop entries: collapse later
-		// events into the run's first one, keeping its burst-start oldValue.
+		// In-place coalesce consecutive same-prop entries: keep the last
+		// event of each run (its fields describe the latest write), but
+		// rewrite its oldValue to the run's burst-start value.
 		let writeIdx = 0;
 		let lastName = null;
 		for (let event of this.#eventQueue) {
 			if (event.name === lastName) {
 				let prev = this.#eventQueue[writeIdx - 1];
-				let { oldValue } = prev;
-				Object.assign(prev, event);
-				prev.oldValue = oldValue;
+				event.oldValue = prev.oldValue;
+				this.#eventQueue[writeIdx - 1] = event;
 			}
 			else {
 				this.#eventQueue[writeIdx++] = event;

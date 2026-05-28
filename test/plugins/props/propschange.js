@@ -241,6 +241,46 @@ export default {
 			},
 		},
 		{
+			name: "Paused burst: coalescing attribute→property does not leak attribute fields",
+			description:
+				"When an attribute write is followed by a property write on the same prop during a pause, the resumed propchange must reflect the latest write — no stale attributeName/attributeValue/oldAttributeValue from the prior attribute event.",
+			async run () {
+				let { element } = this.data;
+				await flush();
+				let propchangeLog = [];
+				element.addEventListener("propchange", e =>
+					propchangeLog.push({
+						source: e.source,
+						value: e.value,
+						attributeName: e.attributeName,
+						attributeValue: e.attributeValue,
+						oldAttributeValue: e.oldAttributeValue,
+					}));
+
+				element.props.paused = true;
+				element.setAttribute("foo", "1");
+				element.foo = 2;
+				element.props.paused = false;
+
+				await flush();
+				return propchangeLog;
+			},
+			arg: {
+				props: {
+					foo: { type: Number, reflect: { from: true, to: false } },
+				},
+			},
+			expect: [
+				{
+					source: "property",
+					value: 2,
+					attributeName: undefined,
+					attributeValue: undefined,
+					oldAttributeValue: undefined,
+				},
+			],
+		},
+		{
 			name: "updated() method auto-wires to propschange",
 			async run () {
 				await flush();
