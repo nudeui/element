@@ -1,7 +1,6 @@
 import PropType from "../util/PropType.js";
+import { split } from "../util/split.js";
 import Iterable from "./iterable.js";
-
-const entrySplitter = /(?<!\\):/;
 
 /**
  * Concrete type for `Map`, which also serves as the canonical dictionary in
@@ -37,7 +36,7 @@ const MapType = PropType.register({
 		for (let item of this.parseItems(value)) {
 			let k, v;
 			if (typeof item === "string") {
-				let parts = item.split(entrySplitter);
+				let parts = [...split(item, { separator: ":" })];
 				if (parts.length >= 2) {
 					k = parts.shift();
 					v = parts.join(":");
@@ -51,9 +50,7 @@ const MapType = PropType.register({
 					v = typeof defaultValue === "function" ? defaultValue(k, index) : defaultValue;
 				}
 				k = k?.trim?.() ?? k;
-				k = k?.replaceAll?.("\\:", ":") ?? k;
 				v = v?.trim?.() ?? v;
-				v = v?.replaceAll?.("\\:", ":") ?? v;
 				if (v === "false") {
 					v = false;
 				}
