@@ -57,7 +57,7 @@ export default class ElementProp {
 			// see a real value, not undefined.
 			this.value = this.get();
 			this.source = "default";
-			this.changed({ source: "default", value: this.value, oldValue: undefined });
+			this.changed({ source: this.source, value: this.value, oldValue: undefined });
 		}
 	}
 
