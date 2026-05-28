@@ -155,13 +155,18 @@ export default class ElementProp {
 	}
 
 	/**
+	 * For validation and to distinguish user vs. cascade writes
+	 */
+	static sources = ["property", "attribute"];
+
+	/**
 	 * Write a user-supplied value: parse, store as input, re-derive, reflect to
 	 * attribute when applicable.
 	 * @param {*} value Raw value (string from an attribute, any from a property write).
 	 * @param {{source?: string, name?: string, oldAttributeValue?: string | null}} [options]
 	 */
 	set (value, { source, name, oldAttributeValue } = {}) {
-		if (source !== "property" && source !== "attribute") {
+		if (!this.constructor.sources.includes(source)) {
 			// Non-user sources don't write through internalValue; they're
 			// derivations. Route to the cascade entry point.
 			this.update();
@@ -202,7 +207,7 @@ export default class ElementProp {
 			// propchange fires — nothing actually changed.
 			if (!wasUserOwned) {
 				this.source = source;
-				if (source === "property") {
+				if (source !== "attribute") {
 					this.#reflectToAttribute(newValue);
 				}
 			}
@@ -219,18 +224,18 @@ export default class ElementProp {
 			oldValue: this.oldValue,
 		};
 
-		if (source === "property") {
-			let reflected = this.#reflectToAttribute(newValue);
-			if (reflected) {
-				Object.assign(change, reflected);
-			}
-		}
-		else {
+		if (source === "attribute") {
 			Object.assign(change, {
 				attributeName: name,
 				attributeValue: value,
 				oldAttributeValue,
 			});
+		}
+		else {
+			let reflected = this.#reflectToAttribute(newValue);
+			if (reflected) {
+				Object.assign(change, reflected);
+			}
 		}
 
 		this.changed(change);
