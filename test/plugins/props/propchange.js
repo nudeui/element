@@ -65,6 +65,35 @@ export default {
 						["derived", 8],
 					],
 				},
+				{
+					name: "default() that reads a non-prop receiver member still fires on mount",
+					description:
+						"`inferDependencies` promotes a `default() { return this.X }` to a synthetic " +
+						"computed depending on `X` regardless of whether `X` is a declared prop. " +
+						"When `X` isn't a prop (e.g. `textContent`, a mixin getter, an instance field), " +
+						"no upstream cascade can reach the synthetic, so the mount event has to come " +
+						"from the prop's own constructor.",
+					arg: {
+						mixin (Class) {
+							Object.defineProperty(Class.prototype, "content", {
+								get () {
+									return "hi";
+								},
+							});
+						},
+						props: {
+							value: {
+								default () {
+									return this.content;
+								},
+							},
+						},
+					},
+					expect: [
+						["defaultValue", "hi"],
+						["value", "hi"],
+					],
+				},
 			],
 		},
 		{

@@ -78,11 +78,10 @@ export default class ElementProp {
 				name: reflect.from,
 			});
 		}
-		else if (!spec.defaultProp && !spec.get) {
-			// Plain prop. Derive eagerly so dependents reading via the cascade
-			// see a real value, and fire a mount event for listeners.
-			// (defaultProp and get props get their mount event via cascade from
-			// their dependency, so the constructor doesn't fire here.)
+		else {
+			// Every prop fires a mount event. Deps govern *re*-computation, not
+			// whether the initial derivation happens; a later cascade short-circuits
+			// on the equality check in update().
 			this.value = this.#derive();
 			this.changed({ source: undefined, value: this.value, oldValue: undefined });
 		}
