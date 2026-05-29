@@ -99,6 +99,28 @@ export default {
 			expect: { propchangeAfter: 2, propschangeAfter: 0 },
 		},
 		{
+			name: "Round-trip on one prop drops it; genuinely changed prop stays",
+			async run () {
+				let { element } = this.data;
+				await flush(); // drain mount-time propschange
+				this.data.propsEvents.length = 0;
+
+				element.a = 5;
+				element.a = 0; // back to stored default
+				element.b = "new";
+
+				await flush();
+				return this.data.propsEvents;
+			},
+			arg: {
+				props: {
+					a: { type: Number, default: 0 },
+					b: { type: String, default: "old" },
+				},
+			},
+			expect: [[["b", "old"]]],
+		},
+		{
 			name: "Cascade: dependents land in the same propschange",
 			description:
 				"Both plain and computed cache their mount-time values, so oldValue is the resolved default for each.",
@@ -126,6 +148,31 @@ export default {
 				[
 					["plain", 1],
 					["computed", 11],
+				],
+			],
+		},
+		{
+			name: "Re-entrant write from a propchange handler joins the same propschange",
+			async run () {
+				let { element } = this.data;
+				await flush(); // drain mount-time propschange
+				this.data.propsEvents.length = 0;
+
+				element.addEventListener("propchange", e => {
+					if (e.name === "a") {
+						element.b = "from_listener";
+					}
+				});
+
+				element.a = "new";
+				await flush();
+				return this.data.propsEvents;
+			},
+			arg: { props: { a: { default: "foo" }, b: { default: "bar" } } },
+			expect: [
+				[
+					["a", "foo"],
+					["b", "bar"],
 				],
 			],
 		},
