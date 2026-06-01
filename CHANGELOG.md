@@ -1,5 +1,51 @@
 # Change Log
 
+## 0.1.4 (2026-06-01)
+
+### Prop system overhaul
+
+This release restructures the prop and type systems. Per-element prop state is now managed by dedicated `ElementProp` / `ElementProps` classes, types use a single `PropType` class with prototype-chain inheritance, and a new coalesced `propschange` event provides batched update callbacks.
+
+### Breaking changes
+
+- **`propchange` event shape**: Events are now plain `Event` objects with flat properties (`e.value`, `e.oldValue`, `e.source`, `e.name`) instead of `CustomEvent` with `e.detail`. Migration: `e.detail.parsedValue` → `e.value`, `e.detail.oldInternalValue` → `e.oldValue`, `e.detail.element` → `e.target`. Source values are now `"property"`, `"attribute"`, or `undefined`; the previous `"default"`, `"get"`, and `"convert"` labels are removed. Plugins may introduce additional source values by @LeaVerou in #116, #129
+- **`element.props` type**: Now an `ElementProps` instance (extends `Map<string, ElementProp>`) that holds per-element prop state, replacing the previous plain object. Individual prop values are still accessible as `element.propName` by @LeaVerou in #124
+- **Type system**: Types are now `PropType` instances with prototype-chain inheritance, replacing the previous spec objects and manual chain-walking dispatcher. `PropType.for(input)` is the public resolver; `type: SomeClass` works without explicit registration for most constructors by @LeaVerou in #127
+
+### New features
+
+- **Batched `propschange` event**: Fires once per microtask after a burst of `propchange` events settles, carrying the net first→last delta as a `Map<name, oldValue>`. Subclasses can define an `updated(event)` method, mirroring Lit's `updated(changedProperties)`. Mount fires a `propschange` with every prop in `changed` so initial values arrive as a single settled snapshot by @LeaVerou in #129
+- **`element.props.paused` accessor**: Coalesces writes per prop during the paused window and dispatches one rebased `propchange` per prop plus a single `propschange` for the net delta on resume. Used internally for the disconnect/reconnect lifecycle by @LeaVerou in #129
+
+### Bug fixes
+
+- `setAttribute()` after mount was not updating reflected props because `attributeChangedCallback` was wired at first instance construction — after `customElements.define` had already snapshotted a `null` callback by @DmitrySharabin in #117
+- `propchange` events fired while an element was disconnected were dropped; they are now queued and replayed on reconnect by @DmitrySharabin in #120
+- Source prop's `propchange` now fires before cascading to dependents, so listeners hear about the prop they wrote to first by @DmitrySharabin
+- `convert` is now applied to default values, and explicit `null` property writes are preserved instead of falling back to the default by @DmitrySharabin
+- Explicit `null` in reflected attribute writes no longer re-reads the existing attribute value, so clearing a reflected prop correctly removes the attribute by @DmitrySharabin
+- `first_connected` shortcut re-fires now populate the event's fields, preventing crashes in listeners that read event properties on the catch-up dispatch by @DmitrySharabin in #106
+
+### Tests
+
+- Behavioral baseline test suite for props/events plugins by @DmitrySharabin in #113, #114
+- Failing regression test for `defaultProp` cache invalidation by @DmitrySharabin in #125
+- Replaced `happy-dom` with `browser-shims` for test setup by @DmitrySharabin in #126
+
+### Internal
+
+- Replaced local extensibility core (`extensible.js`, `hooks.js`, `symbols.js`, `plugins.js`) with the `xtensible` package by @LeaVerou in #96
+
+**Full Changelog**: https://github.com/nudeui/element/compare/0.1.3...0.1.4
+
+## 0.1.3 (2026-04-02)
+
+### Bug fixes
+
+- **Minification compatibility**: Rewrote `attachShadow` and `attachInternals` so their method names are not mangled by minifiers, which broke the shadow and internals plugins in production builds by @LeaVerou
+
+**Full Changelog**: https://github.com/nudeui/element/compare/0.1.2...0.1.3
+
 ## 0.1.2 (2026-04-02)
 
 ### Improvements
