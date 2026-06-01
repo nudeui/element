@@ -126,10 +126,22 @@ export default class ElementProp {
 			// — spec.get is effectively masked. Pre-mount writes to depless
 			// computeds are pathological config; the alternative (silently
 			// dropping the seed) seems worse.
-			let raw =
-				this.internalValue !== undefined
-					? this.internalValue
-					: spec.parse(spec.get.call(element));
+			let raw;
+			if (this.internalValue !== undefined) {
+				raw = this.internalValue;
+			}
+			else {
+				try {
+					raw = spec.parse(spec.get.call(element));
+				}
+				catch (e) {
+					console.warn(
+						`Failed to parse computed value for prop ${this.name}. Original error was:`,
+						e,
+					);
+					return;
+				}
+			}
 			return this.convert(raw);
 		}
 
@@ -150,7 +162,21 @@ export default class ElementProp {
 			raw = resolveValue(spec.default, [element, element]);
 		}
 
-		return raw === undefined ? undefined : this.convert(spec.parse(raw));
+		if (raw === undefined) {
+			return;
+		}
+
+		try {
+			raw = spec.parse(raw);
+		}
+		catch (e) {
+			console.warn(
+				`Failed to parse default value for prop ${this.name}. Original error was:`,
+				e,
+			);
+			return;
+		}
+		return this.convert(raw);
 	}
 
 	/**
