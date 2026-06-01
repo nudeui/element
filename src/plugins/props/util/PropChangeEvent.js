@@ -41,10 +41,12 @@ export default class PropChangeEvent extends Event {
 		// and silently ignores the rest.
 		super(type, options);
 
-		// Assign the rest as own properties, skipping anything Event already
-		// owns (init dict, state like `target`/`defaultPrevented`, methods).
+		// Assign the rest as own properties, skipping anything Event
+		// already owns (init dict, state, unforgeable own properties).
+		// NB: do NOT use class fields — they create own properties that
+		// would shadow options and break this check.
 		for (let [key, value] of Object.entries(options)) {
-			if (!(key in Event.prototype) && !(key in this)) {
+			if (!(key in this)) {
 				this[key] = value;
 			}
 		}
