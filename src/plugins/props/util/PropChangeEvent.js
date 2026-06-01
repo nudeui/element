@@ -41,37 +41,14 @@ export default class PropChangeEvent extends Event {
 		// and silently ignores the rest.
 		super(type, options);
 
-		// Assign the rest as own properties, skipping anything Event already
-		// owns (init dict, state like `target`/`defaultPrevented`, methods).
+		// Assign the rest as own properties, skipping anything Event
+		// already owns (init dict, state, unforgeable own properties).
+		// NB: do NOT use class fields — they create own properties that
+		// would shadow options and break this check.
 		for (let [key, value] of Object.entries(options)) {
-			if (!(key in Event.prototype)) {
+			if (!(key in this)) {
 				this[key] = value;
 			}
-		}
-	}
-
-	/**
-	 * Replay this change on a different element. Used to mirror a prop's
-	 * value onto a sub-element from a `propchange` listener.
-	 *
-	 * Only events whose `source` is `"property"` or `"attribute"` (i.e. a user
-	 * write) are mirrored — cascade-driven changes carry `source: undefined`
-	 * and are intentionally not replicated, since the target should be reached
-	 * by its own cascade if it shares the same dep graph.
-	 *
-	 * @param {Element} target Element to apply the change to.
-	 */
-	applyTo (target) {
-		if (this.source === "attribute") {
-			if (this.attributeValue === null) {
-				target.removeAttribute(this.attributeName);
-			}
-			else {
-				target.setAttribute(this.attributeName, this.attributeValue);
-			}
-		}
-		else if (this.source) {
-			target[this.name] = this.value;
 		}
 	}
 }
