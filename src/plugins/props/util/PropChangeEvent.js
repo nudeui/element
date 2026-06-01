@@ -54,29 +54,4 @@ export default class PropChangeEvent extends Event {
 			}
 		}
 	}
-
-	/**
-	 * Replay this change on a different element. Used to mirror a prop's
-	 * value onto a sub-element from a `propchange` listener.
-	 *
-	 * Only events whose `source` is `"property"` or `"attribute"` (i.e. a user
-	 * write) are mirrored — cascade-driven changes carry `source: undefined`
-	 * and are intentionally not replicated, since the target should be reached
-	 * by its own cascade if it shares the same dep graph.
-	 *
-	 * @param {Element} target Element to apply the change to.
-	 */
-	applyTo (target) {
-		if (this.source === "attribute") {
-			if (this.attributeValue === null) {
-				target.removeAttribute(this.attributeName);
-			}
-			else {
-				target.setAttribute(this.attributeName, this.attributeValue);
-			}
-		}
-		else if (this.source) {
-			target[this.name] = this.value;
-		}
-	}
 }
