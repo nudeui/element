@@ -1,9 +1,10 @@
-import { default as propsPlugin } from "../../../src/plugins/props/index.js";
+import { default as propsPlugin } from "../../../src/plugins/props/base.js";
 import { defineElement } from "../../util/dom.js";
 import reflection from "./reflection.js";
 import defaults from "./defaults.js";
 import computed from "./computed.js";
 import propchange from "./propchange.js";
+import propschange from "./propschange.js";
 import lifecycle from "./lifecycle.js";
 import inheritance from "./inheritance.js";
 import install from "./install.js";
@@ -17,8 +18,8 @@ export default {
 			name: "Behavior",
 
 			beforeEach () {
-				let { props, attributes } = this.arg;
-				let tag = defineElement({ plugins: [propsPlugin], props });
+				let { props, attributes, mixin } = this.arg;
+				let tag = defineElement({ plugins: [propsPlugin], props, mixin });
 				let element = document.createElement(tag);
 
 				let events = [];
@@ -42,6 +43,7 @@ export default {
 
 			tests: [reflection, defaults, computed, propchange, lifecycle],
 		},
+		propschange,
 		inheritance,
 		install,
 		observedAttributes,

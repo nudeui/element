@@ -228,3 +228,59 @@ The `reflect` property takes the following values:
     - `to`: If `true`, reflect to the attribute with the same name as the prop. If a string, reflect to the attribute with the given name.
 
 By default, `reflect` is `true` **unless** `get` is also specified, in which case it defaults to `false`.
+
+## Reacting to changes
+
+Two events fire when props change. They have different timings and different shapes — pick the one that matches your use case.
+
+### `propchange` — fine-grained, synchronous
+
+Fires once per individual property change, synchronously inside the assignment. Best for per-write side effects (logging, validation, syncing to another store).
+
+```js
+element.addEventListener("propchange", e => {
+    e.name;      // prop name
+    e.value;     // new stored value
+    e.oldValue;  // previous stored value
+    e.source;    // "property" | "attribute" | undefined
+});
+```
+
+Subclasses that define a `propChangedCallback(event)` method are auto-wired to `propchange`.
+
+### `propschange` — coalesced, microtask-deferred
+
+Fires once per microtask after a burst of `propchange` events settles. Best for "re-render once after a batch of changes" work — the typical use case for a settled snapshot.
+
+```js
+element.addEventListener("propschange", e => {
+    e.changed;          // Map<name, oldValue> — net first→last delta across the burst
+    for (let [name, oldValue] of e.changed) {
+        let currentValue = this[name];
+        // …
+    }
+});
+```
+
+Subclasses that define an `updated(event)` method are auto-wired to `propschange`, mirroring Lit's `updated(changedProperties)`.
+
+```js
+class MyElement extends NudeElement {
+    static props = { /* … */ };
+
+    updated (event) {
+        // event.changed is a Map<name, oldValue>
+        this.render();
+    }
+}
+```
+
+#### Semantics
+
+- **Mount fires a `propschange`** with every prop in `changed` — initial values arrive as a single settled snapshot. `oldValue` is `undefined` for the mount drain.
+- **Round-trips drop out.** Setting a prop and then setting it back to its previous value within the burst produces no entry in `changed`, even though `propchange` fired for each assignment.
+- **`oldValue` is the stored previous value**, matching `propchange`'s `e.oldValue`. Resolved defaults are cached on first access, so for a prop sitting at its default, `oldValue` will be that resolved default (not `undefined`). Read `this[name]` inside the handler for the current value.
+
+### Pausing dispatch
+
+`element.props.paused = true` holds both `propchange` and `propschange` dispatch. Writes during the paused window are coalesced per property and dispatched as a single rebased `propchange` per (event, prop) on `paused = false`, followed by one `propschange` for the net delta. Used internally for the disconnect/reconnect lifecycle.

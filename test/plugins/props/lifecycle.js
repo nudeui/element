@@ -31,7 +31,7 @@ export default {
 			run () {
 				let { element } = this.data;
 				let log = [];
-				element.addEventListener("propchange", e => log.push([e.name, e.detail.value]));
+				element.addEventListener("propchange", e => log.push([e.name, e.value]));
 
 				element.a = 1; // fires immediately
 				let beforePause = log.length;

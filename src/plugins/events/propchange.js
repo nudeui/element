@@ -5,7 +5,7 @@
 
 import { symbols } from "xtensible";
 import base, { events } from "./base.js";
-import { props } from "../props/index.js";
+import { props } from "../props/base.js";
 import PropChangeEvent from "../props/util/PropChangeEvent.js";
 
 const { propchange } = symbols.new;
@@ -18,42 +18,55 @@ const hooks = {
 			return;
 		}
 
-		let propchangeEvents = Object.entries(this[events])
-			.filter(([name, options]) => options.propchange)
-			.map(([eventName, options]) => [eventName, options.propchange]);
-
-		if (propchangeEvents.length > 0) {
-			// Shortcut for events that fire when a specific prop changes
-			this[propchange] = Object.fromEntries(propchangeEvents);
-
-			for (let eventName in this[propchange]) {
-				let propName = this[propchange][eventName];
-				let prop = this[props].get(propName);
-
-				if (prop) {
-					(prop.eventNames ??= []).push(eventName);
-				}
-				else {
-					throw new TypeError(`No prop named ${propName} in ${this.name}`);
-				}
-			}
-		}
-	},
-
-	first_connected () {
-		// Often propchange events have already fired by the time the event handlers are added
-		for (let eventName in this.constructor[propchange]) {
-			let propName = this.constructor[propchange][eventName];
-			let value = this[propName];
-
-			if (value === undefined) {
+		// Invert the user's `{eventName: {propchange: propName}}` declaration
+		// into `{propName: [eventName, ...]}` — the shape we need at dispatch
+		// time, when we have the prop name and want every alias that fires for it.
+		let aliases = {};
+		for (let [eventName, options] of Object.entries(this[events])) {
+			if (!options.propchange) {
 				continue;
 			}
 
-			let prop = this.props.get(propName);
-			let detail = { source: "initial", value };
-			this.dispatchEvent(new PropChangeEvent(eventName, { name: propName, prop, detail }));
+			let propName = options.propchange;
+			if (!this[props].get(propName)) {
+				throw new TypeError(`No prop named ${propName} in ${this.name}`);
+			}
+
+			(aliases[propName] ??= []).push(eventName);
 		}
+
+		if (Object.keys(aliases).length > 0) {
+			this[propchange] = aliases;
+		}
+	},
+
+	constructor () {
+		let aliases = this.constructor[propchange];
+		if (!aliases) {
+			return;
+		}
+
+		// Re-dispatch every propchange as its declared alias event(s). The
+		// canonical event already inherits coalescing / pause-resume from
+		// ElementProps, so the alias rides along for free. Attaching in the
+		// `constructor` hook means we catch mount propchanges too — no
+		// synthesized catch-up needed.
+		this.addEventListener("propchange", event => {
+			let aliasNames = aliases[event.name];
+			if (!aliasNames) {
+				return;
+			}
+
+			for (let aliasName of aliasNames) {
+				this.dispatchEvent(new PropChangeEvent(aliasName, {
+					name: event.name,
+					prop: event.prop,
+					source: event.source,
+					value: event.value,
+					oldValue: event.oldValue,
+				}));
+			}
+		});
 	},
 };
 

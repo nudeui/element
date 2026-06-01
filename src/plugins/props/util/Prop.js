@@ -30,7 +30,6 @@ let Self = class Prop {
 		this.set = spec.set;
 		this.convert = spec.convert;
 		this.changed = spec.changed;
-		this.eventNames = spec.eventNames;
 		this.enumerable = spec.enumerable ?? true;
 
 		this.default = spec.default;
