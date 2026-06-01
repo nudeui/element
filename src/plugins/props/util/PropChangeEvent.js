@@ -44,13 +44,8 @@ export default class PropChangeEvent extends Event {
 		// Assign the rest as own properties, skipping anything Event already
 		// owns (init dict, state like `target`/`defaultPrevented`, methods).
 		for (let [key, value] of Object.entries(options)) {
-			if (!(key in Event.prototype)) {
-				try {
-					this[key] = value;
-				}
-				catch {
-					// [LegacyUnforgeable] own properties (e.g. isTrusted) are non-writable
-				}
+			if (!(key in Event.prototype) && !(key in this)) {
+				this[key] = value;
 			}
 		}
 	}
