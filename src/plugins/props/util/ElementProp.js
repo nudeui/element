@@ -307,7 +307,20 @@ export default class ElementProp {
 	 */
 	convert (value) {
 		let { convert } = this.spec;
-		return convert ? convert.call(this.element, value) : value;
+		if (!convert) {
+			return value;
+		}
+
+		try {
+			return convert.call(this.element, value);
+		}
+		catch (e) {
+			console.warn(
+				`Failed to convert value ${value} for prop ${this.name}. Original error was:`,
+				e,
+			);
+			return this.value;
+		}
 	}
 
 	/**
