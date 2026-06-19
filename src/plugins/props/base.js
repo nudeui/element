@@ -30,14 +30,26 @@ const hooks = {
 	},
 
 	connected () {
+		if (!this.props) {
+			return;
+		}
+
 		this.props.paused = false;
 	},
 
 	disconnected () {
+		if (!this.props) {
+			return;
+		}
+
 		this.props.paused = true;
 	},
 
 	"attribute-changed" ({ name, oldValue }) {
+		if (!this.props) {
+			return;
+		}
+
 		this.props.attributeChanged(name, oldValue);
 	},
 };

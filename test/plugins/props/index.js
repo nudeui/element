@@ -47,5 +47,19 @@ export default {
 		inheritance,
 		install,
 		observedAttributes,
+		{
+			name: "No static props defined",
+			description:
+				"Connect, setAttribute, disconnect cycle must not throw when a class omits static props (#134)",
+			run () {
+				let tag = defineElement({ plugins: [propsPlugin] });
+				let el = document.createElement(tag);
+
+				document.body.append(el);
+				el.setAttribute("foo", "bar");
+				el.remove();
+			},
+			throws: false,
+		},
 	],
 };
