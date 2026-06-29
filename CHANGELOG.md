@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.1.6 (2026-06-29)
+
+### Bug fixes
+
+- `static plugins = [...]` on a `NudeElement` subclass no longer silently fails to install. Internal plugins are now installed in the correct order: `$hook`, which defines the hooks map, precedes `api`, which builds on top of it by @DmitrySharabin, closes #136
+
+**Full Changelog**: https://github.com/nudeui/element/compare/0.1.5...0.1.6
+
 ## 0.1.5 (2026-06-29)
 
 ### Bug fixes
