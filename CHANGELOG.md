@@ -1,5 +1,14 @@
 # Change Log
 
+## 0.1.5 (2026-06-29)
+
+### Bug fixes
+
+- Props lifecycle hooks (`connected`, `disconnected`, `attribute-changed`) no longer throw when a class omits static `props`; they now no-op when `this.props` is undefined by @DmitrySharabin in #135
+- A throwing `spec.convert()` no longer aborts the prop update — failures are caught, logged via `console.warn`, and the previous value is preserved, matching the existing behavior for `spec.parse()` by @DmitrySharabin in #133
+
+**Full Changelog**: https://github.com/nudeui/element/compare/0.1.4...0.1.5
+
 ## 0.1.4 (2026-06-01)
 
 ### Prop system overhaul
