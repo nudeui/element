@@ -16,6 +16,6 @@ export default class NudeElement extends HTMLElement {
 	static symbols = symbols;
 
 	static {
-		addPlugins(this, api, $hook, hooksCommon, members);
+		addPlugins(this, $hook, api, hooksCommon, members);
 	}
 }

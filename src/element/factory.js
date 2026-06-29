@@ -27,7 +27,7 @@ export default function (Super = HTMLElement, plugins = []) {
 		static symbols = symbols;
 
 		static {
-			addPlugins(this, api, $hook, hooksCommon, members, plugins);
+			addPlugins(this, $hook, api, hooksCommon, members, plugins);
 		}
 	};
 }
