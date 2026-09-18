@@ -5,7 +5,6 @@
 
 import { symbols } from "xtensible";
 import { defineOwnProperty } from "xtensible/util";
-import { defineLazyProperty } from "../../util/lazy.js";
 import shadowPlugin from "../shadow/index.js";
 
 const { shadowRoot, elements } = symbols.known;
@@ -25,14 +24,18 @@ function getElement (host, options) {
 }
 
 const hooks = {
-	connected () {
-		if (!this[elements]) {
-			return;
+	setup () {
+		if (Object.hasOwn(this, "elements")) {
+			this.defineElements();
 		}
+	},
+
+	connected () {
+		let def = this.constructor[elements];
 
 		// Ensure fresh references
-		for (let name in this[elements]) {
-			this[name] = getElement(this, this.constructor[elements][name]);
+		for (let name in def) {
+			this[name] = getElement(this, def[name]);
 		}
 	},
 };
@@ -41,28 +44,6 @@ const providesStatic = {
 	defineElements (def = this.elements) {
 		if (!def) {
 			return;
-		}
-
-		if (!this[elements]) {
-			this[elements] = {};
-			defineOwnProperty(this.prototype, elements, {
-				get () {
-					let ret = {};
-
-					if (this.constructor?.[elements]) {
-						for (let name in this.constructor[elements]) {
-							defineLazyProperty(ret, name, {
-								get () {
-									return getElement(this, this.constructor[elements][name]);
-								},
-							});
-						}
-					}
-
-					return ret;
-				},
-				internal: elements,
-			});
 		}
 
 		for (let [name, options] of Object.entries(def)) {
@@ -74,5 +55,7 @@ const providesStatic = {
 		}
 	},
 };
+
+defineOwnProperty(providesStatic, elements, () => ({}));
 
 export default { dependencies, hooks, providesStatic };
