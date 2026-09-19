@@ -55,12 +55,12 @@
 		"browser-shims": "^0.0.1",
 		"eslint": "^9.39.2",
 		"globals": "^16.5.0",
-		"htest.dev": "^0.0.25",
-		"prettier-plugin-brace-style": "^0.10.1",
+		"htest.dev": "^0.1",
+		"prettier-plugin-brace-style": "^0.10.3",
 		"prettier-plugin-merge": "^0.10.1",
 		"prettier-plugin-space-before-function-paren": "^0.1.0",
-		"release-it": "^20.0.1",
-		"typedoc": "^0.28.18",
+		"release-it": "^21.1.0",
+		"typedoc": "^0.28.20",
 		"typedoc-plugin-rename-defaults": "^0.7.3"
 	},
 	"dependencies": {
