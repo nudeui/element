@@ -18,7 +18,7 @@
 		"build": "npm run build:apidocs",
 		"watch": "npm run watch:apidocs",
 		"test": "npx htest test/index.js",
-		"release": "npm login && npx release-it"
+		"release": "npm whoami >/dev/null 2>&1 || npm login && release-it"
 	},
 	"exports": {
 		".": "./src/index.js",
