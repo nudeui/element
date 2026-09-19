@@ -9,6 +9,7 @@ import lifecycle from "./lifecycle.js";
 import inheritance from "./inheritance.js";
 import install from "./install.js";
 import observedAttributes from "./observed-attributes.js";
+import boolean from "./boolean.js";
 
 export default {
 	name: "Props plugin",
@@ -41,7 +42,7 @@ export default {
 				this.data.element.remove();
 			},
 
-			tests: [reflection, defaults, computed, propchange, lifecycle],
+			tests: [reflection, defaults, computed, propchange, lifecycle, boolean],
 		},
 		propschange,
 		inheritance,
