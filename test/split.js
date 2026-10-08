@@ -50,5 +50,20 @@ export default {
 			arg: `a ", b, c`,
 			expect: [`a "`, "b", "c"],
 		},
+		{
+			name: "Escaped separator",
+			tests: [
+				{
+					name: "Default",
+					arg: "a\\, b, c",
+					expect: ["a, b", "c"],
+				},
+				{
+					name: "Custom",
+					args: ["foo\\:bar: baz", { separator: ":" }],
+					expect: ["foo:bar", "baz"],
+				},
+			],
+		},
 	],
 };

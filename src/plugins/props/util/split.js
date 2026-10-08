@@ -15,10 +15,14 @@ function regexEscape (string) {
 	return string.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
 }
 
+function unescapeSeparator (value, separator) {
+	return separator ? value.replaceAll(`\\${separator}`, separator) : value;
+}
+
 /**
  * Split a value by a separator, respecting pairs (parens, strings, etc.) but
- * failing back gracefully for malformed input. Yields each top-level part as
- * a trimmed string.
+ * failing back gracefully for malformed input. The separator can be escaped
+ * with a backslash. Yields each top-level part as a trimmed string.
  *
  * @param {string} value
  * @param {object} [options]
@@ -34,7 +38,7 @@ export function* split (value, { separator = ",", pairs = defaultPairs } = {}) {
 	let isSeparatorWhitespace = !separator;
 	let separatorRegex = isSeparatorWhitespace
 		? /\s+/g
-		: RegExp(regexEscape(separator).replace(/^\s*|\s*$/g, "\\s*"), "g");
+		: RegExp(`(?<!\\\\)${regexEscape(separator).replace(/^\s*|\s*$/g, "\\s*")}`, "g");
 
 	let pairStrings = new Set([
 		...Object.keys(pairs.nest),
@@ -46,7 +50,10 @@ export function* split (value, { separator = ",", pairs = defaultPairs } = {}) {
 
 	if (!pairRegex.test(value)) {
 		// value contains no pairs, just split
-		yield* value.trim().split(separatorRegex);
+		yield* value
+			.trim()
+			.split(separatorRegex)
+			.map(p => unescapeSeparator(p, separator));
 		return;
 	}
 
@@ -72,7 +79,7 @@ export function* split (value, { separator = ",", pairs = defaultPairs } = {}) {
 		}
 		else if (matched.trim() === separator) {
 			if (stack.length === 0) {
-				yield value.slice(lastIndex, index).trim();
+				yield unescapeSeparator(value.slice(lastIndex, index).trim(), separator);
 				lastIndex = index + matched.length;
 			}
 		}
@@ -98,6 +105,6 @@ export function* split (value, { separator = ",", pairs = defaultPairs } = {}) {
 	}
 
 	if (lastIndex < value.length) {
-		yield value.slice(lastIndex).trim();
+		yield unescapeSeparator(value.slice(lastIndex).trim(), separator);
 	}
 }
