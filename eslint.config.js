@@ -313,11 +313,7 @@ export default [
 
 			// Enforce whitespace after the `//` or `/*` in a comment
 			// https://eslint.style/rules/default/spaced-comment
-			"@stylistic/spaced-comment": [
-				1,
-				"always",
-				{ block: { exceptions: ["*"] } },
-			],
+			"@stylistic/spaced-comment": [1, "always", { block: { exceptions: ["*"] } }],
 		},
 	},
 ];

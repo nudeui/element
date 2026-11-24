@@ -83,7 +83,8 @@ export default {
 				{
 					name: "Unresolvable string still yields the default fallback",
 					check: () =>
-						PropType.for("DefinitelyNotAGlobalOrRegisteredType") === PropType.for(undefined),
+						PropType.for("DefinitelyNotAGlobalOrRegisteredType") ===
+						PropType.for(undefined),
 				},
 				{
 					name: "Built-in singletons match their named exports",
@@ -479,18 +480,12 @@ export default {
 				{
 					name: "equals uses Unknown#equals for distinct-but-equal instances",
 					check: () =>
-						PropType.for(Unknown).equals(
-							new Unknown("red"),
-							new Unknown("red"),
-						),
+						PropType.for(Unknown).equals(new Unknown("red"), new Unknown("red")),
 				},
 				{
 					name: "equals returns false for different Unknown instances",
 					run: () =>
-						PropType.for(Unknown).equals(
-							new Unknown("red"),
-							new Unknown("blue"),
-						),
+						PropType.for(Unknown).equals(new Unknown("red"), new Unknown("blue")),
 					expect: false,
 				},
 			],
@@ -504,7 +499,8 @@ export default {
 						class Box {}
 						PropType.register({ is: Box, hint: "from-parent" });
 						let child = PropType.for({ is: Box, hint: "from-child" });
-						let result = child.super.hint === "from-parent" && child.hint === "from-child";
+						let result =
+							child.super.hint === "from-parent" && child.hint === "from-child";
 						PropType.registry.delete(Box);
 						return result;
 					},

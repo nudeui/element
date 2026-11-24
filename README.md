@@ -16,22 +16,21 @@ The functionality you need, without any complexity you don’t need.
 1. [Features](#features)
 2. [Architecture](#architecture)
 3. [Usage](#usage)
-	1. [Using the default base class](#using-the-default-base-class)
-	2. [Creating a custom base class](#creating-a-custom-base-class)
-	3. [Using Nude Element plugins on your own base class](#using-nude-element-plugins-on-your-own-base-class)
-	4. [Customizing which plugins are included](#customizing-which-plugins-are-included)
-	5. [Writing your own plugins](#writing-your-own-plugins)
-	6. [Plugin docs](#plugin-docs)
-
+    1. [Using the default base class](#using-the-default-base-class)
+    2. [Creating a custom base class](#creating-a-custom-base-class)
+    3. [Using Nude Element plugins on your own base class](#using-nude-element-plugins-on-your-own-base-class)
+    4. [Customizing which plugins are included](#customizing-which-plugins-are-included)
+    5. [Writing your own plugins](#writing-your-own-plugins)
+    6. [Plugin docs](#plugin-docs)
 
 ## Features
 
 - **Extremely lightweight**: Nude Element’s core extensibility infrastructure is only ~1KB minzipped
 - Use the provided `NudeElement` class, generate a custom base class, or even add plugins to your own base class (with a little manual plumbing)
 - Easy **reactive attribute-property reflection** (_props_)
-  - Automatic dependency tracking (+ manual overrides)
-  - Reactive dynamic default values, just like native HTML elements (e.g. having `value` default to `(this.min + this.max) / 2` in a slider)
-  - A wide variety of types with automatic reflection
+    - Automatic dependency tracking (+ manual overrides)
+    - Reactive dynamic default values, just like native HTML elements (e.g. having `value` default to `(this.min + this.max) / 2` in a slider)
+    - A wide variety of types with automatic reflection
 - **Events** that properly create `oneventname` attributes and props, just like native HTML elements
 - Accessible, **form associated elements** with a single line of code
 - And a host of other useful functionality, all optional!
@@ -100,7 +99,7 @@ class MySlider extends NudeElement {
 		change: {
 			from () {
 				return this._el.slider;
-			}
+			},
 		},
 
 		// Fire event when specific prop changes (even programmatically)
@@ -192,7 +191,7 @@ Note that plugins can (and do) add their own hooks, so you may need to check the
 
 You can always include additional plugins by calling `addPlugin(ElementClass, plugin)` or `addPlugins(ElementClass, plugins)`.
 To make this a little nicer, you can use the `pluginsProperty` plugin, which adds static `Element.addPlugin(plugin)` or `Element.addPlugins(plugins)` properties.
-To include *fewer* plugins, you can use the `NudeElement` export (or the default export from `nude-element/fn`) which includes no plugins by default,
+To include _fewer_ plugins, you can use the `NudeElement` export (or the default export from `nude-element/fn`) which includes no plugins by default,
 and only add the plugins you need.
 
 ```js
@@ -213,6 +212,7 @@ class MyElement extends NudeElement {
 Once a class is extensible, you’re not just restricted to Nude Element plugins, you can use the same architecture for your own codebase too!
 
 Each plugin is basically an object with some or all of the following properties:
+
 - `dependencies`: An array of plugins that this plugin depends on, automatically installed before it (in order), if not already installed on the class
 - `provides`: Properties and methods to add to the class prototype
 - `providesStatic`: Properties and methods to add to the class itself

@@ -11,7 +11,8 @@ export default {
 	tests: [
 		{
 			name: "Markup on*= handlers catch the mount-time alias dispatch",
-			description: "The on* prop's `changed` callback attaches the handler during prop init, before mount propchanges flush — so it receives the real mount alias with its original source (issue #106).",
+			description:
+				"The on* prop's `changed` callback attaches the handler during prop init, before mount propchanges flush — so it receives the real mount alias with its original source (issue #106).",
 			run () {
 				let tag = defineElement({
 					plugins: [propsPlugin, eventsPlugin],
@@ -32,7 +33,8 @@ export default {
 		},
 		{
 			name: "Shortcut events ride along on coalesced propchange and don't feed propschange",
-			description: "Burst dispatches one propchange (old=1, value=3); the alias mirrors it, propschange sees only [v, 1].",
+			description:
+				"Burst dispatches one propchange (old=1, value=3); the alias mirrors it, propschange sees only [v, 1].",
 			async run () {
 				let tag = defineElement({
 					plugins: [propsPlugin, propschangePlugin, eventsPlugin],
