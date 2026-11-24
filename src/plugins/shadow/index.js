@@ -9,6 +9,9 @@ import { getOwnValue } from "../../util/get-own-value.js";
 
 const { shadowRoot } = symbols.known;
 
+// A `shadowRoot` override may read the symbol and re-enter attachShadow(), so the plugin reads the native getter
+const { get: getShadowRoot } = Object.getOwnPropertyDescriptor(Element.prototype, "shadowRoot");
+
 const provides = {
 	attachShadow (options) {
 		let existing = getOwnValue(this, shadowRoot) ?? getOwnValue(this, "shadowRoot");
@@ -26,7 +29,13 @@ const provides = {
 		}
 
 		try {
-			this[shadowRoot] = _attachShadow.call(this, options);
+			// Reuse a declarative root, because the native attachShadow() would empty it.
+			// Another mode goes to the native call, which throws, as without the plugin.
+			// No options means the lazy symbol, which takes the root as is.
+			// FIXME: a closed declarative root is visible only through ElementInternals, so `{ mode: "closed" }` still empties it
+			existing = getShadowRoot.call(this);
+			let reuse = existing && (!options || options.mode === existing.mode);
+			this[shadowRoot] = reuse ? existing : _attachShadow.call(this, options);
 			this.$hook("shadow-attached", { shadowRoot });
 		}
 		catch (error) {
