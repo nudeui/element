@@ -58,13 +58,15 @@ const hooks = {
 			}
 
 			for (let aliasName of aliasNames) {
-				this.dispatchEvent(new PropChangeEvent(aliasName, {
-					name: event.name,
-					prop: event.prop,
-					source: event.source,
-					value: event.value,
-					oldValue: event.oldValue,
-				}));
+				this.dispatchEvent(
+					new PropChangeEvent(aliasName, {
+						name: event.name,
+						prop: event.prop,
+						source: event.source,
+						value: event.value,
+						oldValue: event.oldValue,
+					}),
+				);
 			}
 		});
 	},

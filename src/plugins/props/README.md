@@ -133,17 +133,17 @@ The `type` property can also take an object that sets both the type (via the `is
 listed below.
 All type options are optional.
 
-| Property       | Type                                       | Applies to                                                  | Description                                                                              |
-| -------------- | ------------------------------------------ | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `is`           | `Function` &#124; `string` &#124; `object` | _(All)_                                                     | The type of the property.                                                                |
-| `values`       | `Function`                                 | Iterables (`Array`, `Set`), Dictionaries (`Object`, `Map`)  | The type of the items in the list.                                                       |
-| `keys`         | `Function`                                 | Dictionaries (`Object`, `Map`)                              | The type of the keys in the dictionary.                                                  |
-| `separator`    | `string` &#124; `RegExp`                   | Iterables (`Array`, `Set`), Dictionaries (`Object`, `Map`)  | Separator between items when parsing strings. Default: `,` (pair-aware).                 |
-| `joiner`       | `string`                                   | Iterables (`Array`, `Set`), Dictionaries (`Object`, `Map`)  | String used between items when stringifying. Defaults to a normalized form of `separator`. |
-| `pairs`        | `object`                                   | Iterables (`Array`, `Set`), Dictionaries (`Object`, `Map`)  | Override the pair-aware splitter's bracket/quote table.                                  |
-| `defaultKey`   | `Function`                                 | Dictionaries (`Object`, `Map`)                              | Default key for entries with no label.                                                   |
-| `defaultValue` | (any)                                      | Dictionaries (`Object`, `Map`)                              | Default value for entries with no label. Ignored if `defaultKey` is set. Default: `true` |
-| `arguments`    | `string[]`                                 | `Function`                                                  | The names of the arguments of the function. Default: `[]` (no arguments)                 |
+| Property       | Type                                       | Applies to                                                 | Description                                                                                |
+| -------------- | ------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `is`           | `Function` &#124; `string` &#124; `object` | _(All)_                                                    | The type of the property.                                                                  |
+| `values`       | `Function`                                 | Iterables (`Array`, `Set`), Dictionaries (`Object`, `Map`) | The type of the items in the list.                                                         |
+| `keys`         | `Function`                                 | Dictionaries (`Object`, `Map`)                             | The type of the keys in the dictionary.                                                    |
+| `separator`    | `string` &#124; `RegExp`                   | Iterables (`Array`, `Set`), Dictionaries (`Object`, `Map`) | Separator between items when parsing strings. Default: `,` (pair-aware).                   |
+| `joiner`       | `string`                                   | Iterables (`Array`, `Set`), Dictionaries (`Object`, `Map`) | String used between items when stringifying. Defaults to a normalized form of `separator`. |
+| `pairs`        | `object`                                   | Iterables (`Array`, `Set`), Dictionaries (`Object`, `Map`) | Override the pair-aware splitter's bracket/quote table.                                    |
+| `defaultKey`   | `Function`                                 | Dictionaries (`Object`, `Map`)                             | Default key for entries with no label.                                                     |
+| `defaultValue` | (any)                                      | Dictionaries (`Object`, `Map`)                             | Default value for entries with no label. Ignored if `defaultKey` is set. Default: `true`   |
+| `arguments`    | `string[]`                                 | `Function`                                                 | The names of the arguments of the function. Default: `[]` (no arguments)                   |
 
 See the [PropTypes reference](./types/README.md#built-in-types) for the full per-type breakdown.
 
@@ -239,10 +239,10 @@ Fires once per individual property change, synchronously inside the assignment. 
 
 ```js
 element.addEventListener("propchange", e => {
-    e.name;      // prop name
-    e.value;     // new stored value
-    e.oldValue;  // previous stored value
-    e.source;    // "property" | "attribute" | undefined
+	e.name; // prop name
+	e.value; // new stored value
+	e.oldValue; // previous stored value
+	e.source; // "property" | "attribute" | undefined
 });
 ```
 
@@ -254,11 +254,11 @@ Fires once per microtask after a burst of `propchange` events settles. Best for 
 
 ```js
 element.addEventListener("propschange", e => {
-    e.changed;          // Map<name, oldValue> — net first→last delta across the burst
-    for (let [name, oldValue] of e.changed) {
-        let currentValue = this[name];
-        // …
-    }
+	e.changed; // Map<name, oldValue> — net first→last delta across the burst
+	for (let [name, oldValue] of e.changed) {
+		let currentValue = this[name];
+		// …
+	}
 });
 ```
 
@@ -266,12 +266,12 @@ Subclasses that define an `updated(event)` method are auto-wired to `propschange
 
 ```js
 class MyElement extends NudeElement {
-    static props = { /* … */ };
+	static props = {/* … */};
 
-    updated (event) {
-        // event.changed is a Map<name, oldValue>
-        this.render();
-    }
+	updated (event) {
+		// event.changed is a Map<name, oldValue>
+		this.render();
+	}
 }
 ```
 

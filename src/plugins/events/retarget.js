@@ -33,10 +33,8 @@ const hooks = {
 				if (!from.when || from.when(event)) {
 					let EventConstructor = from.event ?? event.constructor;
 					let source = from.constructor
-						? // Construct specific event object
-							pick(event, ["bubbles", "cancelable", "composed", "detail"])
-						: // Retarget this event
-							event;
+						? pick(event, ["bubbles", "cancelable", "composed", "detail"]) // Construct specific event object
+						: event; // Retarget this event
 					let options = Object.assign({}, source, from.options);
 
 					let newEvent = new EventConstructor(name, options);

@@ -14,7 +14,7 @@ export function getAllValues (obj, forMember) {
 	}
 
 	let Super = obj;
-	while (Super = getSuperMember(Super, forMember)) {
+	while ((Super = getSuperMember(Super, forMember))) {
 		values.unshift(Super[forMember]);
 	}
 

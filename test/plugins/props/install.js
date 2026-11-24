@@ -46,7 +46,7 @@ export default {
 			name: "Computed reading a sibling during mount sees its parsed value, not a raw pre-mount write",
 			description:
 				"`derived` cascades from `trigger`'s init; it must read `items` through the accessor " +
-				"(parse: \"x,y,z\" → array), not the still-shadowing pre-mount own data property.",
+				'(parse: "x,y,z" → array), not the still-shadowing pre-mount own data property.',
 			run () {
 				let observed;
 

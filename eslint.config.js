@@ -261,7 +261,11 @@ export default [
 
 			// Enforce consistent indentation
 			// https://eslint.style/rules/default/indent
-			"@stylistic/indent": [1, "tab", { SwitchCase: 1, outerIIFEBody: 0 }],
+			"@stylistic/indent": [
+				1,
+				"tab",
+				{ SwitchCase: 1, outerIIFEBody: 0, offsetTernaryExpressions: true },
+			],
 
 			// Enforce consistent spacing before and after keywords
 			// https://eslint.style/rules/default/keyword-spacing
@@ -309,11 +313,7 @@ export default [
 
 			// Enforce whitespace after the `//` or `/*` in a comment
 			// https://eslint.style/rules/default/spaced-comment
-			"@stylistic/spaced-comment": [
-				1,
-				"always",
-				{ block: { exceptions: ["*"] } },
-			],
+			"@stylistic/spaced-comment": [1, "always", { block: { exceptions: ["*"] } }],
 		},
 	},
 ];
