@@ -281,7 +281,7 @@ export default [
 			"@stylistic/quotes": [
 				1,
 				"double",
-				{ avoidEscape: true, allowTemplateLiterals: true },
+				{ avoidEscape: true, allowTemplateLiterals: "always" },
 			],
 
 			// Require semicolons instead of ASI
